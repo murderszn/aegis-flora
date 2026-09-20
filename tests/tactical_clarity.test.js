@@ -184,3 +184,4 @@ assert(html.includes('pathLineMesh.material.dashOffset'), 'HTML must animate pat
 console.log('✓ Verified: HTML and CSS markup complete.');
 
 console.log('\nAll Tactical Clarity (Issue #10) tests passed successfully!');
+process.exit(0);

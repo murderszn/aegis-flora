@@ -109,35 +109,41 @@ Then open [http://localhost:8000](http://localhost:8000) (landing page) or [http
 
 | Key | Action |
 |-----|--------|
-| `Q` | Select **Gatling Plinth** (100 Scrap) — rapid-fire kinetic turret |
-| `W` | Select **Bloom Cannon** (150 Scrap) — AoE mortar artillery |
-| `E` | Select **Prism Pillar** (175 Scrap) — sustained focus beam |
-| `R` | Select **Resonance Monolith** (125 Scrap) — radial slow/CC aura |
-| `D` | **Verdant Overgrowth** — root all creeps in area (35 Mana) |
-| `F` | **Solar Flare** — orbital strike on target (75 Mana) |
-| `U` | Upgrade selected tower |
-| `S` | Sell selected tower (75% refund) |
-| `N` | Call next wave early (bonus scrap) |
-| `Space` | Center camera on Sanctum |
-| `Tab` | Cycle through placed towers |
-| `1 / 2 / 4` | Toggle game speed (1× / 2× / 4×) |
-| `Esc` | Cancel placement / Pause |
-| Mouse | Left-click to place · Right-click to cancel · Scroll to zoom |
+| `Q` or `1` | Select **Kinetic Gatling** (100 Scrap) — rapid-fire kinetic turret |
+| `W` or `2` | Select **Spore Mortar** (150 Scrap) — AoE artillery battery |
+| `E` or `3` | Select **Solar Beam** (175 Scrap) — sustained focus thermal beam |
+| `R` or `4` | Select **Resonance Obelisk** (125 Scrap) — radial acoustic slow/armor shred |
+| `Space` | Start Wave / Call Next Wave |
+| `D` | **Verdant Overgrowth** — root all creeps in 4×4 area & deal sonic damage (35 Mana) |
+| `F` | **Solar Flare** — orbital solar lance on cursor tile (75 Mana) |
+| `Tab` or `Y` | Cycle tower target priority (First, Last, Strongest, Weakest, Closest) |
+| `K` | Toggle **Tactical Clarity** mode (scenery dimming & high contrast) |
+| `G` | Toggle **Verdant Glyphs** conservatory modal |
+| `?` | Replay 8-step guided mazing tutorial |
+| `P` | Pause / Resume gameplay |
+| `V` | Cycle game speed (1× / 2× / 4×) |
+| `M` | Toggle master audio mute |
+| `C` / `T` | Toggle Isometric (C) / Tactical Over-the-shoulder (T) camera views |
+| `F11` / `Shift+F` | Toggle fullscreen mode |
+| `Esc` | Clear selection / close modal / open Settings |
+| Mouse | Left-click to place/inspect · Right-click to cancel · Scroll to zoom |
 
 ### 🎮 Gamepad Support (Xbox / PlayStation / Switch)
 
 | Button | Action |
 |--------|--------|
 | Left Stick | Pan camera across the map |
-| Right Stick | Look / orbit camera |
+| Right Stick | Orbit & pitch camera |
 | LT / RT | Zoom in / out |
-| A / Cross | Place tower / select |
-| B / Circle | Cancel placement |
-| X / Square | Send next wave |
+| A / Cross | Place tower / inspect unit at crosshair |
+| B / Circle | Cancel placement / close panel |
+| X / Square | Cycle tower target priority |
 | Y / Triangle | Toggle camera view |
 | LB / RB | Cycle tower selection |
+| D-Pad | Quick tower selection (Up/Down/Left/Right) |
 | Start | Pause game |
-| Rumble | Haptic feedback on explosions and boss kills |
+| Back / View | Cycle game speed |
+| Rumble | Haptic vibration on explosions, flares, and leaks |
 
 ---
 
@@ -308,49 +314,40 @@ $$\text{Damage Multiplier} = 1 - \frac{0.06 \times \text{Armor}}{1 + 0.06 \times
 ### Economy
 
 - **Scrap** — earned from kills; used to build & upgrade towers
-- **Interest** — 5% on held scrap per wave (capped at +50/wave)
-- **Early Wave Bonus** — call the next wave early for bonus scrap: `floor(T_remaining × 2.5 × √Wave)`
 - **Solar Mana** — regenerates at 4/sec (max 100); fuels Sanctum abilities
+- **Verdant Glyphs** — persistent meta-progression currency earned across waves
 
-### Wave Scaling (100 waves)
+### Wave Scaling (50 Progressive Waves)
 
 $$\text{Creep HP}(W) = \text{Base HP} \times \left(1 + 0.18W + 0.012W^{1.65}\right)$$
 
-Boss waves appear every 10 waves, culminating in **The Rust God** at Wave 100 (750,000 HP, 25 Armor).
+Boss waves appear every 10 waves (Wave 10, 20, 30, 40, and 50), scaling in health, armor, and leak threat.
 
 ---
 
-## 🗺 Roadmap
+## 🗺 Feature Status & Roadmap
 
-See [`TODO_COMPLETE.md`](./TODO_COMPLETE.md) for the full prioritized backlog. Key milestones:
+See [`SHIPPING_FEATURE_MATRIX.md`](./SHIPPING_FEATURE_MATRIX.md) for the verified feature matrix and [`TODO_COMPLETE.md`](./TODO_COMPLETE.md) for the development backlog.
 
-### 🔴 Critical (Launch Blockers)
-- [ ] Meta-progression system (Verdant Glyphs + localStorage)
-- [ ] Sanctum abilities (D/F keys — root & orbital strike)
-- [ ] Full armor system with damage type interactions
-- [ ] Flow field pathfinding (replace per-creep A* for 200+ unit swarms)
-- [ ] Object pooling (particles, combat text, decals — zero GC at runtime)
-- [ ] Mobile / touch support
+### 🟢 Verified & Implemented in Release Build
+- [x] Meta-progression system (Verdant Glyphs + `localStorage` persistence)
+- [x] Sanctum abilities (`D` Verdant Overgrowth root & `F` Solar Flare strike)
+- [x] Full Dota 2 armor formula with 4 damage types (Kinetic, Energy, Sonic, Blast)
+- [x] Goal-rooted flow field pathfinding with O(1) step lookup
+- [x] Spatial target indexing & zero-allocation object pools (`DMG_POOL`, `FX_SHARED`)
+- [x] Full targeting priority system (First / Last / Strongest / Weakest / Closest)
+- [x] Elite branch mechanics (Rail-Needler pierce, Refraction split, Sol Invictus scorch, Chrono freeze, Resonance shatter)
+- [x] Guided 8-step first-run mazing tutorial
+- [x] Tactical Clarity mode (scenery desaturation, bloom dimming, plinths & threat rings)
+- [x] Audio safety pipeline (immediate mute & clamped decibel explosion bus)
 
-### 🟠 High Priority
-- [ ] Targeting priority system (First / Last / Strongest / Weakest / Closest)
-- [ ] Full T3 branch upgrade mechanics
-- [ ] Boss phase mechanics (EMP, shields, drone summons)
-- [ ] Interest system & early wave call bonus
-- [ ] Missing creep types (Steam Prowler, Dreadnought Ram)
-
-### 🟡 Medium Priority
-- [ ] Screen shake & post-processing bloom
-- [ ] Debuff visual icons above creeps
-- [ ] Spatial audio & ambient soundscape
-- [ ] Dynamic low-pass filter at low Sanctum HP
-
-### 🟢 Polish
-- [ ] Day/night cycle & weather
-- [ ] Replay system
-- [ ] Accessibility options (colorblind mode, key remapping)
-- [ ] macOS .dmg desktop distribution
-- [ ] Steam integration (achievements, leaderboards)
+### 🟡 In Progress / Planned (Open Issues)
+- [ ] Windows standalone release package (#13)
+- [ ] Dedicated Sanctum leak / defeat audio stinger (#19)
+- [ ] Gesture-driven AudioContext initialization (#20)
+- [ ] Boss affixes & multi-phase abilities (#21)
+- [ ] Additional enemy archetypes (Steam Prowler, Dreadnought Ram) (#22)
+- [ ] Licensed solarpunk ambient soundtrack loop (#27)
 
 ---
 

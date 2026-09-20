@@ -184,3 +184,4 @@ assert(res350.avgFrameTimeMs < 16.67, `350 enemies must sustain 60 FPS (<16.67ms
 console.log('✓ Verified: 350-enemy massive swarm comfortably sustains 60 FPS target.');
 
 console.log('\nAll Large-Wave Performance & Profiling (Issue #11) tests passed successfully!');
+process.exit(0);

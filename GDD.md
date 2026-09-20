@@ -187,9 +187,9 @@ After each run (win or defeat), players earn **Verdant Glyphs** based on wave mi
 
 ## 6. Player Experience & Game Modes
 
-1. **Classic Campaign / Survival (Robo Defense 100-Wave Mode):**
-   - Survive 100 progressively harder waves. Difficulty tiers from Level 1 (Casual) to Level 100 (Grandmaster).
-2. **Infinite Overdrive (Endless Mode):**
+1. **Classic Campaign / Survival (Standard 50-Wave Mode):**
+   - Survive 50 progressively harder waves culminating in colossal mechanized titan encounters on Wave 10, 20, 30, 40, and 50. (100-wave master mode and endless mode planned for post-launch).
+2. **Infinite Overdrive (Endless Mode — Planned):**
    - Infinite scaling waves with random modifiers (Haste waves, Shielded waves, Resilient mechs). Leaderboard scoring based on wave reached.
 3. **Architect Puzzle Challenges:**
    - Pre-set layouts with limited scrap where the player must solve specific mazing puzzles to survive impossible creep numbers.
