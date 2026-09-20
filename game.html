@@ -801,6 +801,12 @@ var TOWERS = {
     key: 'R', numKey: '4', name: 'Resonance Obelisk', cost: 15, range: 2.6,
     img: 'blender_pipeline/renders/tower_resonance_monolith_render.png', glb: 'blender_pipeline/models/tower_resonance_monolith.glb',
     desc: 'Acoustic shockwaves. 40% radial slow + strips creep armor.'
+  },
+  blocker: {
+    key: 'B', numKey: '5', name: 'Ruin Barrier', cost: 2, range: 0,
+    img: 'assets/3d_turret_pbr.jpg', glb: 'blender_pipeline/models/accent_masonry_blocks.glb',
+    desc: 'Ancient Greco-Roman masonry wall. Cheap obstacle to route creeps into killzones.',
+    isBlocker: true
   }
 };
 
@@ -820,6 +826,10 @@ var BRANCH = {
   slow: {
     A: { name: 'Chrono-Stutter', cost: 25, range: 3.6, slowF: 0.5, chill: 2.5, dps: 8, stun: true },
     B: { name: 'Resonance Shatter', cost: 30, range: 3.2, dps: 46, hold: 0.25, shatter: true }
+  },
+  blocker: {
+    A: { name: 'Reinforced Masonry', cost: 4, range: 0, desc: 'Adds decorative ivy' },
+    B: { name: 'Thorned Bramble', cost: 4, range: 0, desc: 'Adds thorny vines' }
   }
 };
 
@@ -838,10 +848,11 @@ function armorMultiplier(armor){
   return 2 - Math.pow(0.94, Math.abs(armor));
 }
 
-// Apply damage with armor mitigation and damage-type modifiers
-function applyDamage(f, dmg, dtype, shatteredBonus){
+// Apply damage with armor mitigation, damage-type modifiers, and Foundry Engineering multiplier
+function applyDamage(f, dmg, dtype, shatteredBonus, isTowerDmg){
   var mod = (f.dmgMod && f.dmgMod[dtype]) || 1.0;
   var mult = mod;
+  if(isTowerDmg !== false && S && S.dmgMult) mult *= S.dmgMult;
   // Energy ignores 50% armor
   if(dtype === 'Energy') mult *= (1 - 0.5 * armorMultiplier(f.armor || 0));
   // Sonic is pure damage (ignores armor)
@@ -890,6 +901,8 @@ function worldToGrid3D(pos){
 // ---------- Game State ----------
 var S = null;
 function newState(seed){
+  var glyphs = loadGlyphs();
+  var bonus = getGlyphBonus(glyphs);
   return {
     seed: seed,
     blocked: new Uint8Array(COLS * ROWS),
@@ -899,28 +912,33 @@ function newState(seed){
     foes: [], missiles: [], shells: [],
     parts: [], tracers: [], beams: [], zones: [],
     spawnQueue: [], spawnT: 0,
-    cash: START_CASH, lives: START_LIVES, mana: 100, score: 0,
+    cash: bonus.startCash,
+    lives: bonus.maxLives,
+    maxLives: bonus.maxLives,
+    dmgMult: bonus.dmgMult,
+    hasMazingWall: bonus.hasMazingWall,
+    mana: 100, score: 0,
     wave: 0, phase: 'build', waveT: 0,
     paused: false, speed: 1,
     selected: null, selTower: null,
     kills: 0, leaked: 0, time: 0,
     sanctum: { abilityCD: 0, rootCD: 0, rootTargets: [] },
-    glyphs: loadGlyphs(),
+    glyphs: glyphs,
     // Telemetry & Post-Match Statistics
-    totalEarned: START_CASH,
+    totalEarned: bonus.startCash,
     totalSpent: 0,
     totalRefunded: 0,
     totalDamageDealt: 0,
     towersBuilt: 0,
     upgradesPurchased: 0,
-    peakCash: START_CASH,
+    peakCash: bonus.startCash,
     killsByType: { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0 },
     leakedByType: { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0 },
     abilitiesUsed: { flare: 0, root: 0 }
   };
 }
 
-// ---------- Meta-Progression: Verdant Glyphs ----------
+// ---------- Meta-Progression: Verdant Glyphs & Banked Meta-Scrap ----------
 var GLYPH_DEFS = {
   foundry: { name: 'Foundry Engineering', desc: '+2% tower damage per level', maxLvl: 15, cost: 50, icon: '⚙' },
   vault: { name: 'Ancient Vault', desc: '+50 starting Scrap per level', maxLvl: 3, cost: 80, icon: '💰' },
@@ -928,36 +946,116 @@ var GLYPH_DEFS = {
   mazing: { name: 'Mazing Mastery', desc: 'Unlock decorative blocker walls', maxLvl: 1, cost: 100, icon: '🧱' }
 };
 
+function getMetaScrap(){
+  var raw = localStorage.getItem('aegis_meta_scrap');
+  if(raw === null) return 120; // starter allocation for new players
+  var val = parseInt(raw, 10);
+  return (isNaN(val) || val < 0) ? 0 : val;
+}
+
+function setMetaScrap(amt){
+  var safe = Math.max(0, Math.floor(amt || 0));
+  try { localStorage.setItem('aegis_meta_scrap', String(safe)); } catch(e){}
+  return safe;
+}
+
+function addMetaScrap(amt){
+  if(amt <= 0) return getMetaScrap();
+  return setMetaScrap(getMetaScrap() + amt);
+}
+
 function loadGlyphs(){
-  try { return JSON.parse(localStorage.getItem('aegis_glyphs') || '{}'); }
-  catch(e){ return {}; }
+  var raw = {};
+  try { raw = JSON.parse(localStorage.getItem('aegis_glyphs') || '{}') || {}; }
+  catch(e){ raw = {}; }
+  var clean = {};
+  for(var gid in GLYPH_DEFS){
+    var max = GLYPH_DEFS[gid].maxLvl;
+    var val = parseInt(raw[gid], 10);
+    if(isNaN(val) || val < 0) val = 0;
+    if(val > max) val = max;
+    clean[gid] = val;
+  }
+  return clean;
 }
-function saveGlyphs(){
-  try { localStorage.setItem('aegis_glyphs', JSON.stringify(S.glyphs)); }
-  catch(e){}
+
+function saveGlyphs(glyphsToSave){
+  var target = glyphsToSave || (S ? S.glyphs : null);
+  if(!target) return;
+  var clean = {};
+  for(var gid in GLYPH_DEFS){
+    var max = GLYPH_DEFS[gid].maxLvl;
+    var val = parseInt(target[gid], 10);
+    if(isNaN(val) || val < 0) val = 0;
+    if(val > max) val = max;
+    clean[gid] = val;
+  }
+  try { localStorage.setItem('aegis_glyphs', JSON.stringify(clean)); } catch(e){}
+  if(S) S.glyphs = clean;
 }
-function getGlyphLevel(gid){ return S.glyphs[gid] || 0; }
-function canAffordGlyph(gid){ var def = GLYPH_DEFS[gid]; var lvl = getGlyphLevel(gid); return lvl < def.maxLvl && S.cash >= def.cost * (lvl + 1); }
-function purchaseGlyph(gid){
-  var def = GLYPH_DEFS[gid]; var lvl = getGlyphLevel(gid);
-  if(lvl >= def.maxLvl) return false;
-  var cost = def.cost * (lvl + 1);
-  if(S.cash < cost) return false;
-  S.cash -= cost;
-  S.glyphs[gid] = lvl + 1;
-  saveGlyphs();
-  return true;
+
+function getGlyphLevel(gid){
+  if(S && S.glyphs && typeof S.glyphs[gid] === 'number') return S.glyphs[gid];
+  var saved = loadGlyphs();
+  return saved[gid] || 0;
 }
-function getGlyphBonus(){
-  var fLvl = getGlyphLevel('foundry');
-  var vLvl = getGlyphLevel('vault');
-  var fLvl2 = getGlyphLevel('flora');
+
+function getGlyphBonus(glyphs){
+  var g = glyphs || (S ? S.glyphs : loadGlyphs());
+  var fLvl = (g && g.foundry) || 0;
+  var vLvl = (g && g.vault) || 0;
+  var flLvl = (g && g.flora) || 0;
+  var mLvl = (g && g.mazing) || 0;
   return {
     dmgMult: 1 + fLvl * 0.02,
     startCash: START_CASH + vLvl * 50,
-    maxLives: START_LIVES + fLvl2 * Math.round(START_LIVES * 0.15),
-    hasMazingWall: getGlyphLevel('mazing') >= 1
+    maxLives: START_LIVES + flLvl * Math.round(START_LIVES * 0.15),
+    hasMazingWall: mLvl >= 1
   };
+}
+
+function applyGlyphBonuses(targetState){
+  var st = targetState || S;
+  if(!st) return;
+  var b = getGlyphBonus(st.glyphs);
+  st.dmgMult = b.dmgMult;
+  st.hasMazingWall = b.hasMazingWall;
+  if(st.wave === 0 && st.phase === 'build'){
+    st.maxLives = b.maxLives;
+    st.lives = b.maxLives;
+  }
+}
+
+function canAffordGlyph(gid){
+  var def = GLYPH_DEFS[gid];
+  if(!def) return false;
+  var lvl = getGlyphLevel(gid);
+  if(lvl >= def.maxLvl) return false;
+  var cost = def.cost * (lvl + 1);
+  return getMetaScrap() >= cost;
+}
+
+function purchaseGlyph(gid){
+  var def = GLYPH_DEFS[gid];
+  if(!def) return false;
+  // Shop restriction: cannot mutate meta-progression during active combat wave
+  if(S && S.phase === 'combat'){
+    toast('Glyph Forge is only accessible between waves or runs!');
+    sfx('error');
+    return false;
+  }
+  var lvl = getGlyphLevel(gid);
+  if(lvl >= def.maxLvl) return false;
+  var cost = def.cost * (lvl + 1);
+  if(getMetaScrap() < cost) return false;
+
+  setMetaScrap(getMetaScrap() - cost);
+  if(!S.glyphs) S.glyphs = loadGlyphs();
+  S.glyphs[gid] = lvl + 1;
+  saveGlyphs(S.glyphs);
+  applyGlyphBonuses(S);
+  if(typeof initCards === 'function' && def === GLYPH_DEFS.mazing) initCards();
+  return true;
 }
 
 // ---------- A* Pathfinding ----------
@@ -3605,7 +3703,7 @@ function create3DTowerMesh(type){
     root.add(turn);
     root.userData = { crystal: crystal, turn: turn };
   }
-  else {
+  else if(type === 'slow'){
     var ob = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.3, 0.85), MATS.stone);
     ob.position.y = 1.15; root.add(ob);
 
@@ -3620,6 +3718,16 @@ function create3DTowerMesh(type){
     turn.add(dish);
     root.add(turn);
     root.userData = { pulseRing: rRing, turn: turn };
+  }
+  else if(type === 'blocker'){
+    var block = new THREE.Mesh(new THREE.BoxGeometry(1.35, 1.05, 1.35), MATS.marble);
+    block.position.y = 0.52; block.castShadow = true; block.receiveShadow = true;
+    root.add(block);
+    var cornice = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.18, 1.48), MATS.brass);
+    cornice.position.y = 1.12; cornice.castShadow = true; root.add(cornice);
+    var leaves = new THREE.Mesh(new THREE.SphereGeometry(0.24, 7, 7), MATS.leaf);
+    leaves.position.set(0.32, 1.28, 0.25); root.add(leaves);
+    root.userData = { isBlocker: true, turn: null };
   }
 
   return root;
@@ -4213,7 +4321,8 @@ function placeAt(gx, gy, key){
   S.towers.push({
     gx: gx, gy: gy, type: key, branch: 0, cd: 0,
     invested: cost, beamTgt: null, beamTime: 0, pulse: 0,
-    mesh: mesh, kills: 0, totalDmg: 0
+    mesh: mesh, kills: 0, totalDmg: 0,
+    isBlocker: !!(TOWERS[key] && TOWERS[key].isBlocker)
   });
 
   rerouteFoes();
@@ -4457,6 +4566,7 @@ function update(dt){
 
   // 2. Update 3D Towers & Combat — Dota-2 juice: tracers, shells, arcs, beams, rings
   for(var t of S.towers){
+    if(t.type === 'blocker') continue;
     t.cd -= dt;
     // idle breathing: crystal bob, gear glow pulse, petal sway + fire-animation decay
     if(t.mesh.userData.crystal){
@@ -4690,6 +4800,10 @@ function update(dt){
 var LAST_MATCH_REPORT = '';
 function gameOver(win){
   S.phase = win ? 'win' : 'over';
+
+  // Bank match earnings into permanent Meta-Scrap
+  var bankedScrap = Math.max(5, Math.floor((S.score || 0) * 0.1 + (S.wave || 0) * 8 + (win ? 100 : 0)));
+  addMetaScrap(bankedScrap);
 
   // 1. Time & SPM Calculations
   var totalSecs = Math.floor(S.time || 0);
@@ -4929,25 +5043,32 @@ function toast(msg){
 }
 
 function towerDPS(t){
+  if(t.type === 'blocker') return 0;
   if(t.type === 'gun'){ var b = t.branch ? BRANCH.gun[t.branch] : null; return ((b && b.dmg) || 6) / ((b && b.iv) || 0.12); }
   if(t.type === 'rocket'){ var r = t.branch ? BRANCH.rocket[t.branch] : null; return ((r && r.dmg) || 32) / ((r && r.iv) || 1.8); }
   if(t.type === 'beam'){ var m = t.branch ? BRANCH.beam[t.branch] : null; return ((m && m.dps) || 40) * (1 + ((m && m.ramp) || 1) * 0.5); }
   var s = t.branch ? BRANCH.slow[t.branch] : null; return (s && s.dps) || 0;
 }
-function towerDmgType(t){ return t.type === 'gun' ? 'Kinetic' : (t.type === 'rocket' ? 'Blast' : (t.type === 'beam' ? 'Energy' : 'Sonic')); }
+function towerDmgType(t){
+  if(t.type === 'blocker') return 'Wall';
+  return t.type === 'gun' ? 'Kinetic' : (t.type === 'rocket' ? 'Blast' : (t.type === 'beam' ? 'Energy' : 'Sonic'));
+}
 
 function buildDrawer(){
   if(!el.buildGrid) return;
+  el.buildGrid.innerHTML = '';
   var tips = {
     gun: '<b>Petal Gatling [Q]</b> — Rapid <span class="dmg-Kinetic">Kinetic</span> fire.<br>DPS <b>~50</b> → Vulcan <b>~75</b> spin-up / Rail-Needler pierce 3.',
     rocket: '<b>Bloom Mortar [W]</b> — Arcing <span class="dmg-Blast">Blast</span> shells.<br>Splash <b>1.4</b> → Cataclysm fissures + slow / Skyburst <b>2.5x vs air</b>.',
     beam: '<b>Prism Pillar [E]</b> — Ramping <span class="dmg-Energy">Energy</span> beam.<br><b>40→240 DPS</b> → Sol Invictus scorch line / Refraction 3-way split.',
-    slow: '<b>Resonance Obelisk [R]</b> — <span class="dmg-Sonic">Sonic</span> slow aura.<br><b>35–50%</b> slow → Chrono-Stutter stun / Shatter <b>+35%</b> dmg taken.'
+    slow: '<b>Resonance Obelisk [R]</b> — <span class="dmg-Sonic">Sonic</span> slow aura.<br><b>35–50%</b> slow → Chrono-Stutter stun / Shatter <b>+35%</b> dmg taken.',
+    blocker: '<b>Ruin Barrier [B]</b> — Heavy masonry maze wall.<br>Directs creep navigation into defensive choke points.'
   };
   Object.keys(TOWERS).forEach(function(key){
+    if(key === 'blocker' && !(S && S.hasMazingWall)) return;
     var c = TOWERS[key];
-    var shortDesc = { gun: 'Rapid kinetic fire', rocket: 'Explosive area damage', beam: 'Focused energy beam', slow: 'Slow and weaken enemies' };
-    var category = { gun: 'KINETIC', rocket: 'BLAST', beam: 'ENERGY', slow: 'CONTROL' };
+    var shortDesc = { gun: 'Rapid kinetic fire', rocket: 'Explosive area damage', beam: 'Focused energy beam', slow: 'Slow and weaken enemies', blocker: 'Mazing wall obstacle' };
+    var category = { gun: 'KINETIC', rocket: 'BLAST', beam: 'ENERGY', slow: 'CONTROL', blocker: 'MAZE WALL' };
     var d = document.createElement('button');
     d.type = 'button';
     d.className = 'card'; d.id = 'card_' + key;
@@ -4958,7 +5079,7 @@ function buildDrawer(){
       '<div class="card-body">' +
         '<span class="card-category">' + category[key] + ' / TOWER 0' + (Object.keys(TOWERS).indexOf(key) + 1) + '</span>' +
         '<span class="nm">' + c.name + '</span>' +
-        '<span class="ds">' + shortDesc[key] + '</span>' +
+        '<span class="ds">' + (shortDesc[key] || '') + '</span>' +
         '<span class="card-foot"><span class="cost">¤ ' + c.cost + ' <small>SCRAP</small></span><span class="key">' + c.key + '</span></span>' +
       '</div>';
     d.addEventListener('click', function(){ audio(); selectBuild(key); sfx('click'); });
@@ -5821,46 +5942,7 @@ function togglePause(explicitVal){
 }
 function cycleSpeed(){ S.speed = S.speed === 1 ? 2 : (S.speed === 2 ? 4 : 1); el.btnSpeed.textContent = S.speed + 'x'; }
 
-// ---------- Meta-Progression: Verdant Glyphs ----------
-var GLYPH_DEFS = {
-  foundry: { name: 'Foundry Engineering', desc: '+2% tower damage per level', maxLvl: 15, cost: 50, icon: '⚙' },
-  vault: { name: 'Ancient Vault', desc: '+50 starting Scrap per level', maxLvl: 3, cost: 80, icon: '💰' },
-  flora: { name: 'Flora Symbiosis', desc: '+15% Sanctum HP per level', maxLvl: 5, cost: 60, icon: '🌿' },
-  mazing: { name: 'Mazing Mastery', desc: 'Unlock decorative blocker walls', maxLvl: 1, cost: 100, icon: '🧱' }
-};
-
-function loadGlyphs(){
-  try { return JSON.parse(localStorage.getItem('aegis_glyphs') || '{}'); }
-  catch(e){ return {}; }
-}
-function saveGlyphs(){
-  try { localStorage.setItem('aegis_glyphs', JSON.stringify(S.glyphs)); }
-  catch(e){}
-}
-function getGlyphLevel(gid){ return S.glyphs[gid] || 0; }
-function canAffordGlyph(gid){ var def = GLYPH_DEFS[gid]; var lvl = getGlyphLevel(gid); return lvl < def.maxLvl && S.cash >= def.cost * (lvl + 1); }
-function purchaseGlyph(gid){
-  var def = GLYPH_DEFS[gid]; var lvl = getGlyphLevel(gid);
-  if(lvl >= def.maxLvl) return false;
-  var cost = def.cost * (lvl + 1);
-  if(S.cash < cost) return false;
-  S.cash -= cost;
-  S.glyphs[gid] = lvl + 1;
-  saveGlyphs();
-  return true;
-}
-function getGlyphBonus(){
-  var fLvl = getGlyphLevel('foundry');
-  var vLvl = getGlyphLevel('vault');
-  var flLvl = getGlyphLevel('flora');
-  return {
-    dmgMult: 1 + fLvl * 0.02,
-    startCash: START_CASH + vLvl * 50,
-    maxLives: START_LIVES + flLvl * Math.round(START_LIVES * 0.15),
-    hasMazingWall: getGlyphLevel('mazing') >= 1
-  };
-}
-
+// ---------- Verdant Glyphs Shop UI ----------
 var GLYPH_SHOP_OPEN = false;
 function toggleGlyphShop(){
   GLYPH_SHOP_OPEN = !GLYPH_SHOP_OPEN;
@@ -5871,12 +5953,19 @@ function showGlyphShop(){
   if(existing){ existing.style.display = 'block'; return; }
   var shop = document.createElement('div');
   shop.id = 'glyphShop';
+  var metaScrap = getMetaScrap();
+  var isCombat = S && S.phase === 'combat';
   var html = '<h3>✧ Verdant Glyphs</h3>';
-  html += '<p>Permanent upgrades between runs. Spend Scrap to unlock.</p>';
+  html += '<p>Permanent upgrades between runs. Forged with banked Meta-Scrap.</p>';
+  html += '<div style="margin:6px 0 14px;padding:8px 12px;background:rgba(0,0,0,0.35);border:1px solid rgba(0,245,212,0.3);border-radius:6px;font-size:12px;display:flex;justify-content:space-between;align-items:center;">';
+  html += '<span>Banked Meta-Scrap:</span><b style="color:#00f5d4;font-size:14px;">¤ ' + metaScrap + '</b></div>';
+  if(isCombat){
+    html += '<div style="margin-bottom:10px;padding:6px 10px;background:rgba(255,107,53,0.15);border-left:3px solid #ff6b35;color:#ff9e79;font-size:11px;">Forge locked during active wave. Spend Meta-Scrap between waves or after the match.</div>';
+  }
   var keys = Object.keys(GLYPH_DEFS);
   for(var i=0;i<keys.length;i++){
     var gid = keys[i]; var def = GLYPH_DEFS[gid]; var lvl = getGlyphLevel(gid); var max = def.maxLvl;
-    var cost = def.cost * (lvl + 1); var canBuy = canAffordGlyph(gid);
+    var cost = def.cost * (lvl + 1); var canBuy = !isCombat && canAffordGlyph(gid);
     var pct = (lvl / max) * 100;
     html += '<div class="glyph-row"><span class="glyph-icon" aria-hidden="true">' + def.icon + '</span>';
     html += '<div class="glyph-detail"><b>' + def.name + '</b><span>' + def.desc + '</span>';
@@ -5885,7 +5974,7 @@ function showGlyphShop(){
     if(lvl >= max){
       html += '<span class="glyph-maxed">MAXED</span>';
     } else {
-      html += '<button class="btn' + (canBuy ? ' primary' : '') + ' glyph-buy" data-gid="' + gid + '"' + (canBuy ? '' : ' disabled') + '>' + cost + ' Scrap</button>';
+      html += '<button class="btn' + (canBuy ? ' primary' : '') + ' glyph-buy" data-gid="' + gid + '"' + (canBuy ? '' : ' disabled') + '>' + cost + ' Meta-Scrap</button>';
     }
     html += '</div></div>';
   }
@@ -5901,7 +5990,7 @@ function showGlyphShop(){
         shop.remove();
         showGlyphShop();
       } else {
-        toast('Not enough Scrap!'); sfx('error');
+        toast('Not enough Meta-Scrap or Forge locked!'); sfx('error');
       }
     }
     if(e.target.id === 'btnCloseGlyphs'){ hideGlyphShop(); }
@@ -6196,7 +6285,17 @@ var API = {
   isAudioMuted: function(){ return AUDIO_MUTED; },
   playExplosionSFX: playExplosionSFX,
   sfx: sfx,
-  getAudioContext: function(){ return audio(); }
+  getAudioContext: function(){ return audio(); },
+  getGlyphLevel: getGlyphLevel,
+  purchaseGlyph: purchaseGlyph,
+  canAffordGlyph: canAffordGlyph,
+  getGlyphBonus: getGlyphBonus,
+  loadGlyphs: loadGlyphs,
+  saveGlyphs: saveGlyphs,
+  getMetaScrap: getMetaScrap,
+  setMetaScrap: setMetaScrap,
+  addMetaScrap: addMetaScrap,
+  GLYPH_DEFS: GLYPH_DEFS
 };
 window.RoboFlora = API;
 window.AegisFlora = API;
