@@ -1221,6 +1221,133 @@ function findPath(sx, sy, blocked){
 }
 function mazeValid(blocked){ return findPath(SPAWN.x, SPAWN.y, blocked) !== null; }
 
+// ---------- Goal-Rooted Flow Field (Dijkstra/BFS) ----------
+var FLOW_FIELD = {
+  dist: new Int16Array(COLS * ROWS),
+  nextX: new Int8Array(COLS * ROWS),
+  nextY: new Int8Array(COLS * ROWS),
+  queue: new Int16Array(COLS * ROWS)
+};
+
+function computeFlowField(gx, gy, blocked){
+  var W = COLS, H = ROWS;
+  var dist = FLOW_FIELD.dist;
+  var nextX = FLOW_FIELD.nextX;
+  var nextY = FLOW_FIELD.nextY;
+  var queue = FLOW_FIELD.queue;
+
+  dist.fill(30000);
+  nextX.fill(-1);
+  nextY.fill(-1);
+
+  var goalIdx = gx + gy * W;
+  if(blocked[goalIdx]) return null;
+
+  var head = 0, tail = 0;
+  dist[goalIdx] = 0;
+  nextX[goalIdx] = gx;
+  nextY[goalIdx] = gy;
+  queue[tail++] = goalIdx;
+
+  var dirs = [0, -1, 1, 0, 0, 1, -1, 0];
+
+  while(head < tail){
+    var curr = queue[head++];
+    var cx = curr % W;
+    var cy = (curr / W) | 0;
+    var cDist = dist[curr];
+
+    for(var d = 0; d < 8; d += 2){
+      var nx = cx + dirs[d];
+      var ny = cy + dirs[d + 1];
+      if(nx >= 0 && nx < W && ny >= 0 && ny < H){
+        var nIdx = nx + ny * W;
+        if(!blocked[nIdx] && dist[nIdx] > cDist + 1){
+          dist[nIdx] = cDist + 1;
+          nextX[nIdx] = cx;
+          nextY[nIdx] = cy;
+          queue[tail++] = nIdx;
+        }
+      }
+    }
+  }
+
+  return FLOW_FIELD;
+}
+
+function getFlowPath(sx, sy, flow){
+  if(!flow) return null;
+  var W = COLS;
+  var x = sx, y = sy;
+  var path = [];
+  var visited = 0;
+
+  while(visited++ < 500){
+    path.push({ x: x, y: y });
+    if(x === SANCTUM.x && y === SANCTUM.y) break;
+    var i = x + y * W;
+    var nx = flow.nextX[i];
+    var ny = flow.nextY[i];
+    if(nx === -1 || (nx === x && ny === y)) return null;
+    x = nx; y = ny;
+  }
+  return path;
+}
+
+// ---------- Spatial Target Indexing Grid ----------
+var SPATIAL_INDEX = {
+  cells: new Array(COLS * ROWS),
+  queryToken: 0
+};
+for(var _si = 0; _si < COLS * ROWS; _si++) SPATIAL_INDEX.cells[_si] = [];
+
+var TOWER_QUERY_BUF = [];
+var BLAST_QUERY_BUF = [];
+var SLOW_QUERY_BUF = [];
+
+function buildSpatialIndex(){
+  SPATIAL_INDEX.queryToken++;
+  var cells = SPATIAL_INDEX.cells;
+  for(var i = 0; i < cells.length; i++) cells[i].length = 0;
+  if(!S || !S.foes) return;
+  var foes = S.foes;
+  for(var j = 0; j < foes.length; j++){
+    var f = foes[j];
+    if(f.hp <= 0 || f.dead) continue;
+    var gx = Math.floor(f.x);
+    var gy = Math.floor(f.y);
+    if(gx >= 0 && gx < COLS && gy >= 0 && gy < ROWS){
+      cells[gx + gy * COLS].push(f);
+    }
+  }
+}
+
+function queryFoesInRadius(cx, cy, radius, outArray){
+  var res = outArray || [];
+  res.length = 0;
+  var minX = Math.max(0, Math.floor(cx - radius));
+  var maxX = Math.min(COLS - 1, Math.ceil(cx + radius));
+  var minY = Math.max(0, Math.floor(cy - radius));
+  var maxY = Math.min(ROWS - 1, Math.ceil(cy + radius));
+  var token = ++SPATIAL_INDEX.queryToken;
+  var cells = SPATIAL_INDEX.cells;
+
+  for(var y = minY; y <= maxY; y++){
+    var rowOff = y * COLS;
+    for(var x = minX; x <= maxX; x++){
+      var bucket = cells[rowOff + x];
+      for(var k = 0; k < bucket.length; k++){
+        var f = bucket[k];
+        if(f._spatialToken !== token){
+          f._spatialToken = token;
+          res.push(f);
+        }
+      }
+    }
+  }
+  return res;
+}
+
 function seedRuins(){
   var r = mulberry((S.seed ^ 0x9e37) >>> 0);
   var tries = 0, placed = 0, test = S.blocked.slice();
@@ -4075,10 +4202,17 @@ function spawnTracer(from, to, color){
   FX.beams.push({ mesh: line, life: 0.07, max: 0.07 });
 }
 function spawnShellCasing(worldPos){
-  var m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.16, 6), MATS.brass);
+  if(typeof GFX !== 'undefined' && GFX.profile === 'perf' && FX.shells.length > 20) return;
+  if(!FX_SHARED.shellGeo) FX_SHARED.shellGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.16, 6);
+  if(!FX_SHARED.shellPool) FX_SHARED.shellPool = [];
+  var m = FX_SHARED.shellPool.pop();
+  if(!m){
+    m = new THREE.Mesh(FX_SHARED.shellGeo, MATS.brass);
+    scene.add(m);
+  }
   m.position.copy(worldPos);
-  scene.add(m);
-  FX.shells.push({ mesh: m, vx: (Math.random()-0.5)*4 + 2.2, vy: 3+Math.random()*2, vz: (Math.random()-0.5)*4, rx: Math.random()*8, life: 2.2 });
+  m.visible = true;
+  FX.shells.push({ mesh: m, vx: (Math.random()-0.5)*4 + 2.2, vy: 3+Math.random()*2, vz: (Math.random()-0.5)*4, rx: Math.random()*8, life: 2.2, pooled: true });
 }
 function spawnMortarShell(from, to, dmg, splash){
   var m = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), MATS.amberGlow);
@@ -4158,11 +4292,18 @@ function spawnPrismBeam(from, to){
   // violent sparking contact + dynamic point light
   var L = fxLight(0x00F5D4, 4.5, 9);
   if(L) L.position.copy(to);
-  for(var i=0;i<4;i++){
-    var s = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), MATS.cyanGlow);
+  if(!FX_SHARED.sparkGeo) FX_SHARED.sparkGeo = new THREE.SphereGeometry(0.07, 6, 6);
+  if(!FX_SHARED.sparkPool) FX_SHARED.sparkPool = [];
+  var sparkCount = (typeof GFX !== 'undefined' && GFX.profile === 'perf') ? 2 : 4;
+  for(var i = 0; i < sparkCount; i++){
+    var s = FX_SHARED.sparkPool.pop();
+    if(!s){
+      s = new THREE.Mesh(FX_SHARED.sparkGeo, MATS.cyanGlow);
+      scene.add(s);
+    }
     s.position.copy(to);
-    scene.add(s);
-    FX.sparks.push({ mesh: s, vx: (Math.random()-0.5)*7, vy: 2+Math.random()*4, vz: (Math.random()-0.5)*7, life: 0.35, grav: 10 });
+    s.visible = true;
+    FX.sparks.push({ mesh: s, vx: (Math.random()-0.5)*7, vy: 2+Math.random()*4, vz: (Math.random()-0.5)*7, life: 0.35, grav: 10, pooled: true });
   }
 }
 function spawnResonanceRing(worldPos, range, violet){
@@ -4209,22 +4350,27 @@ function combatCanvasRatio(){
     Math.sqrt(budget / (window.innerWidth * window.innerHeight)));
 }
 
+var DMG_POOL = [];
+
 function damageNumber(worldPos, amount, dtype){
   if(typeof SETTINGS !== 'undefined' && !SETTINGS.dmgNums) return;
-  if(DMG_NUMS.length > 90) DMG_NUMS.shift(); // Prevent runaway allocations during dense killboxes
-  DMG_NUMS.push({
-    x: worldPos.x,
-    y: worldPos.y,
-    z: worldPos.z,
-    text: (typeof amount === 'number') ? Math.round(amount) : String(amount),
-    color: DMG_COLORS[dtype] || '#ffffff',
-    vx: (Math.random() - 0.5) * 32,
-    vy: -46 - Math.random() * 20,
-    ox: 0,
-    oy: 0,
-    life: 0.8,
-    maxLife: 0.8
-  });
+  if(DMG_NUMS.length >= 120){
+    var recycled = DMG_NUMS.shift();
+    if(recycled) DMG_POOL.push(recycled);
+  }
+  var d = (DMG_POOL.length > 0) ? DMG_POOL.pop() : {};
+  d.x = worldPos.x;
+  d.y = worldPos.y;
+  d.z = worldPos.z;
+  d.text = (typeof amount === 'number') ? Math.round(amount) : String(amount);
+  d.color = DMG_COLORS[dtype] || '#ffffff';
+  d.vx = (Math.random() - 0.5) * 32;
+  d.vy = -46 - Math.random() * 20;
+  d.ox = 0;
+  d.oy = 0;
+  d.life = 0.8;
+  d.maxLife = 0.8;
+  DMG_NUMS.push(d);
 }
 
 function renderCombatFX(dt){
@@ -4247,6 +4393,7 @@ function renderCombatFX(dt){
     var d = DMG_NUMS[i];
     d.life -= dt;
     if(d.life <= 0){
+      DMG_POOL.push(d);
       DMG_NUMS.splice(i, 1);
       continue;
     }
@@ -4341,7 +4488,12 @@ function updateFX(dt){
     o.mesh.position.x+=o.vx*dt; o.mesh.position.y+=o.vy*dt; o.mesh.position.z+=o.vz*dt;
     o.mesh.rotation.x+=o.rx*dt;
     if(o.mesh.position.y<0.08){ o.mesh.position.y=0.08; o.vy*=-0.45; o.vx*=0.7; o.vz*=0.7; }
-    if(o.life<=0){ disposeFxMesh(o.mesh); FX.shells.splice(i,1); } }
+    if(o.life<=0){
+      if(o.pooled && FX_SHARED.shellPool){ o.mesh.visible = false; FX_SHARED.shellPool.push(o.mesh); }
+      else disposeFxMesh(o.mesh);
+      FX.shells.splice(i,1);
+    }
+  }
   for(i=FX.mortars.length-1;i>=0;i--){ o=FX.mortars[i]; o.t+=dt; var k=Math.min(1,o.t/o.dur);
     o.mesh.position.lerpVectors(o.from, o.to, k); o.mesh.position.y += Math.sin(k*Math.PI)*(4+o.from.distanceTo(o.to)*0.15);
     o.trail-=dt; if(o.trail<=0){ o.trail=0.06;
@@ -4363,7 +4515,12 @@ function updateFX(dt){
     if(o.life<=0){ disposeFxMesh(o.mesh); FX.debris.splice(i,1); } }
   for(i=FX.sparks.length-1;i>=0;i--){ o=FX.sparks[i]; o.life-=dt; o.vy-=(o.grav||12)*dt;
     o.mesh.position.x+=o.vx*dt; o.mesh.position.y+=o.vy*dt; o.mesh.position.z+=o.vz*dt;
-    if(o.life<=0){ disposeFxMesh(o.mesh); FX.sparks.splice(i,1); } }
+    if(o.life<=0){
+      if(o.pooled && FX_SHARED.sparkPool){ o.mesh.visible = false; FX_SHARED.sparkPool.push(o.mesh); }
+      else disposeFxMesh(o.mesh);
+      FX.sparks.splice(i,1);
+    }
+  }
   // decals fade
   if(scene.userData.decals) for(i=scene.userData.decals.length-1;i>=0;i--){
     var dc=scene.userData.decals[i]; dc.life-=dt;
@@ -4376,7 +4533,10 @@ function updateFX(dt){
 }
 function clearActiveEffects(){
   for(var key in FX){
-    for(var effect of FX[key]) disposeFxMesh(effect.mesh);
+    for(var effect of FX[key]){
+      if(effect.pooled){ effect.mesh.visible = false; }
+      else disposeFxMesh(effect.mesh);
+    }
     FX[key].length = 0;
   }
   if(scene.userData.decals){
@@ -4389,19 +4549,24 @@ function clearActiveEffects(){
     }
     S.zones.length = 0;
   }
+  if(DMG_POOL){
+    for(var di = 0; di < DMG_NUMS.length; di++) DMG_POOL.push(DMG_NUMS[di]);
+  }
   DMG_NUMS.length = 0;
   if(combatCtx) combatCtx.clearRect(0, 0, combatCanvas.width, combatCanvas.height);
 }
 function applyBlastDamage(worldPos, dmg, splash){
   var g = worldToGrid3D(worldPos);
   var cx = g.gx + 0.5, cy = g.gy + 0.5;
-  for(var f of S.foes){
-    if(f.hp <= 0) continue;
+  var nearby = (typeof queryFoesInRadius === 'function') ? queryFoesInRadius(cx, cy, splash + 0.8, BLAST_QUERY_BUF) : S.foes;
+  for(var fi = 0; fi < nearby.length; fi++){
+    var f = nearby[fi];
+    if(f.hp <= 0 || f.dead) continue;
     var d = Math.hypot(f.x - cx, f.y - cy);
     if(d <= splash + f.r){
       var actualDmg = applyDamage(f, dmg, 'Blast', true);
       hitFlashCreep(f);
-      damageNumber(gridToWorld3D(f.x, f.y, f.air?2.5:0), actualDmg, 'Blast');
+      damageNumber(gridToWorld3D(f.x, f.y, f.air ? 2.5 : 0), actualDmg, 'Blast');
       if(f.hp <= 0) killFoe(f);
     }
   }
@@ -4587,7 +4752,8 @@ function spawnEnemy(type){
     mesh: mesh
   };
   if(!air){
-    var path = findPath(SPAWN.x, SPAWN.y, S.blocked);
+    if(!S.flowField) S.flowField = computeFlowField(SANCTUM.x, SANCTUM.y, S.blocked);
+    var path = (S.flowField ? getFlowPath(SPAWN.x, SPAWN.y, S.flowField) : null) || findPath(SPAWN.x, SPAWN.y, S.blocked);
     f.path = path || [];
     if(!path) f.direct = true;
   }
@@ -4627,11 +4793,21 @@ function updateHpBar(f){
 }
 
 function rerouteFoes(){
-  for(var f of S.foes){
+  var ff = computeFlowField(SANCTUM.x, SANCTUM.y, S.blocked);
+  S.flowField = ff;
+  for(var i = 0; i < S.foes.length; i++){
+    var f = S.foes[i];
     if(f.air) continue;
-    var p = findPath(clamp(Math.floor(f.x), 0, COLS - 1), clamp(Math.floor(f.y), 0, ROWS - 1), S.blocked);
-    if(p && p.length > 1){ f.path = p; f.wp = 1; f.direct = false; }
-    else f.direct = true;
+    var gx = clamp(Math.floor(f.x), 0, COLS - 1);
+    var gy = clamp(Math.floor(f.y), 0, ROWS - 1);
+    var p = getFlowPath(gx, gy, ff);
+    if(p && p.length > 1){
+      f.path = p;
+      f.wp = 1;
+      f.direct = false;
+    } else {
+      f.direct = true;
+    }
   }
 }
 
@@ -4712,6 +4888,7 @@ function update(dt){
   updateBossBar();
 
   // 2. Update 3D Towers & Combat — Dota-2 juice: tracers, shells, arcs, beams, rings
+  if(typeof buildSpatialIndex === 'function') buildSpatialIndex();
   for(var t of S.towers){
     if(t.type === 'blocker') continue;
     t.cd -= dt;
@@ -4743,8 +4920,10 @@ function update(dt){
     var tMode = t.targetMode || 'first';
     var best = null, bestScore = -1e12;
     var tPos = { x: t.gx + 0.5, y: t.gy + 0.5 };
+    var nearbyFoes = (typeof queryFoesInRadius === 'function') ? queryFoesInRadius(tPos.x, tPos.y, range + 0.8, TOWER_QUERY_BUF) : S.foes;
 
-    for(var f of S.foes){
+    for(var fi = 0; fi < nearbyFoes.length; fi++){
+      var f = nearbyFoes[fi];
       if(f.hp <= 0 || f.dead) continue;
       if(f.air && t.type === 'gun' && t.branch && BRANCH.gun[t.branch].aa === false) continue;
       var d = Math.hypot(f.x - tPos.x, f.y - tPos.y);
@@ -4833,7 +5012,8 @@ function update(dt){
           var dirX = ndx / nlen, dirY = ndy / nlen;
 
           var candidates = [];
-          for(var fPierce of S.foes){
+          var piercePool = (typeof queryFoesInRadius === 'function') ? queryFoesInRadius(tPos.x, tPos.y, range + 0.8, TOWER_QUERY_BUF) : S.foes;
+          for(var fPierce of piercePool){
             if(fPierce.hp <= 0 || fPierce.dead) continue;
             var proj = (fPierce.x - tPos.x) * dirX + (fPierce.y - tPos.y) * dirY;
             if(proj < 0.2 || proj > range + 0.6) continue;
@@ -4925,7 +5105,8 @@ function update(dt){
         if(spec && spec.split){
           var maxSplit = spec.split - 1; // 2 secondary targets
           var secCandidates = [];
-          for(var secFoe of S.foes){
+          var secPool = (typeof queryFoesInRadius === 'function') ? queryFoesInRadius(tPos.x, tPos.y, range + 0.8, TOWER_QUERY_BUF) : S.foes;
+          for(var secFoe of secPool){
             if(secFoe === best || secFoe.hp <= 0 || secFoe.dead) continue;
             var secDist = Math.hypot(secFoe.x - tPos.x, secFoe.y - tPos.y);
             if(secDist <= range + secFoe.r){
@@ -5010,7 +5191,8 @@ function update(dt){
         var shatter = spec && spec.shatter;
         var isChronoStun = !!(spec && spec.stun && (t.pulseCount % 4 === 0));
 
-        for(var nearby of S.foes){
+        var slowPool = (typeof queryFoesInRadius === 'function') ? queryFoesInRadius(tPos.x, tPos.y, range + 0.8, SLOW_QUERY_BUF) : S.foes;
+        for(var nearby of slowPool){
           if(nearby.hp <= 0 || nearby.dead) continue;
           if(Math.hypot(nearby.x - tPos.x, nearby.y - tPos.y) <= range + nearby.r){
             var nbWorld = gridToWorld3D(nearby.x, nearby.y, nearby.air ? 2.5 : 0.7);
@@ -6945,6 +7127,116 @@ function boot(){
   animate();
 }
 
+// ---------- Deterministic Large-Wave Stress Benchmark (100, 200, 350 enemies) ----------
+function runStressBenchmark(enemyCount, frameCount){
+  enemyCount = enemyCount || 100;
+  frameCount = frameCount || 120;
+
+  // 1. Reset state with fixed deterministic seed
+  clearActiveEffects();
+  if(S && S.towers) for(var ti = 0; ti < S.towers.length; ti++) disposeSceneObject(S.towers[ti].mesh);
+  if(S && S.foes) for(var fi = 0; fi < S.foes.length; fi++) disposeSceneObject(S.foes[fi].mesh);
+  clearRuinVisuals();
+  S = newState(4242);
+  seedRuins();
+  S.cash = 999999;
+
+  // 2. Build a standardized maze of 20 diverse towers
+  var testTowers = [
+    { gx: 4, gy: 3, type: 'gun', branch: 'A' },
+    { gx: 4, gy: 5, type: 'rocket', branch: 'A' },
+    { gx: 4, gy: 7, type: 'slow', branch: 'A' },
+    { gx: 4, gy: 9, type: 'beam', branch: 'A' },
+    { gx: 8, gy: 8, type: 'gun', branch: 'B' },
+    { gx: 8, gy: 10, type: 'rocket', branch: 'B' },
+    { gx: 8, gy: 12, type: 'slow', branch: 'B' },
+    { gx: 8, gy: 14, type: 'beam', branch: 'B' },
+    { gx: 12, gy: 4, type: 'gun', branch: 'A' },
+    { gx: 12, gy: 6, type: 'rocket', branch: 'A' },
+    { gx: 12, gy: 8, type: 'slow', branch: 'A' },
+    { gx: 12, gy: 10, type: 'beam', branch: 'B' },
+    { gx: 16, gy: 7, type: 'gun', branch: 'B' },
+    { gx: 16, gy: 9, type: 'rocket', branch: 'B' },
+    { gx: 16, gy: 11, type: 'slow', branch: 'B' },
+    { gx: 16, gy: 13, type: 'beam', branch: 'A' },
+    { gx: 20, gy: 5, type: 'gun', branch: 'A' },
+    { gx: 20, gy: 7, type: 'rocket', branch: 'A' },
+    { gx: 20, gy: 9, type: 'slow', branch: 'A' },
+    { gx: 20, gy: 11, type: 'beam', branch: 'B' }
+  ];
+
+  for(var i = 0; i < testTowers.length; i++){
+    var tc = testTowers[i];
+    if(canPlace(tc.gx, tc.gy).ok){
+      placeAt(tc.gx, tc.gy, tc.type);
+      var placed = S.towers[S.towers.length - 1];
+      if(placed && tc.branch) upgradeTo(placed, tc.branch);
+    }
+  }
+
+  // 3. Deterministically spawn exact enemyCount creeps in combat
+  var archetypes = ['spider', 'tank', 'drone', 'walker'];
+  S.phase = 'combat';
+  for(var e = 0; e < enemyCount; e++){
+    var type = archetypes[e % archetypes.length];
+    spawnEnemy(type);
+    var foe = S.foes[S.foes.length - 1];
+    if(foe){
+      foe.x = SPAWN.x + 0.5 + (Math.sin(e * 0.4) * 0.4);
+      foe.y = SPAWN.y + 0.5 + (Math.cos(e * 0.4) * 0.4);
+      foe.hp = Math.round(foe.maxhp * 2.0); // resilient enough to sustain full stress test
+    }
+  }
+
+  // 4. Run deterministic simulation loop and record high-resolution timings
+  var frameTimes = [];
+  var nowFn = (typeof performance !== 'undefined' && performance.now) ? function(){ return performance.now(); } : Date.now;
+  var fixedDt = 1 / 60; // 16.67ms simulation step
+
+  for(var f = 0; f < frameCount; f++){
+    var t0 = nowFn();
+    update(fixedDt);
+    var t1 = nowFn();
+    frameTimes.push(t1 - t0);
+  }
+
+  // 5. Compute metrics (avg, max, 1% low p99, memory)
+  var totalTime = 0;
+  var maxTime = 0;
+  for(var ft = 0; ft < frameTimes.length; ft++){
+    totalTime += frameTimes[ft];
+    if(frameTimes[ft] > maxTime) maxTime = frameTimes[ft];
+  }
+  var avgMs = totalTime / frameTimes.length;
+
+  var sorted = frameTimes.slice().sort(function(a, b){ return a - b; });
+  var p99Idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.99));
+  var p99Ms = sorted[p99Idx];
+  var onePercentLowFps = p99Ms > 0 ? (1000 / p99Ms) : 60;
+  var avgFps = avgMs > 0 ? (1000 / avgMs) : 60;
+
+  var memMb = 0;
+  try {
+    if(typeof performance !== 'undefined' && performance.memory && performance.memory.usedJSHeapSize){
+      memMb = Math.round(performance.memory.usedJSHeapSize / (1024 * 1024) * 10) / 10;
+    } else if(typeof process !== 'undefined' && process.memoryUsage){
+      memMb = Math.round(process.memoryUsage().heapUsed / (1024 * 1024) * 10) / 10;
+    }
+  } catch(e){}
+
+  return {
+    enemyCount: enemyCount,
+    frames: frameCount,
+    avgFrameTimeMs: Math.round(avgMs * 100) / 100,
+    maxFrameTimeMs: Math.round(maxTime * 100) / 100,
+    p99FrameTimeMs: Math.round(p99Ms * 100) / 100,
+    avgFps: Math.round(avgFps * 10) / 10,
+    onePercentLowFps: Math.round(onePercentLowFps * 10) / 10,
+    memoryMb: memMb,
+    passed: avgMs <= 16.67 // Meets 60fps target (<16.67ms frame time)
+  };
+}
+
 // ---------- Public Automated Testing & API ----------
 var API = {
   cfg: { COLS: COLS, ROWS: ROWS, SPAWN: SPAWN, SANCTUM: SANCTUM, TOWERS: TOWERS, BRANCH: BRANCH, FOES: FOES, WAVE_MAX: WAVE_MAX },
@@ -6999,7 +7291,18 @@ var API = {
   setTacticalClarity: setTacticalClarity,
   applyTacticalClarityScenery: applyTacticalClarityScenery,
   addTowerBasePlinth: addTowerBasePlinth,
-  addCreepThreatRing: addCreepThreatRing
+  addCreepThreatRing: addCreepThreatRing,
+  runStressBenchmark: runStressBenchmark,
+  computeFlowField: computeFlowField,
+  getFlowPath: getFlowPath,
+  buildSpatialIndex: buildSpatialIndex,
+  queryFoesInRadius: queryFoesInRadius,
+  damageNumber: damageNumber,
+  renderCombatFX: renderCombatFX,
+  get DMG_POOL(){ return DMG_POOL; },
+  get DMG_NUMS(){ return DMG_NUMS; },
+  get FX(){ return FX; },
+  get FX_SHARED(){ return FX_SHARED; }
 };
 window.RoboFlora = API;
 window.AegisFlora = API;
