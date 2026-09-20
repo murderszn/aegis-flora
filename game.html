@@ -491,7 +491,7 @@
   .padmap-key.waiting { color: #fff; border-color: var(--teal-glow); animation: padblink 0.8s infinite; }
   @keyframes padblink { 50% { opacity: 0.4; } }
 </style>
-<link rel="stylesheet" href="hud.css">
+<link rel="stylesheet" href="hud.css?v=6">
 
 <!-- Self-contained local Three.js, OrbitControls & GLTFLoader -->
 <script src="js/three.min.js"></script>
@@ -603,8 +603,9 @@
       <div class="gta-bar-track">
         <div class="gta-bar-fill" id="gtaBarFill"></div>
       </div>
+      <button type="button" class="gta-skip" id="gtaSkip">SKIP INTRO <span aria-hidden="true">→</span></button>
       <div class="gta-continue-prompt" id="gtaPrompt" style="display:none;">
-        ▶ CLICK ANYWHERE OR PRESS SPACE TO ENTER
+        SYSTEMS READY · PRESS SPACE OR SKIP TO ENTER
       </div>
     </div>
   </div>
@@ -624,7 +625,6 @@
   <div class="wave-group"><small id="phaseLabel">PREPARE DEFENSES</small><span class="wave-value">WAVE <b id="wave">0 / 50</b></span><span class="score-line">SCORE <b id="score">0</b></span></div>
   <div class="command-group">
     <button class="btn primary" id="btnWave">Start Wave (Space)</button>
-    <button class="btn ability" id="btnGlyph" title="Verdant Glyphs (G) — Meta Upgrades"><span class="btn-icon">✧</span><span class="btn-label">Glyphs</span><kbd>G</kbd></button>
   </div>
 </div>
 
@@ -636,11 +636,16 @@
   <button class="tp-btn square" id="btnAudio" title="Toggle Mute (M)">🔊</button>
   <button class="tp-btn" id="btnCam" title="Toggle Camera View (C)"><span class="btn-icon">◈</span><span>View</span><kbd>C</kbd></button>
   <button class="tp-btn" id="btnPad" title="Controller Mapping"><span class="btn-icon">🎮</span><span id="btnPadLabel">Pad</span></button>
-  <a href="landing.html" class="tp-btn" id="btnCodex" title="Sanctum Codex & Lore"><span class="btn-icon">📜</span><span>Codex</span></a>
 </div>
 
 <!-- Floating Tactical Ability Cluster (Bottom-Right Overlays) -->
-<div id="ability-cluster" aria-label="Sanctum combat abilities">
+<div id="ability-cluster" aria-label="Sanctum abilities and upgrades">
+  <button class="ability-card glyph-card" id="btnGlyph" title="Verdant Glyphs (G) — Meta Upgrades">
+    <span class="ab-cost">UPGRADES</span>
+    <span class="ab-icon">✧</span>
+    <span class="ab-name">Glyphs</span>
+    <span class="ab-key">G</span>
+  </button>
   <button class="ability-card" id="btnRoot" title="Verdant Overgrowth (D) — 35 Mana">
     <span class="ab-cost">35 ✧</span>
     <span class="ab-icon">✿</span>
@@ -1030,7 +1035,7 @@ function seedRuins(){
 
 // ---------- Ruin obstacles: visible jungle-swallowed temple fragments (not white blocks) ----------
 function clearRuinVisuals(){
-  if(S && S.ruinMeshes) for(var m of S.ruinMeshes) scene.remove(m);
+  if(S && S.ruinMeshes) for(var m of S.ruinMeshes) disposeSceneObject(m);
   if(S) S.ruinMeshes = [];
 }
 function ruinCluster(wp, seed){
@@ -1574,6 +1579,28 @@ var dustParticles;
 // GLTF Models Cache & Asset Streaming
 var GLTF_CACHE = {};
 var gltfLoader = new THREE.GLTFLoader();
+var SHARED_GEOMETRIES = new WeakSet();
+var SHARED_MATERIALS = new WeakSet();
+
+// GLTF clones share their source GPU resources; procedural children do not.
+function disposeSceneObject(root){
+  scene.remove(root);
+  var geometries = new Set(), materials = new Set();
+  var libraryMaterials = Object.values(MATS);
+  root.traverse(function(node){
+    if(node.geometry && !SHARED_GEOMETRIES.has(node.geometry) && !geometries.has(node.geometry)){
+      geometries.add(node.geometry);
+      node.geometry.dispose();
+    }
+    var list = Array.isArray(node.material) ? node.material : (node.material ? [node.material] : []);
+    for(var mat of list){
+      if(mat && !SHARED_MATERIALS.has(mat) && libraryMaterials.indexOf(mat) < 0 && !materials.has(mat)){
+        materials.add(mat);
+        mat.dispose();
+      }
+    }
+  });
+}
 
 // ---------- Fullscreen & Audio Controls ----------
 var AUDIO_MUTED = localStorage.getItem('aegis_audio_muted') === 'true';
@@ -1668,41 +1695,51 @@ var GTA_SLIDES = [
 
 var GTA_LOADER = {
   currentSlide: 0,
+  slidesShown: 1,
   modelsLoaded: 0,
   totalModels: 21,
-  startTime: performance.now(),
-  minDuration: 3600, // Cinematic minimum display duration to admire art
+  startTime: 0,
+  minDuration: 11000, // Four illustrated dossiers before automatic entry
   readyToDismiss: false,
-  timer: null
+  timer: null,
+  autoTimer: null,
+  fallbackTimer: null
 };
 
 function initGtaLoadingScreen(){
   var screen = document.getElementById('loading-screen');
   if(!screen) return;
+  GTA_LOADER.startTime = performance.now();
 
   GTA_LOADER.timer = setInterval(function(){
     advanceGtaSlide();
-  }, 3800);
+  }, 3200);
 
-  // Allow click or key to skip / enter immediately
-  screen.addEventListener('click', function(){
+  document.getElementById('gtaSkip').addEventListener('click', function(ev){
+    ev.stopPropagation();
     dismissGtaLoadingScreen();
   });
+  // Capture before gameplay shortcuts so Space only skips the intro.
   window.addEventListener('keydown', function(ev){
+    if(!screen.isConnected || screen.classList.contains('fade-out')) return;
     if(ev.key === ' ' || ev.key === 'Enter' || ev.key === 'Escape'){
+      ev.preventDefault();
+      ev.stopPropagation();
       dismissGtaLoadingScreen();
     }
-  });
+  }, true);
 
-  // Guaranteed failsafe: Auto-dismiss loading screen after 3.8s regardless of network/disk state
-  setTimeout(function(){
+  GTA_LOADER.autoTimer = setTimeout(tryAutoDismissGtaLoadingScreen, GTA_LOADER.minDuration);
+  // Never strand the player if an asset request stalls.
+  GTA_LOADER.fallbackTimer = setTimeout(function(){
     dismissGtaLoadingScreen();
-  }, 3800);
+  }, 18000);
 }
 
 function advanceGtaSlide(){
   var nextIdx = (GTA_LOADER.currentSlide + 1) % GTA_SLIDES.length;
   GTA_LOADER.currentSlide = nextIdx;
+  GTA_LOADER.slidesShown++;
   var slide = GTA_SLIDES[nextIdx];
 
   var bg0 = document.getElementById('gtaBg0');
@@ -1727,6 +1764,14 @@ function advanceGtaSlide(){
   if(title) title.textContent = slide.title;
   if(desc) desc.textContent = slide.desc;
   if(meta) meta.innerHTML = slide.meta;
+  tryAutoDismissGtaLoadingScreen();
+}
+
+function tryAutoDismissGtaLoadingScreen(){
+  if(GTA_LOADER.readyToDismiss && GTA_LOADER.slidesShown >= 4 &&
+     performance.now() - GTA_LOADER.startTime >= GTA_LOADER.minDuration){
+    dismissGtaLoadingScreen();
+  }
 }
 
 function updateGtaProgress(loaded, total){
@@ -1755,9 +1800,7 @@ function updateGtaProgress(loaded, total){
     GTA_LOADER.readyToDismiss = true;
     var prompt = document.getElementById('gtaPrompt');
     if(prompt) prompt.style.display = 'block';
-    setTimeout(function(){
-      dismissGtaLoadingScreen();
-    }, 1200);
+    tryAutoDismissGtaLoadingScreen();
   }
 }
 
@@ -1766,6 +1809,8 @@ function dismissGtaLoadingScreen(){
   if(!screen || screen.classList.contains('fade-out')) return;
   screen.classList.add('fade-out');
   if(GTA_LOADER.timer) clearInterval(GTA_LOADER.timer);
+  if(GTA_LOADER.autoTimer) clearTimeout(GTA_LOADER.autoTimer);
+  if(GTA_LOADER.fallbackTimer) clearTimeout(GTA_LOADER.fallbackTimer);
   sfx('wave');
   setTimeout(function(){
     if(screen.parentNode) screen.parentNode.removeChild(screen);
@@ -1806,6 +1851,9 @@ function preloadGLTFModels(){
       var root = gltf.scene;
       root.traverse(function(child){
         if(child.isMesh){
+          if(child.geometry) SHARED_GEOMETRIES.add(child.geometry);
+          var mats = Array.isArray(child.material) ? child.material : (child.material ? [child.material] : []);
+          for(var mat of mats) SHARED_MATERIALS.add(mat);
           child.castShadow = true;
           child.receiveShadow = true;
           if(child.material){
@@ -2101,6 +2149,7 @@ function addContactShadow(parent, size, opacity){
 // ---------- Graphics Profile, Metal / Mac Silicon Optimization & DRS ----------
 var GFX = {
   profile: localStorage.getItem('aegis_gfx_profile') || 'auto', // 'auto', 'perf', 'balanced', 'ultra'
+  safari: /^((?!chrome|crios|android).)*safari/i.test(navigator.userAgent),
   scale: 1.0,
   targetScale: 1.0,
   dpr: 1.0,
@@ -2115,38 +2164,47 @@ function getIdealPixelRatio(profile){
   var w = window.innerWidth, h = window.innerHeight;
   var maxDim = Math.max(w, h);
   
+  var dpr;
   if(profile === 'perf'){
     // Clean 1:1 hardware buffer (1080p/1440p) - ultra fast on Mac M-series
-    return 1.0;
-  }
-  if(profile === 'balanced'){
+    dpr = 1.0;
+  } else if(profile === 'balanced'){
     // Sweet spot: 1.15x - 1.25x gives crisp Solarpunk details without 4x Retina pixel explosion
-    if(maxDim >= 2400) return 1.15;
-    if(maxDim >= 1800) return 1.25;
-    return Math.min(nativeDpr, 1.35);
-  }
-  if(profile === 'ultra'){
+    dpr = maxDim >= 2400 ? 1.15 : (maxDim >= 1800 ? 1.25 : Math.min(nativeDpr, 1.35));
+  } else if(profile === 'ultra'){
     // Native high-DPI Retina (up to 2.0)
-    return Math.min(nativeDpr, 2.0);
+    dpr = Math.min(nativeDpr, 2.0);
+  } else {
+    // AUTO Dynamic Resolution Scaling, with a per-frame pixel budget below.
+    var base = (maxDim >= 2400) ? 1.05 : (maxDim >= 1800 ? 1.20 : Math.min(nativeDpr, 1.4));
+    dpr = Math.max(0.85, base * GFX.scale);
   }
-  
-  // 'auto' Dynamic Resolution Scaling:
-  // On 2K / 4K / Retina displays, base at 1.15x, scaled smoothly by DRS
-  var base = (maxDim >= 2400) ? 1.05 : (maxDim >= 1800 ? 1.20 : Math.min(nativeDpr, 1.4));
-  return Math.max(0.85, base * GFX.scale);
+  // A DPR of 2 quadruples the color and depth buffer area. Bound the total
+  // allocation even on large external displays and for saved Ultra settings.
+  var pixelBudget = GFX.safari ? 2800000 : 6000000;
+  return Math.min(dpr, GFX.safari ? 1.5 : 2.0, Math.sqrt(pixelBudget / (w * h)));
 }
 
 function applyGraphicsProfile(){
   var dpr = getIdealPixelRatio(GFX.profile);
+  var width = window.innerWidth, height = window.innerHeight;
+  var sizeChanged = GFX.renderWidth !== width || GFX.renderHeight !== height;
+  var ratioChanged = Math.abs(dpr - GFX.dpr) > 0.01;
   GFX.dpr = dpr;
   if(renderer){
-    renderer.setPixelRatio(dpr);
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    if(ratioChanged || sizeChanged){
+      // setPixelRatio already resizes the existing drawing buffer in Three.js.
+      if(ratioChanged) renderer.setPixelRatio(dpr);
+      if(sizeChanged) renderer.setSize(width, height);
+      GFX.renderWidth = width;
+      GFX.renderHeight = height;
+    }
     
     // Dynamic shadow map allocation based on profile
     if(scene && scene.userData && scene.userData.sun){
       var sun = scene.userData.sun;
       var sz = (GFX.profile === 'perf') ? 1024 : (GFX.profile === 'balanced' ? 1536 : 2048);
+      if(GFX.safari) sz = Math.min(sz, 1536);
       if(sun.shadow && sun.shadow.mapSize.width !== sz){
         sun.shadow.mapSize.set(sz, sz);
         if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; }
@@ -2359,6 +2417,7 @@ function build3DLighting(){
   sun.position.set(38, 60, 32);
   sun.castShadow = true;
   var initSz = (GFX.profile === 'perf') ? 1024 : (GFX.profile === 'balanced' ? 1536 : 2048);
+  if(GFX.safari) initSz = Math.min(initSz, 1536);
   sun.shadow.mapSize.width = initSz;
   sun.shadow.mapSize.height = initSz;
   sun.shadow.camera.near = 10;
@@ -2989,7 +3048,8 @@ function updatePathVisualizer(){
   for(var pt of p){
     points.push(gridToWorld3D(pt.x, pt.y, 0.12));
   }
-  pathLineMesh.geometry.setFromPoints(points);
+  pathLineMesh.geometry.dispose();
+  pathLineMesh.geometry = new THREE.BufferGeometry().setFromPoints(points);
   pathLineMesh.computeLineDistances();
   pathLineMesh.visible = true;
 }
@@ -2997,9 +3057,9 @@ function updatePathVisualizer(){
 // ---------- Dynamic Ground Decals: scorch / craters / oil / moss (pooled, fading) ----------
 function spawnDecal(kind, gx, gy, size){
   if(!scene || !scene.userData.decals) return;
-  if(scene.userData.decals.length > 90){
+  if(scene.userData.decals.length >= 90){
     var old = scene.userData.decals.shift();
-    scene.remove(old.mesh);
+    disposeDecal(old);
   }
   var cv = document.createElement('canvas'); cv.width = cv.height = 64;
   var ctx = cv.getContext('2d');
@@ -3032,6 +3092,12 @@ function spawnDecal(kind, gx, gy, size){
   m.position.copy(wp); m.rotation.z = Math.random()*Math.PI;
   scene.add(m);
   scene.userData.decals.push({ mesh: m, life: kind === 'scorch' || kind === 'crater' ? 60 : 45 });
+}
+function disposeDecal(decal){
+  scene.remove(decal.mesh);
+  decal.mesh.geometry.dispose();
+  decal.mesh.material.map.dispose();
+  decal.mesh.material.dispose();
 }
 
 // ---------- 3D Mesh Factory (GLTF Model Clone or Procedural Fallback) ----------
@@ -3482,9 +3548,16 @@ function initCombatCanvas(){
 
 function resizeCombatCanvas(){
   if(!combatCanvas) return;
-  var dpr = Math.min(window.devicePixelRatio || 1, 2);
-  combatCanvas.width = Math.round(window.innerWidth * dpr);
-  combatCanvas.height = Math.round(window.innerHeight * dpr);
+  var dpr = combatCanvasRatio();
+  GFX.combatDpr = dpr;
+  var width = Math.round(window.innerWidth * dpr), height = Math.round(window.innerHeight * dpr);
+  if(combatCanvas.width !== width) combatCanvas.width = width;
+  if(combatCanvas.height !== height) combatCanvas.height = height;
+}
+function combatCanvasRatio(){
+  var budget = GFX.safari ? 2000000 : 3000000;
+  return Math.min(window.devicePixelRatio || 1, GFX.safari ? 1.5 : 2,
+    Math.sqrt(budget / (window.innerWidth * window.innerHeight)));
 }
 
 function damageNumber(worldPos, amount, dtype){
@@ -3514,7 +3587,7 @@ function renderCombatFX(dt){
   var cw = combatCanvas.width, ch = combatCanvas.height;
   combatCtx.clearRect(0, 0, cw, ch);
   
-  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var dpr = GFX.combatDpr || 1;
   var fontSize = Math.round(14 * dpr);
   combatCtx.font = '900 ' + fontSize + 'px "JetBrains Mono", monospace, sans-serif';
   combatCtx.textAlign = 'center';
@@ -3583,10 +3656,22 @@ function deathDisassembly(f){
   var g = worldToGrid3D(wp);
   if(Math.random() < 0.5) spawnDecal('oil', g.gx, g.gy, 1.8);
 }
+function disposeFxMesh(root){
+  scene.remove(root);
+  var sharedMaterials = Object.values(MATS);
+  root.traverse(function(node){
+    if(node.geometry && node.geometry !== FX_SHARED.puffGeo) node.geometry.dispose();
+    if(!node.material) return;
+    var materials = Array.isArray(node.material) ? node.material : [node.material];
+    for(var mat of materials){
+      if(mat && mat !== FX_SHARED.puffMat && sharedMaterials.indexOf(mat) < 0) mat.dispose();
+    }
+  });
+}
 function updateFX(dt){
   var i, o;
-  for(i=FX.flashes.length-1;i>=0;i--){ o=FX.flashes[i]; o.life-=dt; o.mesh.scale.multiplyScalar(1+dt*6); if(o.life<=0){ scene.remove(o.mesh); FX.flashes.splice(i,1); } }
-  for(i=FX.beams.length-1;i>=0;i--){ o=FX.beams[i]; o.life-=dt; if(o.life<=0){ scene.remove(o.mesh); FX.beams.splice(i,1); } }
+  for(i=FX.flashes.length-1;i>=0;i--){ o=FX.flashes[i]; o.life-=dt; o.mesh.scale.multiplyScalar(1+dt*6); if(o.life<=0){ disposeFxMesh(o.mesh); FX.flashes.splice(i,1); } }
+  for(i=FX.beams.length-1;i>=0;i--){ o=FX.beams[i]; o.life-=dt; if(o.life<=0){ disposeFxMesh(o.mesh); FX.beams.splice(i,1); } }
   
   // Update pooled dynamic lights without scene add/remove (prevents shader recompilation)
   for(var li=0; li<LIGHT_POOL.length; li++){
@@ -3602,7 +3687,7 @@ function updateFX(dt){
     o.mesh.position.x+=o.vx*dt; o.mesh.position.y+=o.vy*dt; o.mesh.position.z+=o.vz*dt;
     o.mesh.rotation.x+=o.rx*dt;
     if(o.mesh.position.y<0.08){ o.mesh.position.y=0.08; o.vy*=-0.45; o.vx*=0.7; o.vz*=0.7; }
-    if(o.life<=0){ scene.remove(o.mesh); FX.shells.splice(i,1); } }
+    if(o.life<=0){ disposeFxMesh(o.mesh); FX.shells.splice(i,1); } }
   for(i=FX.mortars.length-1;i>=0;i--){ o=FX.mortars[i]; o.t+=dt; var k=Math.min(1,o.t/o.dur);
     o.mesh.position.lerpVectors(o.from, o.to, k); o.mesh.position.y += Math.sin(k*Math.PI)*(4+o.from.distanceTo(o.to)*0.15);
     o.trail-=dt; if(o.trail<=0){ o.trail=0.06;
@@ -3612,24 +3697,40 @@ function updateFX(dt){
       }
       var puff = new THREE.Mesh(FX_SHARED.puffGeo, FX_SHARED.puffMat);
       puff.position.copy(o.mesh.position); scene.add(puff); FX.flashes.push({ mesh: puff, life: 0.35 }); }
-    if(k>=1){ scene.remove(o.mesh); FX.mortars.splice(i,1);
+    if(k>=1){ disposeFxMesh(o.mesh); FX.mortars.splice(i,1);
       applyBlastDamage(o.to, o.dmg, o.splash); spawnExplosion(o.to, o.splash); } }
   for(i=FX.rings.length-1;i>=0;i--){ o=FX.rings[i]; o.life-=dt; var p=1-o.life/o.max;
     var r=o.grow*p+0.5; o.mesh.scale.set(r,r,1); o.mesh.material.opacity=0.85*(1-p);
-    if(o.life<=0){ scene.remove(o.mesh); FX.rings.splice(i,1); } }
+    if(o.life<=0){ disposeFxMesh(o.mesh); FX.rings.splice(i,1); } }
   for(i=FX.debris.length-1;i>=0;i--){ o=FX.debris[i]; o.life-=dt; o.vy-=14*dt;
     o.mesh.position.x+=o.vx*dt; o.mesh.position.y+=o.vy*dt; o.mesh.position.z+=o.vz*dt;
     o.mesh.rotation.x+=o.rx*dt; o.mesh.rotation.z+=o.rz*dt;
     if(o.mesh.position.y<0.1){ o.mesh.position.y=0.1; o.vy*=-0.4; o.vx*=0.6; o.vz*=0.6; }
-    if(o.life<=0){ scene.remove(o.mesh); FX.debris.splice(i,1); } }
+    if(o.life<=0){ disposeFxMesh(o.mesh); FX.debris.splice(i,1); } }
   for(i=FX.sparks.length-1;i>=0;i--){ o=FX.sparks[i]; o.life-=dt; o.vy-=(o.grav||12)*dt;
     o.mesh.position.x+=o.vx*dt; o.mesh.position.y+=o.vy*dt; o.mesh.position.z+=o.vz*dt;
-    if(o.life<=0){ scene.remove(o.mesh); FX.sparks.splice(i,1); } }
+    if(o.life<=0){ disposeFxMesh(o.mesh); FX.sparks.splice(i,1); } }
   // decals fade
-  if(scene.userData.decals) for(i=scene.userData.decals.length-1;i>=0;i--){ var dc=scene.userData.decals[i]; dc.life-=dt; if(dc.life<8) dc.mesh.material.opacity = Math.max(0, dc.life/8); }
+  if(scene.userData.decals) for(i=scene.userData.decals.length-1;i>=0;i--){
+    var dc=scene.userData.decals[i]; dc.life-=dt;
+    if(dc.life<=0){ disposeDecal(dc); scene.userData.decals.splice(i,1); }
+    else if(dc.life<8) dc.mesh.material.opacity = dc.life/8;
+  }
   // god-ray shimmer + vine sway
   if(scene.userData.shafts) for(i=0;i<scene.userData.shafts.length;i++){ var sh=scene.userData.shafts[i]; sh.material.opacity = 0.026 + 0.014*Math.sin(S.time*0.7+i*1.7); }
   if(scene.userData.vines) for(i=0;i<scene.userData.vines.length;i++){ var vn=scene.userData.vines[i]; vn.mesh.rotation.x = Math.sin(S.time*1.2+vn.phase)*0.12; }
+}
+function clearActiveEffects(){
+  for(var key in FX){
+    for(var effect of FX[key]) disposeFxMesh(effect.mesh);
+    FX[key].length = 0;
+  }
+  if(scene.userData.decals){
+    for(var decal of scene.userData.decals) disposeDecal(decal);
+    scene.userData.decals.length = 0;
+  }
+  DMG_NUMS.length = 0;
+  if(combatCtx) combatCtx.clearRect(0, 0, combatCanvas.width, combatCanvas.height);
 }
 function applyBlastDamage(worldPos, dmg, splash){
   var g = worldToGrid3D(worldPos);
@@ -3731,7 +3832,7 @@ function upgradeTo(t, branch){
 
 function sellTower(t){
   var i = S.towers.indexOf(t); if(i < 0) return;
-  scene.remove(t.mesh);
+  disposeSceneObject(t.mesh);
   S.towers.splice(i, 1);
   S.blocked[idx(t.gx, t.gy)] = 0;
   var refund = Math.round(t.invested * SELL_RATE);
@@ -3865,7 +3966,7 @@ function update(dt){
     var f = S.foes[i];
     if(f.hp <= 0 || f.dead){
       if(!f.deadCounted){ f.deadCounted = true; if(!f.dead) killFoe(f); }
-      scene.remove(f.mesh);
+      disposeSceneObject(f.mesh);
       S.foes.splice(i, 1);
       continue;
     }
@@ -3882,7 +3983,7 @@ function update(dt){
       f.x = fx; f.y = fy;
       if(!f.air && !f.direct) f.wp++;
       if(Math.abs(f.x - (SANCTUM.x + 0.5)) < 0.08 && Math.abs(f.y - (SANCTUM.y + 0.5)) < 0.08){
-        scene.remove(f.mesh);
+        disposeSceneObject(f.mesh);
         S.foes.splice(i, 1);
         S.lives -= f.leak; S.leaked++;
         if(!S.leakedByType) S.leakedByType = { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0 };
@@ -4297,16 +4398,37 @@ function gameOver(win){
 
 function copyMatchStats(){
   if(!LAST_MATCH_REPORT){ toast('No match data to copy'); return; }
+  function copied(){
+    toast('📋 Match scorecard copied to clipboard!');
+    var button = document.getElementById('btnCopyStats');
+    if(button){
+      button.textContent = '✓ Copied!';
+      clearTimeout(copyMatchStats.resetTimer);
+      copyMatchStats.resetTimer = setTimeout(function(){ button.textContent = '📋 Copy Match Stats'; }, 2200);
+    }
+  }
+  function legacyCopy(){
+    var field = document.createElement('textarea');
+    field.value = LAST_MATCH_REPORT;
+    field.setAttribute('readonly', '');
+    field.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(field);
+    field.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch(e){}
+    field.remove();
+    return ok;
+  }
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(LAST_MATCH_REPORT).then(function(){
-      toast('📋 Match scorecard copied to clipboard!');
+      copied();
     }).catch(function(){
-      toast('Match report printed to console!');
-      console.log(LAST_MATCH_REPORT);
+      if(legacyCopy()) copied();
+      else window.prompt('Select and copy your match report:', LAST_MATCH_REPORT);
     });
   } else {
-    toast('Match report printed to console!');
-    console.log(LAST_MATCH_REPORT);
+    if(legacyCopy()) copied();
+    else window.prompt('Select and copy your match report:', LAST_MATCH_REPORT);
   }
 }
 
@@ -4552,6 +4674,7 @@ function bindInput(){
   });
 
   document.addEventListener('keydown', function(ev){
+    if(document.getElementById('loading-screen')) return;
     audio();
     var k = (ev.key || '').toLowerCase();
     if(k === 'q' || k === '1') selectBuild('gun');
@@ -4760,9 +4883,16 @@ function padPress(btn){
     return;
   }
   var M = PADMAP;
+  // Rebinding must not also execute the button's old gameplay action.
+  if(padRebinding) return;
+  var pm = document.getElementById('padmap-modal');
+  if(pm && pm.classList.contains('open')){
+    if(btn === M.cancel || btn === 8) closePadmap();
+    return;
+  }
   if(btn === M.place){ // place selected tower at crosshair, or inspect unit there
     var g = centerTile();
-    if(!g) return;
+    if(!g){ toast('Aim the crosshair at the battlefield to place or select'); sfx('error'); return; }
     if(S.selected){
       var res = placeAt(g.gx, g.gy, S.selected);
       if(!res.ok){ toast(res.why); sfx('error'); padRumble(0.9, 0.2, 80); }
@@ -4826,12 +4956,6 @@ function padPress(btn){
   }
   else if(btn === M.speed){ cycleSpeed(); }
   else if(btn === M.pause){ togglePause(); }
-  else if(btn === 8){
-    // Back / Select button opens controller mapping
-    var pmModal = document.getElementById('padmap-modal');
-    if(pmModal && pmModal.classList.contains('open')) closePadmap();
-    else openPadmap();
-  }
   // L3 / R3 ability shortcuts (Left Stick Click = Root, Right Stick Click = Solar Flare)
   else if(btn === 10){ useSanctumAbility('root'); padRumble(0.4, 0.5, 120); }
   else if(btn === 11){ useSanctumAbility('flare'); padRumble(0.7, 0.7, 160); }
@@ -5032,7 +5156,13 @@ function updatePadmapLiveStatus(){
   } else {
     dot.style.background = '#ff5d5d';
     dot.style.boxShadow = 'none';
-    st.innerHTML = '<b>No controller detected by browser yet.</b> Tap any button on your controller to activate.';
+    if(!navigator.getGamepads && !navigator.webkitGetGamepads){
+      st.textContent = 'This browser does not expose the Gamepad API. Open the local game in Chrome or Safari.';
+    } else if(!window.isSecureContext){
+      st.textContent = 'Controller access needs a secure page. Open the game at http://localhost:8000/game.html.';
+    } else {
+      st.textContent = 'No controller detected yet. Focus this tab, then press a button on the connected controller.';
+    }
   }
 }
 
@@ -5117,9 +5247,16 @@ function pollGamepad(dt){
     slide.addScaledVector(fwd, -ly * spd);
     controls.target.add(slide);
     camera.position.add(slide);
-    var lim = Math.max(COLS, ROWS) * CELL_SIZE * 0.75;
-    controls.target.x = Math.max(-lim, Math.min(lim, controls.target.x));
-    controls.target.z = Math.max(-lim, Math.min(lim, controls.target.z));
+    // Keep the center reticle over a tile. The old 0.75 * width limit let it
+    // travel far outside the board, where place/select silently failed.
+    var edgeX = COLS * CELL_SIZE / 2 - CELL_SIZE / 2;
+    var edgeZ = ROWS * CELL_SIZE / 2 - CELL_SIZE / 2;
+    var clampedX = Math.max(-edgeX, Math.min(edgeX, controls.target.x));
+    var clampedZ = Math.max(-edgeZ, Math.min(edgeZ, controls.target.z));
+    camera.position.x += clampedX - controls.target.x;
+    camera.position.z += clampedZ - controls.target.z;
+    controls.target.x = clampedX;
+    controls.target.z = clampedZ;
     controls.target.y = 0;
     controls.update();
   }
@@ -5391,8 +5528,10 @@ function useSanctumAbility(type){
   refreshHud();
 }
 function resetGame(){
-  for(var t of S.towers) scene.remove(t.mesh);
-  for(var f of S.foes) scene.remove(f.mesh);
+  hideGlyphShop();
+  clearActiveEffects();
+  for(var t of S.towers) disposeSceneObject(t.mesh);
+  for(var f of S.foes) disposeSceneObject(f.mesh);
   clearRuinVisuals();
   var bonus = getGlyphBonus();
   S = newState((Math.random() * 1e9) | 0);
@@ -5561,8 +5700,9 @@ var API = {
   cfg: { COLS: COLS, ROWS: ROWS, SPAWN: SPAWN, SANCTUM: SANCTUM, TOWERS: TOWERS, BRANCH: BRANCH, FOES: FOES, WAVE_MAX: WAVE_MAX },
   get state(){ return S; },
   newGame: function(seed){
-    for(var t of S.towers) scene.remove(t.mesh);
-    for(var f of S.foes) scene.remove(f.mesh);
+    clearActiveEffects();
+    for(var t of S.towers) disposeSceneObject(t.mesh);
+    for(var f of S.foes) disposeSceneObject(f.mesh);
     clearRuinVisuals();
     S = newState(seed || 1); seedRuins();
     updatePathVisualizer();
