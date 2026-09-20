@@ -1,0 +1,66 @@
+{
+  "name": "aegis-flora",
+  "version": "1.0.0",
+  "description": "Aegis Flora Desktop Game",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder build --mac",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "author": "murderszn",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^29.1.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.murderszn.aegisflora",
+    "productName": "Aegis Flora",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "mac": {
+      "category": "public.app-category.games",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "target": ["dmg"],
+      "icon": "build/icon.icns"
+    },
+    "dmg": {
+      "title": "Aegis Flora",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "files": [
+      "main.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "..",
+        "to": ".",
+        "filter": [
+          "index.html",
+          "game.html",
+          "hud.css",
+          "js/**/*",
+          "blender_pipeline/models/**/*"
+        ]
+      }
+    ]
+  }
+}

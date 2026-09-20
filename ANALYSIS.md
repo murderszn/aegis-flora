@@ -1,6 +1,6 @@
 # Aegis Flora 3D — Gap Analysis: Areas That Need More Work
 
-This document identifies gaps between the project's **documented specifications** (GDD, TECHNICAL_ARCHITECTURE, UI_AND_UX_SPEC, ART_AND_AUDIO_SPEC, TOWER_AND_ENEMY_BALANCE_SHEET) and the **actual implementation** in `index.html` and the Unity scripts.
+This document identifies gaps between the project's **documented specifications** (GDD, TECHNICAL_ARCHITECTURE, UI_AND_UX_SPEC, GRAPHICS_AND_ART_OVERHAUL_PROMPT, TOWER_AND_ENEMY_BALANCE_SHEET) and the **actual implementation** in `game.html` and the Unity scripts.
 
 ---
 
@@ -192,3 +192,32 @@ This document identifies gaps between the project's **documented specifications*
 | 🟢 Low | Weather / Day-Night | 0% | High |
 | 🟢 Low | Unity Feature Parity | 20% | High |
 
+---
+
+## 🟢 BONUS — Implemented Features Not in Any Spec Doc
+
+These features exist in `game.html` but are not documented in the GDD, Tech Architecture, or UI/UX Spec:
+
+### 29. **Gamepad / Controller Support — IMPLEMENTED (Undocumented)**
+- **Reality:** Full Xbox, PlayStation, and Nintendo Switch controller support via the Gamepad API. Left stick pans camera, right stick orbits, A places towers, B cancels, X sends wave, LB/RB cycle tower selection. Includes haptic rumble feedback on explosions and boss kills.
+- **Action:** Add gamepad support section to UI_AND_UX_SPEC.md.
+
+### 30. **Controller Remapping Modal — IMPLEMENTED (Undocumented)**
+- **Reality:** A custom controller remapping UI modal is implemented in `game.html`, allowing players to rebind gamepad buttons.
+- **Action:** Document in UI spec.
+
+### 31. **Verdant Glyphs Meta-Progression UI — PARTIALLY IMPLEMENTED (Undocumented)**
+- **Reality:** A glyph shop UI exists in `game.html` with `G` key toggle, 4 upgrade tracks (Titan Foundry, Solar Treasury, Living Root, Sacred Ambrosia), progress bars, and purchase buttons. However, `localStorage` persistence is not yet wired up.
+- **Action:** Wire up localStorage save/load for glyph state.
+
+### 32. **Public Testing API — IMPLEMENTED (Undocumented)**
+- **Reality:** `window.RoboFlora` and `window.AegisFlora` expose a public automated testing API for programmatic game control (placing towers, spawning waves, querying state).
+- **Action:** Document in TECHNICAL_ARCHITECTURE.md for CI/testing purposes.
+
+### 33. **Cinematic Letterbox / Film Grain — IMPLEMENTED (Undocumented)**
+- **Reality:** `game.html` includes cinematic letterbox bars, SVG-based film grain overlay, and CSS-based saturation/contrast color grading on the canvas element.
+- **Action:** Document in GRAPHICS_AND_ART_OVERHAUL_PROMPT.md as implemented.
+
+### 34. **Match Telemetry / End-of-Game Stats — IMPLEMENTED (Undocumented)**
+- **Reality:** A full match telemetry debriefing card appears at game end, showing kills, DPS, wave reached, scrap earned, and a "Copy Stats" button.
+- **Action:** Document in UI_AND_UX_SPEC.md.

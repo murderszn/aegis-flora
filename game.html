@@ -546,6 +546,8 @@
 </div>
 
 <div id="cam-mode"><div class="dot"></div><span>TACTICAL VIEW <span class="cam-hint">· Right drag to orbit · Scroll to zoom</span></span></div>
+<div id="gfx-mode" title="Graphics & Resolution (Shift+G): Click to toggle Auto (DRS) · Performance · Balanced · Ultra"><div class="dot"></div><span>⚡ 60 FPS · AUTO</span></div>
+<canvas id="combat-canvas"></canvas>
 <div class="preview-wrap"><span class="preview-kicker">NEXT THREAT <span class="preview-pulse"></span></span><div id="preview"></div></div>
 
 <!-- Defense arsenal -->
@@ -1766,6 +1768,121 @@ function addContactShadow(parent, size, opacity){
   var mesh = new THREE.Mesh(g, m); mesh.rotation.x = -Math.PI/2; mesh.position.y = 0.04; parent.add(mesh); return mesh;
 }
 
+// ---------- Graphics Profile, Metal / Mac Silicon Optimization & DRS ----------
+var GFX = {
+  profile: localStorage.getItem('aegis_gfx_profile') || 'auto', // 'auto', 'perf', 'balanced', 'ultra'
+  scale: 1.0,
+  targetScale: 1.0,
+  dpr: 1.0,
+  fps: 60,
+  fpsCount: 0,
+  fpsTimer: performance.now(),
+  drsTimer: 0
+};
+
+function getIdealPixelRatio(profile){
+  var nativeDpr = window.devicePixelRatio || 1;
+  var w = window.innerWidth, h = window.innerHeight;
+  var maxDim = Math.max(w, h);
+  
+  if(profile === 'perf'){
+    // Clean 1:1 hardware buffer (1080p/1440p) - ultra fast on Mac M-series
+    return 1.0;
+  }
+  if(profile === 'balanced'){
+    // Sweet spot: 1.15x - 1.25x gives crisp Solarpunk details without 4x Retina pixel explosion
+    if(maxDim >= 2400) return 1.15;
+    if(maxDim >= 1800) return 1.25;
+    return Math.min(nativeDpr, 1.35);
+  }
+  if(profile === 'ultra'){
+    // Native high-DPI Retina (up to 2.0)
+    return Math.min(nativeDpr, 2.0);
+  }
+  
+  // 'auto' Dynamic Resolution Scaling:
+  // On 2K / 4K / Retina displays, base at 1.15x, scaled smoothly by DRS
+  var base = (maxDim >= 2400) ? 1.05 : (maxDim >= 1800 ? 1.20 : Math.min(nativeDpr, 1.4));
+  return Math.max(0.85, base * GFX.scale);
+}
+
+function applyGraphicsProfile(){
+  var dpr = getIdealPixelRatio(GFX.profile);
+  GFX.dpr = dpr;
+  if(renderer){
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    // Dynamic shadow map allocation based on profile
+    if(scene && scene.userData && scene.userData.sun){
+      var sun = scene.userData.sun;
+      var sz = (GFX.profile === 'perf') ? 1024 : (GFX.profile === 'balanced' ? 1536 : 2048);
+      if(sun.shadow && sun.shadow.mapSize.width !== sz){
+        sun.shadow.mapSize.set(sz, sz);
+        if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; }
+      }
+    }
+  }
+  resizeCombatCanvas();
+  updateGfxPill();
+}
+
+function cycleGraphicsProfile(){
+  var order = ['auto', 'perf', 'balanced', 'ultra'];
+  var idx = order.indexOf(GFX.profile);
+  GFX.profile = order[(idx + 1) % order.length];
+  localStorage.setItem('aegis_gfx_profile', GFX.profile);
+  GFX.scale = 1.0;
+  applyGraphicsProfile();
+  var names = {
+    auto: 'AUTO (Dynamic FPS Guard)',
+    perf: 'PERFORMANCE (1080p/1440p 1.0x)',
+    balanced: 'BALANCED (1.2x Sweet Spot)',
+    ultra: 'ULTRA (Native Retina 2.0x)'
+  };
+  toast('Graphics: ' + (names[GFX.profile] || GFX.profile));
+}
+
+function updateGfxPill(){
+  var pill = document.querySelector('#gfx-mode span');
+  var dot = document.querySelector('#gfx-mode .dot');
+  if(!pill) return;
+  var dprStr = (GFX.dpr || 1).toFixed(2) + 'x';
+  var w = Math.round(window.innerWidth * (GFX.dpr || 1));
+  var h = Math.round(window.innerHeight * (GFX.dpr || 1));
+  var prof = GFX.profile.toUpperCase();
+  pill.innerHTML = '⚡ ' + GFX.fps + ' FPS · <span style="font-weight:700">' + prof + '</span> <span class="gfx-sub">(' + w + '×' + h + ' · ' + dprStr + ')</span>';
+  if(dot){
+    dot.className = 'dot ' + GFX.profile;
+  }
+}
+
+function stepFpsAndDrs(dt){
+  GFX.fpsCount++;
+  var now = performance.now();
+  if(now - GFX.fpsTimer >= 1000){
+    GFX.fps = Math.round((GFX.fpsCount * 1000) / (now - GFX.fpsTimer));
+    GFX.fpsCount = 0;
+    GFX.fpsTimer = now;
+    updateGfxPill();
+  }
+  
+  // Dynamic Resolution Scaling (DRS) in AUTO mode
+  if(GFX.profile === 'auto'){
+    GFX.drsTimer += dt;
+    if(GFX.drsTimer >= 1.5){
+      GFX.drsTimer = 0;
+      if(GFX.fps < 54 && GFX.scale > 0.85){
+        GFX.scale = Math.max(0.85, GFX.scale - 0.08);
+        applyGraphicsProfile();
+      } else if(GFX.fps >= 59 && GFX.scale < 1.0){
+        GFX.scale = Math.min(1.0, GFX.scale + 0.05);
+        applyGraphicsProfile();
+      }
+    }
+  }
+}
+
 function initThreeJS(){
   var container = document.getElementById('game-container');
   scene = new THREE.Scene();
@@ -1775,14 +1892,22 @@ function initThreeJS(){
   camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 1, 1000);
   setCameraIsometric();
 
-  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    powerPreference: 'high-performance',
+    alpha: false,
+    stencil: false,
+    depth: true,
+    preserveDrawingBuffer: false
+  });
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.95;
   container.appendChild(renderer.domElement);
+
+  initCombatCanvas();
+  applyGraphicsProfile();
 
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -1795,6 +1920,7 @@ function initThreeJS(){
   initMaterials();
   preloadGLTFModels();
   build3DLighting();
+  initLightPool();
   build3DEnvironment();
   build3DGrid();
   buildJunglePerimeter();
@@ -1902,8 +2028,9 @@ function build3DLighting(){
   var sun = new THREE.DirectionalLight(0xFFF0D5, 1.6);
   sun.position.set(38, 60, 32);
   sun.castShadow = true;
-  sun.shadow.mapSize.width = 2048;
-  sun.shadow.mapSize.height = 2048;
+  var initSz = (GFX.profile === 'perf') ? 1024 : (GFX.profile === 'balanced' ? 1536 : 2048);
+  sun.shadow.mapSize.width = initSz;
+  sun.shadow.mapSize.height = initSz;
   sun.shadow.camera.near = 10;
   sun.shadow.camera.far = 160;
   var d = 42;
@@ -1913,6 +2040,7 @@ function build3DLighting(){
   sun.shadow.camera.bottom = -d;
   sun.shadow.bias = -0.0004;
   scene.add(sun);
+  scene.userData.sun = sun;
 
   // 2) Ambient Fill: deep cerulean teal #0E3844 — cinematic lifted shadows
   var fill = new THREE.DirectionalLight(0x477984, 0.45);
@@ -2852,13 +2980,36 @@ function create3DCreepMesh(type){
 }
 
 // ---------- Dota-2 Combat Juice & Particle Telemetry ----------
-var FX = { flashes: [], shells: [], mortars: [], rings: [], debris: [], sparks: [], beams: [], lights: [] };
+var FX = { flashes: [], shells: [], mortars: [], rings: [], debris: [], sparks: [], beams: [] };
+var FX_SHARED = {};
 var DMG_COLORS = { Kinetic: '#FFD60A', Blast: '#FF6B35', Energy: '#00F5D4', Sonic: '#C77DFF' };
+
+// Fixed light pool to completely prevent runtime shader recompilations in WebGL
+var LIGHT_POOL = [];
+var LIGHT_POOL_SIZE = 6;
+function initLightPool(){
+  if(LIGHT_POOL.length > 0) return;
+  for(var i = 0; i < LIGHT_POOL_SIZE; i++){
+    var pl = new THREE.PointLight(0xffd60a, 0, 14);
+    pl.castShadow = false; // Muzzle lights never cast shadow maps
+    scene.add(pl);
+    LIGHT_POOL.push({ light: pl, life: 0, max: 0, base: 0 });
+  }
+}
 function fxLight(color, intensity, dist){
-  var L = new THREE.PointLight(color, intensity, dist || 12);
-  scene.add(L); FX.lights.push({ light: L, life: 0.12, max: 0.12, base: intensity });
-  if(FX.lights.length > 14){ var o = FX.lights.shift(); scene.remove(o.light); }
-  return L;
+  if(LIGHT_POOL.length === 0) return null;
+  var best = LIGHT_POOL[0];
+  for(var i = 0; i < LIGHT_POOL.length; i++){
+    if(LIGHT_POOL[i].life <= 0){ best = LIGHT_POOL[i]; break; }
+    if(LIGHT_POOL[i].life < best.life) best = LIGHT_POOL[i];
+  }
+  best.light.color.setHex(color);
+  best.light.distance = dist || 14;
+  best.base = intensity;
+  best.light.intensity = intensity;
+  best.life = 0.14;
+  best.max = 0.14;
+  return best.light;
 }
 function spawnMuzzleFlash(worldPos, color){
   var grp = new THREE.Group(); grp.position.copy(worldPos);
@@ -2984,23 +3135,90 @@ function spawnResonanceRing(worldPos, range, violet){
   scene.add(mist);
   FX.flashes.push({ mesh: mist, life: 0.7 });
 }
-function damageNumber(worldPos, amount, dtype){
-  var elx = document.createElement('div');
-  elx.textContent = Math.round(amount);
-  elx.style.cssText = 'position:fixed;z-index:11;pointer-events:none;font-family:var(--font-stats);font-weight:900;font-size:15px;color:'+(DMG_COLORS[dtype]||'#fff')+';text-shadow:0 0 6px rgba(0,0,0,0.9),0 2px 2px #000;transition:none;';
-  document.body.appendChild(elx);
-  var v = worldPos.clone(); v.y += 1.2; v.project(camera);
-  var sx = (v.x*0.5+0.5)*window.innerWidth, sy = (-v.y*0.5+0.5)*window.innerHeight;
-  elx.style.left = sx+'px'; elx.style.top = sy+'px';
-  var vy = -46 - Math.random()*20, vx = (Math.random()-0.5)*30, life = 0.8;
-  (function tick(){
-    life -= 0.03;
-    if(life <= 0){ elx.remove(); return; }
-    sy += vy*0.03; sx += vx*0.03; vy *= 0.96;
-    elx.style.top = sy+'px'; elx.style.left = sx+'px'; elx.style.opacity = Math.min(1, life*2);
-    requestAnimationFrame(tick);
-  })();
+var combatCanvas = null;
+var combatCtx = null;
+var DMG_NUMS = [];
+
+function initCombatCanvas(){
+  combatCanvas = document.getElementById('combat-canvas');
+  if(!combatCanvas){
+    combatCanvas = document.createElement('canvas');
+    combatCanvas.id = 'combat-canvas';
+    document.body.appendChild(combatCanvas);
+  }
+  combatCtx = combatCanvas.getContext('2d');
+  resizeCombatCanvas();
 }
+
+function resizeCombatCanvas(){
+  if(!combatCanvas) return;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  combatCanvas.width = Math.round(window.innerWidth * dpr);
+  combatCanvas.height = Math.round(window.innerHeight * dpr);
+}
+
+function damageNumber(worldPos, amount, dtype){
+  if(DMG_NUMS.length > 90) DMG_NUMS.shift(); // Prevent runaway allocations during dense killboxes
+  DMG_NUMS.push({
+    x: worldPos.x,
+    y: worldPos.y,
+    z: worldPos.z,
+    text: (typeof amount === 'number') ? Math.round(amount) : String(amount),
+    color: DMG_COLORS[dtype] || '#ffffff',
+    vx: (Math.random() - 0.5) * 32,
+    vy: -46 - Math.random() * 20,
+    ox: 0,
+    oy: 0,
+    life: 0.8,
+    maxLife: 0.8
+  });
+}
+
+function renderCombatFX(dt){
+  if(!combatCanvas || !combatCtx) return;
+  if(DMG_NUMS.length === 0){
+    combatCtx.clearRect(0, 0, combatCanvas.width, combatCanvas.height);
+    return;
+  }
+  var cw = combatCanvas.width, ch = combatCanvas.height;
+  combatCtx.clearRect(0, 0, cw, ch);
+  
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var fontSize = Math.round(14 * dpr);
+  combatCtx.font = '900 ' + fontSize + 'px "JetBrains Mono", monospace, sans-serif';
+  combatCtx.textAlign = 'center';
+  combatCtx.textBaseline = 'middle';
+  
+  var v = new THREE.Vector3();
+  for(var i = DMG_NUMS.length - 1; i >= 0; i--){
+    var d = DMG_NUMS[i];
+    d.life -= dt;
+    if(d.life <= 0){
+      DMG_NUMS.splice(i, 1);
+      continue;
+    }
+    d.oy += d.vy * dt;
+    d.ox += d.vx * dt;
+    d.vy *= 0.96;
+    
+    v.set(d.x, d.y + 1.2, d.z);
+    v.project(camera);
+    if(v.z > 1.0) continue; // Behind camera
+    
+    var sx = (v.x * 0.5 + 0.5) * cw + d.ox * dpr;
+    var sy = (-v.y * 0.5 + 0.5) * ch + d.oy * dpr;
+    var alpha = Math.min(1, d.life * 2.2);
+    
+    combatCtx.save();
+    combatCtx.globalAlpha = alpha;
+    combatCtx.shadowColor = 'rgba(0,0,0,0.9)';
+    combatCtx.shadowBlur = 4 * dpr;
+    combatCtx.fillStyle = d.color;
+    combatCtx.fillText(d.text, sx, sy);
+    combatCtx.restore();
+  }
+}
+
 function hitFlashCreep(f){
   f.flashT = 0.06;
   if(f.mesh && f.mesh.traverse){
@@ -3017,7 +3235,8 @@ function deathDisassembly(f){
   for(var i=0;i<n;i++){
     var geo = i%3===0 ? new THREE.BoxGeometry(0.3,0.1,0.4) : (i%3===1 ? new THREE.CylinderGeometry(0.16,0.16,0.08,8) : new THREE.BoxGeometry(0.18,0.18,0.18));
     var m = new THREE.Mesh(geo, Math.random()<0.5?MATS.iron:MATS.brass);
-    m.position.copy(wp); m.castShadow = true;
+    m.position.copy(wp);
+    m.castShadow = (GFX.profile === 'ultra'); // Exclude from shadow map pass for massive draw-call savings
     scene.add(m);
     var a = Math.random()*Math.PI*2;
     FX.debris.push({ mesh: m, vx: Math.cos(a)*(2+Math.random()*4), vy: 4+Math.random()*4, vz: Math.sin(a)*(2+Math.random()*4), rx: (Math.random()-0.5)*12, rz: (Math.random()-0.5)*12, life: 1.6+Math.random()*0.6 });
@@ -3037,7 +3256,17 @@ function updateFX(dt){
   var i, o;
   for(i=FX.flashes.length-1;i>=0;i--){ o=FX.flashes[i]; o.life-=dt; o.mesh.scale.multiplyScalar(1+dt*6); if(o.life<=0){ scene.remove(o.mesh); FX.flashes.splice(i,1); } }
   for(i=FX.beams.length-1;i>=0;i--){ o=FX.beams[i]; o.life-=dt; if(o.life<=0){ scene.remove(o.mesh); FX.beams.splice(i,1); } }
-  for(i=FX.lights.length-1;i>=0;i--){ o=FX.lights[i]; o.life-=dt; o.light.intensity = o.base * Math.max(0, o.life/o.max); if(o.life<=0){ scene.remove(o.light); FX.lights.splice(i,1); } }
+  
+  // Update pooled dynamic lights without scene add/remove (prevents shader recompilation)
+  for(var li=0; li<LIGHT_POOL.length; li++){
+    var lo = LIGHT_POOL[li];
+    if(lo.life > 0){
+      lo.life -= dt;
+      if(lo.life <= 0) lo.light.intensity = 0;
+      else lo.light.intensity = lo.base * Math.max(0, lo.life / lo.max);
+    }
+  }
+
   for(i=FX.shells.length-1;i>=0;i--){ o=FX.shells[i]; o.life-=dt; o.vy-=12*dt;
     o.mesh.position.x+=o.vx*dt; o.mesh.position.y+=o.vy*dt; o.mesh.position.z+=o.vz*dt;
     o.mesh.rotation.x+=o.rx*dt;
@@ -3045,9 +3274,13 @@ function updateFX(dt){
     if(o.life<=0){ scene.remove(o.mesh); FX.shells.splice(i,1); } }
   for(i=FX.mortars.length-1;i>=0;i--){ o=FX.mortars[i]; o.t+=dt; var k=Math.min(1,o.t/o.dur);
     o.mesh.position.lerpVectors(o.from, o.to, k); o.mesh.position.y += Math.sin(k*Math.PI)*(4+o.from.distanceTo(o.to)*0.15);
-    o.trail-=dt; if(o.trail<=0){ o.trail=0.05;
-      var puff = new THREE.Mesh(new THREE.SphereGeometry(0.16,6,6), new THREE.MeshBasicMaterial({ color: 0xbbbbbb, transparent: true, opacity: 0.5 }));
-      puff.position.copy(o.mesh.position); scene.add(puff); FX.flashes.push({ mesh: puff, life: 0.4 }); }
+    o.trail-=dt; if(o.trail<=0){ o.trail=0.06;
+      if(!FX_SHARED.puffGeo){
+        FX_SHARED.puffGeo = new THREE.SphereGeometry(0.16, 6, 6);
+        FX_SHARED.puffMat = new THREE.MeshBasicMaterial({ color: 0xbbbbbb, transparent: true, opacity: 0.5, depthWrite: false });
+      }
+      var puff = new THREE.Mesh(FX_SHARED.puffGeo, FX_SHARED.puffMat);
+      puff.position.copy(o.mesh.position); scene.add(puff); FX.flashes.push({ mesh: puff, life: 0.35 }); }
     if(k>=1){ scene.remove(o.mesh); FX.mortars.splice(i,1);
       applyBlastDamage(o.to, o.dmg, o.splash); spawnExplosion(o.to, o.splash); } }
   for(i=FX.rings.length-1;i>=0;i--){ o=FX.rings[i]; o.life-=dt; var p=1-o.life/o.max;
@@ -4050,12 +4283,21 @@ function bindInput(){
   if(btnCopy) btnCopy.addEventListener('click', copyMatchStats);
   var btnRepGlyph = document.getElementById('btnGlyphsReport');
   if(btnRepGlyph) btnRepGlyph.addEventListener('click', toggleGlyphShop);
+
+  var gfxEl = document.getElementById('gfx-mode');
+  if(gfxEl) gfxEl.addEventListener('click', cycleGraphicsProfile);
+  window.addEventListener('keydown', function(ev){
+    if(ev.shiftKey && (ev.key === 'G' || ev.key === 'g')){
+      ev.preventDefault();
+      cycleGraphicsProfile();
+    }
+  });
 }
 
 function onWindowResize(){
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  applyGraphicsProfile();
 }
 
 // ---------- Gamepad controller support (Standard mapping: Xbox/PS/Switch) ----------
@@ -4591,6 +4833,8 @@ function animate(){
     camera.position.z += (Math.random() - 0.5) * sh;
   }
   renderer.render(scene, camera);
+  renderCombatFX(dt);
+  stepFpsAndDrs(dt);
 }
 
 // ---------- Boot ----------
