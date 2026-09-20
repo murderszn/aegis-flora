@@ -530,6 +530,13 @@
   .tut-visual-icon { font-size: 24px; color: #00F5D4; flex-shrink: 0; }
   .tut-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(201,162,39,0.18); padding-top: 14px; }
   .tut-nav { display: flex; gap: 8px; }
+
+  /* ---------- Tactical Clarity Mode ---------- */
+  body.tactical-clarity #game-container { filter: contrast(1.15) saturate(0.92); }
+  body.tactical-clarity .letterbox { display: none !important; }
+  body.tactical-clarity #filmgrain { display: none !important; }
+  body.tactical-clarity #cam-mode { border-color: rgba(0,245,212,0.5); }
+  .tp-btn#btnClarity.active { background: #00F5D4; color: #04120e; font-weight: bold; border-color: #00F5D4; box-shadow: 0 0 10px rgba(0,245,212,0.5); }
 </style>
 <link rel="stylesheet" href="hud.css?v=7">
 
@@ -585,6 +592,7 @@
     <div class="padmap-row"><div class="act">Damage numbers<small>Floating combat text</small></div><input type="checkbox" id="setDmgNums" class="switch" checked></div>
     <div class="padmap-row"><div class="act">Creep HP bars<small>Overhead health bars</small></div><input type="checkbox" id="setHpBars" class="switch" checked></div>
     <div class="padmap-row"><div class="act">Screen shake<small>Trauma kick on blasts</small></div><input type="checkbox" id="setShake" class="switch" checked></div>
+    <div class="padmap-row"><div class="act">Tactical Clarity<small>Desaturate scenery & reduce effects for combat readability (K)</small></div><input type="checkbox" id="setClarity" class="switch"></div>
     <div class="padmap-row"><div class="act">Mazing tutorial<small>Replay the 8-step guided walkthrough</small></div><button class="btn" id="btnReplayTutorial">Replay…</button></div>
     <div class="padmap-row"><div class="act">Reset glyph progress<small>Clears meta upgrades</small></div><button class="btn" id="btnWipeGlyphs">Reset…</button></div>
   </div>
@@ -651,16 +659,14 @@
       <p class="gta-intel-body" id="gtaDesc">
         Supreme commander of the floating citadel. Armed with solar-kinetic lance and botanical overgrowth algorithms that turn ancient stone into lethal chokepoints.
       </p>
-      <div class="gta-intel-footer" id="gtaMeta">
-        <span>SANCTUM DEFENSE</span> // <span>CLASSIFICATION: TITAN</span> · <span>WEAPON: KINETIC SPEAR</span>
+      <div class="gta-meta-sub" id="gtaMeta">
+        ARMOR CLASS: OLYMPIAN COMPOSITE · SPECIALIZATION: BASTION SIEGE / MAZE ARCHITECT
       </div>
     </div>
-
-    <!-- Bottom Right Loading Progress & CTA -->
-    <div class="gta-progress-box">
-      <div class="gta-status-row">
-        <span id="gtaStatusText">INITIALIZING METAL & WEBGPU PIPELINE...</span>
-        <span id="gtaPercent">0%</span>
+    <div class="gta-progress-wrap">
+      <div class="gta-bar-meta">
+        <span class="gta-status-line" id="gtaStatusText">SYNCHRONIZING ORBITAL SENSORS...</span>
+        <span class="gta-percent" id="gtaPercent">0%</span>
       </div>
       <div class="gta-bar-track">
         <div class="gta-bar-fill" id="gtaBarFill"></div>
@@ -695,6 +701,7 @@
   <button class="tp-btn square" id="btnSpeed" title="Cycle Game Speed (V)">1x</button>
   <button class="tp-btn square" id="btnFullscreen" title="Toggle Fullscreen (F11 / Shift+F)">⛶</button>
   <button class="tp-btn square" id="btnAudio" title="Toggle Mute (M)">🔊</button>
+  <button class="tp-btn square" id="btnClarity" title="Toggle Tactical Clarity Mode (K)">👁</button>
   <button class="tp-btn square" id="btnTutorial" title="Tutorial & Mazing Guide (?)">?</button>
   <button class="tp-btn" id="btnCam" title="Toggle Camera View (C)"><span class="btn-icon">◈</span><span>View</span><kbd>C</kbd></button>
   <button class="tp-btn" id="btnPad" title="Controller Mapping"><span class="btn-icon">🎮</span><span id="btnPadLabel">Pad</span></button>
@@ -3692,6 +3699,37 @@ function disposeDecal(decal){
   decal.mesh.material.dispose();
 }
 
+function addTowerBasePlinth(root, type){
+  var baseRingColors = { gun: 0xFFB703, rocket: 0xFF6B35, beam: 0x00F5D4, slow: 0x9D4EDD, blocker: 0x8C733E };
+  var ringCol = baseRingColors[type] || 0x00F5D4;
+  var plinthRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.66, 0.84, 32),
+    new THREE.MeshBasicMaterial({ color: ringCol, transparent: true, opacity: 0.82, side: THREE.DoubleSide, depthWrite: false })
+  );
+  plinthRing.rotation.x = -Math.PI / 2;
+  plinthRing.position.y = 0.04;
+  root.add(plinthRing);
+  root.userData = root.userData || {};
+  root.userData.baseRing = plinthRing;
+  return root;
+}
+
+function addCreepThreatRing(root, type){
+  var foeSpec = (typeof FOES !== 'undefined' && FOES[type]) || { r: 0.3 };
+  var rad = foeSpec.r || 0.3;
+  var col = foeSpec.armored ? 0xFF9E00 : (foeSpec.kind === 'air' ? 0x00F5D4 : 0xFF3B30);
+  var ring = new THREE.Mesh(
+    new THREE.RingGeometry(rad * 0.82, rad * 1.22, 24),
+    new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.65, side: THREE.DoubleSide, depthWrite: false })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.04;
+  root.add(ring);
+  root.userData = root.userData || {};
+  root.userData.contactRing = ring;
+  return root;
+}
+
 // ---------- 3D Mesh Factory (GLTF Model Clone or Procedural Fallback) ----------
 function create3DTowerMesh(type){
   var root = new THREE.Group();
@@ -3702,21 +3740,21 @@ function create3DTowerMesh(type){
     clone.scale.set(0.65, 0.65, 0.65);
     root.add(clone);
     root.userData = { isGltf: true, model: clone, turn: clone };
-    return root;
+    return addTowerBasePlinth(root, type);
   }
   if(type === 'rocket' && GLTF_CACHE.mortar){
     var clone = GLTF_CACHE.mortar.clone();
     clone.scale.set(0.7, 0.7, 0.7);
     root.add(clone);
     root.userData = { isGltf: true, model: clone, turn: clone };
-    return root;
+    return addTowerBasePlinth(root, type);
   }
   if(type === 'slow' && GLTF_CACHE.resonance){
     var clone = GLTF_CACHE.resonance.clone();
     clone.scale.set(0.65, 0.65, 0.65);
     root.add(clone);
     root.userData = { isGltf: true, model: clone, turn: clone };
-    return root;
+    return addTowerBasePlinth(root, type);
   }
 
   // Enhanced Procedural 3D Mesh Fallback
@@ -3824,7 +3862,7 @@ function create3DTowerMesh(type){
     root.userData = { isBlocker: true, turn: null };
   }
 
-  return root;
+  return addTowerBasePlinth(root, type);
 }
 
 function create3DCreepMesh(type){
@@ -3837,6 +3875,7 @@ function create3DCreepMesh(type){
     clone.scale.set(sc, sc, sc);
     root.add(clone);
     root.userData = { isGltf: true, model: clone, scale: sc };
+    addCreepThreatRing(root, type);
     scene.add(root);
     return root;
   }
@@ -3846,6 +3885,7 @@ function create3DCreepMesh(type){
     clone.scale.set(sc, sc, sc);
     root.add(clone);
     root.userData = { isGltf: true, model: clone, scale: sc };
+    addCreepThreatRing(root, type);
     scene.add(root);
     return root;
   }
@@ -3855,6 +3895,7 @@ function create3DCreepMesh(type){
     clone.scale.set(sc, sc, sc);
     root.add(clone);
     root.userData = { isGltf: true, model: clone, scale: sc, isAir: true };
+    addCreepThreatRing(root, type);
     scene.add(root);
     return root;
   }
@@ -3864,6 +3905,7 @@ function create3DCreepMesh(type){
     clone.scale.set(sc, sc, sc);
     root.add(clone);
     root.userData = { isGltf: true, model: clone, scale: sc };
+    addCreepThreatRing(root, type);
     scene.add(root);
     return root;
   }
@@ -3873,6 +3915,7 @@ function create3DCreepMesh(type){
     clone.scale.set(sc, sc, sc);
     root.add(clone);
     root.userData = { isGltf: true, model: clone, scale: sc, isAir: true };
+    addCreepThreatRing(root, type);
     scene.add(root);
     return root;
   }
@@ -3882,6 +3925,7 @@ function create3DCreepMesh(type){
     clone.scale.set(sc, sc, sc);
     root.add(clone);
     root.userData = { isGltf: true, model: clone, scale: sc };
+    addCreepThreatRing(root, type);
     scene.add(root);
     return root;
   }
@@ -3973,6 +4017,7 @@ function create3DCreepMesh(type){
     root.userData = { turret: turret };
   }
 
+  addCreepThreatRing(root, type);
   scene.add(root);
   return root;
 }
@@ -5481,12 +5526,21 @@ function showInspect(){
     hideInspect();
     if(rangeRingMesh) rangeRingMesh.visible = false;
   });
-  box.style.display = 'block';
+    box.style.display = 'block';
   document.body.classList.add('inspect-active');
+  if(rangeRingMesh){
+    var twPos = gridToWorld3D(t.gx, t.gy, 0.06);
+    rangeRingMesh.position.set(twPos.x, 0.06, twPos.z);
+    var rng = towerRange(t) * CELL_SIZE;
+    rangeRingMesh.scale.set(rng, rng, 1);
+    rangeRingMesh.material.color.setHex(0x00f5d4);
+    rangeRingMesh.visible = true;
+  }
 }
 function hideInspect(){
   if(el.inspect) el.inspect.style.display = 'none';
   document.body.classList.remove('inspect-active');
+  if(rangeRingMesh && !S.selected) rangeRingMesh.visible = false;
 }
 
 function refreshHud(){
@@ -5539,6 +5593,7 @@ function onMouseMove(ev){
       rangeRingMesh.position.set(wPos.x, 0.06, wPos.z);
       var rng = TOWERS[S.selected].range * CELL_SIZE;
       rangeRingMesh.scale.set(rng, rng, 1);
+      rangeRingMesh.material.color.setHex(chk.ok ? 0x00f5d4 : 0xff3b30);
       rangeRingMesh.visible = true;
     } else {
       hoverBoxMesh.visible = false;
@@ -5630,6 +5685,7 @@ function bindInput(){
     else if(k === 't') toggleCameraView(); // tactical <-> boots-on-the-map
     else if(k === 'v') cycleSpeed();
     else if(k === 'g') toggleGlyphShop();
+    else if(k === 'k') toggleTacticalClarity();
     else if(S && S.paused){
       if(['q', 'w', 'e', 'r', '1', '2', '3', '4', ' ', 'd', 'f'].indexOf(k) >= 0){
         ev.preventDefault();
@@ -5649,6 +5705,8 @@ function bindInput(){
   });
 
   el.btnWave.addEventListener('click', function(){ audio(); startWave(); });
+  var btnClarity = document.getElementById('btnClarity');
+  if(btnClarity) btnClarity.addEventListener('click', function(){ audio(); toggleTacticalClarity(); });
   var btnPad = document.getElementById('btnPad');
   if(btnPad) btnPad.addEventListener('click', function(){ audio(); sfx('click'); openPadmap(); });
   var btnPadClose = document.getElementById('btnPadClose');
@@ -5930,7 +5988,7 @@ function padPress(btn){
 
 // ---------- Controller setup modal: remap every action button ----------
 // ---------- Settings: Video / Audio / Game (persisted, Esc closes) ----------
-var SETTINGS_DEFAULT = { volume: 0.8, explosionVol: 0.8, exposure: 1.0, grain: true, shake: true, dmgNums: true, hpbars: true, muted: false };
+var SETTINGS_DEFAULT = { volume: 0.8, explosionVol: 0.8, exposure: 1.0, grain: true, shake: true, dmgNums: true, hpbars: true, muted: false, tacticalClarity: false };
 var SETTINGS = Object.assign({}, SETTINGS_DEFAULT);
 try {
   var _ss = JSON.parse(localStorage.getItem('aegis_settings') || 'null');
@@ -5947,7 +6005,84 @@ function applySettings(){
   try { if(renderer) renderer.toneMappingExposure = 1.35 * SETTINGS.exposure; } catch(e){}
   var fg = document.getElementById('filmgrain');
   if(fg) fg.style.display = SETTINGS.grain ? 'block' : 'none';
+  applyTacticalClarityScenery(SETTINGS.tacticalClarity);
 }
+
+function applyTacticalClarityScenery(active){
+  document.body.classList.toggle('tactical-clarity', !!active);
+  var btn = document.getElementById('btnClarity');
+  if(btn) btn.classList.toggle('active', !!active);
+  var chk = document.getElementById('setClarity');
+  if(chk && chk.checked !== !!active) chk.checked = !!active;
+
+  if(typeof POST !== 'undefined' && POST && POST.postMaterial && POST.postMaterial.uniforms && POST.postMaterial.uniforms.uBloomIntensity){
+    POST.postMaterial.uniforms.uBloomIntensity.value = active ? 0.12 : 0.5;
+  }
+  if(typeof dustParticles !== 'undefined' && dustParticles && dustParticles.material){
+    dustParticles.material.opacity = active ? 0.12 : 0.55;
+  }
+
+  // Dim or restore decorative scenery groups
+  if(typeof scene !== 'undefined' && scene){
+    var decor = scene.getObjectByName('perimeterDecorations');
+    if(decor){
+      decor.traverse(function(obj){
+        if(obj.isMesh && obj.material){
+          if(active){
+            if(obj.userData._origOpacity === undefined) obj.userData._origOpacity = (obj.material.opacity !== undefined) ? obj.material.opacity : 1.0;
+            if(obj.userData._origTransparent === undefined) obj.userData._origTransparent = !!obj.material.transparent;
+            obj.material.transparent = true;
+            obj.material.opacity = 0.45;
+          } else if(obj.userData._origOpacity !== undefined){
+            obj.material.opacity = obj.userData._origOpacity;
+            obj.material.transparent = obj.userData._origTransparent;
+          }
+        }
+      });
+    }
+
+    if(scene.userData && scene.userData.floatingIslands){
+      for(var i = 0; i < scene.userData.floatingIslands.length; i++){
+        var grp = scene.userData.floatingIslands[i].group;
+        if(grp){
+          grp.traverse(function(obj){
+            if(obj.isMesh && obj.material){
+              if(active){
+                if(obj.userData._origOpacity === undefined) obj.userData._origOpacity = (obj.material.opacity !== undefined) ? obj.material.opacity : 1.0;
+                if(obj.userData._origTransparent === undefined) obj.userData._origTransparent = !!obj.material.transparent;
+                obj.material.transparent = true;
+                obj.material.opacity = 0.35;
+              } else if(obj.userData._origOpacity !== undefined){
+                obj.material.opacity = obj.userData._origOpacity;
+                obj.material.transparent = obj.userData._origTransparent;
+              }
+            }
+          });
+        }
+      }
+    }
+  }
+}
+
+function toggleTacticalClarity(forceVal){
+  var nextVal = (forceVal !== undefined) ? !!forceVal : !SETTINGS.tacticalClarity;
+  SETTINGS.tacticalClarity = nextVal;
+  saveSettings();
+  applySettings();
+  syncSettingsUI();
+  toast('Tactical Clarity: ' + (nextVal ? 'ACTIVE' : 'OFF'));
+  sfx('click');
+  return nextVal;
+}
+
+function setTacticalClarity(val){
+  return toggleTacticalClarity(!!val);
+}
+
+function isTacticalClarityActive(){
+  return !!SETTINGS.tacticalClarity;
+}
+
 function setGfxProfile(p){
   GFX.profile = p;
   try { localStorage.setItem('aegis_gfx_profile', p); } catch(e){}
@@ -5975,7 +6110,7 @@ function switchSettingsTab(tab){
   for(var j = 0; j < panels.length; j++) panels[j].style.display = (panels[j].id === 'settab-' + tab) ? 'block' : 'none';
 }
 function syncSettingsUI(){
-  var map = [['setExposure', 'exposure', 100], ['setVolume', 'volume', 100], ['setExplosionVol', 'explosionVol', 100], ['setGrain', 'grain'], ['setDmgNums', 'dmgNums'], ['setHpBars', 'hpbars'], ['setShake', 'shake']];
+  var map = [['setExposure', 'exposure', 100], ['setVolume', 'volume', 100], ['setExplosionVol', 'explosionVol', 100], ['setGrain', 'grain'], ['setDmgNums', 'dmgNums'], ['setHpBars', 'hpbars'], ['setShake', 'shake'], ['setClarity', 'tacticalClarity']];
   map.forEach(function(m){
     var elx = document.getElementById(m[0]);
     if(!elx) return;
@@ -5984,6 +6119,8 @@ function syncSettingsUI(){
   });
   var mu = document.getElementById('setMute');
   if(mu){ try { mu.checked = (typeof AUDIO_MUTED !== 'undefined' && AUDIO_MUTED); } catch(e){ mu.checked = false; } }
+  var btn = document.getElementById('btnClarity');
+  if(btn) btn.classList.toggle('active', !!SETTINGS.tacticalClarity);
   renderGfxBtns();
 }
 function openSettings(tab){
@@ -6006,7 +6143,7 @@ function bindSettingsUI(){
     if(elx) elx.addEventListener('change', function(){ SETTINGS[key] = elx.checked; saveSettings(); applySettings(); sfx('click'); });
   }
   num('setExposure', 'exposure', 100); num('setVolume', 'volume', 100); num('setExplosionVol', 'explosionVol', 100);
-  tog('setGrain', 'grain'); tog('setDmgNums', 'dmgNums'); tog('setHpBars', 'hpbars'); tog('setShake', 'shake');
+  tog('setGrain', 'grain'); tog('setDmgNums', 'dmgNums'); tog('setHpBars', 'hpbars'); tog('setShake', 'shake'); tog('setClarity', 'tacticalClarity');
   var mu2 = document.getElementById('setMute');
   if(mu2) mu2.addEventListener('change', function(){
     setMasterMute(mu2.checked);
@@ -6289,6 +6426,7 @@ function pollGamepad(dt){
       rangeRingMesh.position.set(wPos.x, 0.06, wPos.z);
       var rng = TOWERS[S.selected].range * CELL_SIZE;
       rangeRingMesh.scale.set(rng, rng, 1);
+      rangeRingMesh.material.color.setHex(chk.ok ? 0x00f5d4 : 0xff3b30);
       rangeRingMesh.visible = true;
     } else if(g && !S.selected){
       var existingTower = null;
@@ -6590,6 +6728,11 @@ function animate(){
     }
   }
 
+  // Animate dynamic path flow towards Sanctum
+  if(pathLineMesh && pathLineMesh.visible && pathLineMesh.material && pathLineMesh.material.isLineDashedMaterial){
+    pathLineMesh.material.dashOffset -= dt * 2.8;
+  }
+
   stepCamTween(dt);
   stepDirector(dt);
   controls.update();
@@ -6850,7 +6993,13 @@ var API = {
   skipTutorial: skipTutorial,
   completeTutorial: completeTutorial,
   getTutorialStep: getTutorialStep,
-  isTutorialActive: isTutorialActive
+  isTutorialActive: isTutorialActive,
+  toggleTacticalClarity: toggleTacticalClarity,
+  isTacticalClarityActive: isTacticalClarityActive,
+  setTacticalClarity: setTacticalClarity,
+  applyTacticalClarityScenery: applyTacticalClarityScenery,
+  addTowerBasePlinth: addTowerBasePlinth,
+  addCreepThreatRing: addCreepThreatRing
 };
 window.RoboFlora = API;
 window.AegisFlora = API;
