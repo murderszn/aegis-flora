@@ -546,6 +546,7 @@
   </div>
   <div class="settings-panel" id="settab-audio" style="display:none">
     <div class="padmap-row"><div class="act">Master volume<small>All synthesized SFX</small></div><input type="range" id="setVolume" min="0" max="100" step="1" value="80"></div>
+    <div class="padmap-row"><div class="act">Explosion volume<small>Mortar and blast punch</small></div><input type="range" id="setExplosionVol" min="0" max="100" step="1" value="80"></div>
     <div class="padmap-row"><div class="act">Mute<small>Silence everything (M)</small></div><input type="checkbox" id="setMute" class="switch"></div>
   </div>
   <div class="settings-panel" id="settab-game" style="display:none">
@@ -1510,8 +1511,15 @@ function buildWaterAndFire(){
   });
 }
 
-// ---------- Audio Synthesizer ----------
+// ---------- Audio Synthesizer, Dynamics Limiter & SFX Buses ----------
 var AC = null, lastGunSnd = 0;
+var AUDIO_MUTED = false;
+try { AUDIO_MUTED = localStorage.getItem('aegis_audio_muted') === 'true'; } catch(e){}
+
+// Explosion concurrency capping and dynamic ducking to prevent blowout peaks
+var MAX_CONCURRENT_EXPLOSIONS = 3;
+var lastExplosionTimes = [];
+
 function audio(){
   if(AC) return AC;
   try {
@@ -1520,17 +1528,72 @@ function audio(){
   } catch(e){}
   return AC;
 }
+
 function masterOut(){
   var ac = audio(); if(!ac) return null;
   try {
     if(!AC._master){
+      // 1. Master Output Gain
       AC._master = ac.createGain();
-      AC._master.gain.value = (typeof SETTINGS !== 'undefined' && SETTINGS.muted) ? 0 : (typeof SETTINGS !== 'undefined' ? SETTINGS.volume : 0.8);
+      var isMuted = AUDIO_MUTED || (typeof SETTINGS !== 'undefined' && SETTINGS.muted);
+      var curVol = (typeof SETTINGS !== 'undefined' && SETTINGS.volume !== undefined) ? SETTINGS.volume : 0.8;
+      AC._master.gain.setValueAtTime(isMuted ? 0 : curVol, ac.currentTime);
       AC._master.connect(ac.destination);
+
+      // 2. Dynamics Compressor Peak Limiter (-6dB ceiling, fast attack, transparent decay)
+      if(ac.createDynamicsCompressor){
+        AC._limiter = ac.createDynamicsCompressor();
+        AC._limiter.threshold.setValueAtTime(-6.0, ac.currentTime);
+        AC._limiter.knee.setValueAtTime(12.0, ac.currentTime);
+        AC._limiter.ratio.setValueAtTime(12.0, ac.currentTime);
+        AC._limiter.attack.setValueAtTime(0.003, ac.currentTime);
+        AC._limiter.release.setValueAtTime(0.25, ac.currentTime);
+        AC._limiter.connect(AC._master);
+      }
+
+      var busDest = AC._limiter || AC._master;
+
+      // 3. General SFX bus
+      AC._sfxBus = ac.createGain();
+      AC._sfxBus.gain.setValueAtTime(1.0, ac.currentTime);
+      AC._sfxBus.connect(busDest);
+
+      // 4. Dedicated Explosion bus with configurable punch
+      AC._explosionBus = ac.createGain();
+      var expVol = (typeof SETTINGS !== 'undefined' && SETTINGS.explosionVol !== undefined) ? SETTINGS.explosionVol : 0.8;
+      AC._explosionBus.gain.setValueAtTime(expVol, ac.currentTime);
+      AC._explosionBus.connect(busDest);
     }
   } catch(e){ return null; }
-  return AC._master;
+  return AC._sfxBus || AC._master;
 }
+
+function setMasterMute(muted, silent){
+  AUDIO_MUTED = !!muted;
+  try { localStorage.setItem('aegis_audio_muted', AUDIO_MUTED ? 'true' : 'false'); } catch(e){}
+  if(typeof SETTINGS !== 'undefined'){
+    SETTINGS.muted = AUDIO_MUTED;
+    try { saveSettings(); } catch(e){}
+  }
+  if(AC && AC._master){
+    try {
+      var targetGain = AUDIO_MUTED ? 0 : (typeof SETTINGS !== 'undefined' && SETTINGS.volume !== undefined ? SETTINGS.volume : 0.8);
+      AC._master.gain.cancelScheduledValues(AC.currentTime);
+      AC._master.gain.setValueAtTime(targetGain, AC.currentTime);
+    } catch(e){
+      try { AC._master.gain.value = targetGain; } catch(e2){}
+    }
+  }
+  if(typeof updateAudioButton === 'function') updateAudioButton();
+  var mu = document.getElementById('setMute');
+  if(mu) mu.checked = AUDIO_MUTED;
+  if(!silent) toast(AUDIO_MUTED ? 'Audio Muted' : 'Audio Enabled');
+}
+
+function toggleAudioMute(){
+  setMasterMute(!AUDIO_MUTED);
+}
+
 function tone(freq, dur, type, vol, slideTo){
   if(AUDIO_MUTED) return;
   var ac = audio(); if(!ac) return;
@@ -1545,6 +1608,7 @@ function tone(freq, dur, type, vol, slideTo){
     o.start(); o.stop(ac.currentTime + dur + 0.02);
   } catch(e){}
 }
+
 function noiseHit(dur, vol, low){
   if(AUDIO_MUTED) return;
   var ac = audio(); if(!ac) return;
@@ -1558,6 +1622,70 @@ function noiseHit(dur, vol, low){
     src.connect(f); f.connect(g); g.connect(out); src.start();
   } catch(e){}
 }
+
+function playExplosionSFX(customVol){
+  if(AUDIO_MUTED) return;
+  var ac = audio(); if(!ac) return;
+  masterOut(); // Ensure graph initialized
+
+  var now = ac.currentTime;
+  // Prune expired blast timestamps (> 0.35s old)
+  lastExplosionTimes = lastExplosionTimes.filter(function(t){ return now - t < 0.35; });
+
+  // Concurrency cap: drop blast if max overlapping voices reached
+  if(lastExplosionTimes.length >= MAX_CONCURRENT_EXPLOSIONS) return;
+
+  // Dynamic ducking: scale subsequent rapid blasts down to avoid clipping
+  var blastDensity = lastExplosionTimes.length;
+  lastExplosionTimes.push(now);
+  var duckScale = blastDensity === 0 ? 1.0 : (blastDensity === 1 ? 0.65 : 0.45);
+  var baseVol = (customVol || 1.0) * duckScale;
+
+  var outNode = (AC && AC._explosionBus) ? AC._explosionBus : (masterOut() || ac.destination);
+
+  try {
+    // 1. Initial transient crack (bandpassed punch 1100Hz)
+    var durNoise = 0.20;
+    var n = Math.floor(ac.sampleRate * durNoise);
+    var buf = ac.createBuffer(1, n, ac.sampleRate);
+    var d = buf.getChannelData(0);
+    for(var i = 0; i < n; i++){
+      var decay = Math.exp(-i / (ac.sampleRate * 0.04));
+      d[i] = (Math.random() * 2 - 1) * decay;
+    }
+    var noiseSrc = ac.createBufferSource();
+    noiseSrc.buffer = buf;
+    var bpFilter = ac.createBiquadFilter();
+    bpFilter.type = 'bandpass';
+    bpFilter.frequency.setValueAtTime(1100, now);
+    bpFilter.Q.setValueAtTime(1.2, now);
+
+    var noiseGain = ac.createGain();
+    noiseGain.gain.setValueAtTime(0.16 * baseVol, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + durNoise);
+
+    noiseSrc.connect(bpFilter);
+    bpFilter.connect(noiseGain);
+    noiseGain.connect(outNode);
+    noiseSrc.start(now);
+
+    // 2. Controlled sub-bass body rumble (90Hz -> 28Hz smooth low drop)
+    var osc = ac.createOscillator();
+    var oscGain = ac.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(90, now);
+    osc.frequency.exponentialRampToValueAtTime(28, now + 0.30);
+
+    oscGain.gain.setValueAtTime(0.15 * baseVol, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
+
+    osc.connect(oscGain);
+    oscGain.connect(outNode);
+    osc.start(now);
+    osc.stop(now + 0.35);
+  } catch(e){}
+}
+
 function sfx(name){
   try {
     if(name === 'click') tone(720, 0.04, 'square', 0.04);
@@ -1567,7 +1695,7 @@ function sfx(name){
     else if(name === 'error') tone(130, 0.2, 'sawtooth', 0.12, 80);
     else if(name === 'gun'){ var n = performance.now(); if(n - lastGunSnd > 65){ lastGunSnd = n; tone(160 + Math.random() * 80, 0.035, 'square', 0.04); } }
     else if(name === 'launch') noiseHit(0.28, 0.09, 2200);
-    else if(name === 'boom'){ noiseHit(0.45, 0.25, 600); tone(80, 0.35, 'sine', 0.18, 30); }
+    else if(name === 'boom'){ playExplosionSFX(); }
     else if(name === 'zap') tone(1400 + Math.random() * 500, 0.07, 'sawtooth', 0.035, 350);
     else if(name === 'slow') tone(260, 0.3, 'sine', 0.08, 100);
     else if(name === 'wave'){ tone(280, 0.12, 'sawtooth', 0.1); setTimeout(function(){ tone(420, 0.18, 'sawtooth', 0.12); }, 110); }
@@ -1609,8 +1737,6 @@ function disposeSceneObject(root){
 }
 
 // ---------- Fullscreen & Audio Controls ----------
-var AUDIO_MUTED = localStorage.getItem('aegis_audio_muted') === 'true';
-
 function toggleFullscreen(){
   try {
     if(!document.fullscreenElement){
@@ -1632,13 +1758,6 @@ function updateFullscreenIcon(){
 }
 document.addEventListener('fullscreenchange', updateFullscreenIcon);
 document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
-
-function toggleAudioMute(){
-  AUDIO_MUTED = !AUDIO_MUTED;
-  localStorage.setItem('aegis_audio_muted', AUDIO_MUTED ? 'true' : 'false');
-  updateAudioButton();
-  toast(AUDIO_MUTED ? 'Audio Muted' : 'Audio Enabled');
-}
 
 function updateAudioButton(){
   var btn = document.getElementById('btnAudio');
@@ -5308,7 +5427,7 @@ function padPress(btn){
 
 // ---------- Controller setup modal: remap every action button ----------
 // ---------- Settings: Video / Audio / Game (persisted, Esc closes) ----------
-var SETTINGS_DEFAULT = { volume: 0.8, exposure: 1.0, grain: true, shake: true, dmgNums: true, hpbars: true };
+var SETTINGS_DEFAULT = { volume: 0.8, explosionVol: 0.8, exposure: 1.0, grain: true, shake: true, dmgNums: true, hpbars: true, muted: false };
 var SETTINGS = Object.assign({}, SETTINGS_DEFAULT);
 try {
   var _ss = JSON.parse(localStorage.getItem('aegis_settings') || 'null');
@@ -5318,7 +5437,10 @@ function saveSettings(){ try { localStorage.setItem('aegis_settings', JSON.strin
 function applySettings(){
   var muted = false;
   try { muted = (typeof AUDIO_MUTED !== 'undefined' && AUDIO_MUTED); } catch(e){}
-  try { if(AC && AC._master) AC._master.gain.value = muted ? 0 : SETTINGS.volume; } catch(e){}
+  try {
+    if(AC && AC._master) AC._master.gain.setValueAtTime(muted ? 0 : SETTINGS.volume, AC.currentTime);
+    if(AC && AC._explosionBus) AC._explosionBus.gain.setValueAtTime(SETTINGS.explosionVol !== undefined ? SETTINGS.explosionVol : 0.8, AC.currentTime);
+  } catch(e){}
   try { if(renderer) renderer.toneMappingExposure = 1.35 * SETTINGS.exposure; } catch(e){}
   var fg = document.getElementById('filmgrain');
   if(fg) fg.style.display = SETTINGS.grain ? 'block' : 'none';
@@ -5350,7 +5472,7 @@ function switchSettingsTab(tab){
   for(var j = 0; j < panels.length; j++) panels[j].style.display = (panels[j].id === 'settab-' + tab) ? 'block' : 'none';
 }
 function syncSettingsUI(){
-  var map = [['setExposure', 'exposure', 100], ['setVolume', 'volume', 100], ['setGrain', 'grain'], ['setDmgNums', 'dmgNums'], ['setHpBars', 'hpbars'], ['setShake', 'shake']];
+  var map = [['setExposure', 'exposure', 100], ['setVolume', 'volume', 100], ['setExplosionVol', 'explosionVol', 100], ['setGrain', 'grain'], ['setDmgNums', 'dmgNums'], ['setHpBars', 'hpbars'], ['setShake', 'shake']];
   map.forEach(function(m){
     var elx = document.getElementById(m[0]);
     if(!elx) return;
@@ -5380,21 +5502,22 @@ function bindSettingsUI(){
     var elx = document.getElementById(id);
     if(elx) elx.addEventListener('change', function(){ SETTINGS[key] = elx.checked; saveSettings(); applySettings(); sfx('click'); });
   }
-  num('setExposure', 'exposure', 100); num('setVolume', 'volume', 100);
+  num('setExposure', 'exposure', 100); num('setVolume', 'volume', 100); num('setExplosionVol', 'explosionVol', 100);
   tog('setGrain', 'grain'); tog('setDmgNums', 'dmgNums'); tog('setHpBars', 'hpbars'); tog('setShake', 'shake');
   var mu2 = document.getElementById('setMute');
   if(mu2) mu2.addEventListener('change', function(){
-    try { AUDIO_MUTED = mu2.checked; localStorage.setItem('aegis_audio_muted', AUDIO_MUTED ? 'true' : 'false'); } catch(e){}
-    try { if(typeof updateAudioButton === 'function') updateAudioButton(); } catch(e){}
-    applySettings(); sfx('click');
+    setMasterMute(mu2.checked);
+    sfx('click');
   });
   var bc = document.getElementById('btnSettingsClose');
   if(bc) bc.addEventListener('click', function(){ closeSettings(); sfx('click'); });
   var br = document.getElementById('btnSettingsReset');
   if(br) br.addEventListener('click', function(){
     var keepVol = SETTINGS.volume;
+    var keepExpVol = SETTINGS.explosionVol;
     SETTINGS = Object.assign({}, SETTINGS_DEFAULT);
     SETTINGS.volume = keepVol;
+    SETTINGS.explosionVol = keepExpVol;
     saveSettings(); applySettings(); syncSettingsUI(); sfx('click'); toast('Settings restored to defaults');
   });
   var bw = document.getElementById('btnWipeGlyphs');
@@ -6067,7 +6190,13 @@ var API = {
   canMutateGameplay: canMutateGameplay,
   togglePause: togglePause,
   isPaused: function(){ return S ? !!S.paused : false; },
-  useSanctumAbility: useSanctumAbility
+  useSanctumAbility: useSanctumAbility,
+  setMasterMute: setMasterMute,
+  toggleAudioMute: toggleAudioMute,
+  isAudioMuted: function(){ return AUDIO_MUTED; },
+  playExplosionSFX: playExplosionSFX,
+  sfx: sfx,
+  getAudioContext: function(){ return audio(); }
 };
 window.RoboFlora = API;
 window.AegisFlora = API;
