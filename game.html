@@ -609,7 +609,6 @@
   </div>
   <div class="settings-panel" id="settab-audio" style="display:none">
     <div class="padmap-row"><div class="act">Master volume<small>Master audio output</small></div><input type="range" id="setVolume" min="0" max="100" step="1" value="80"></div>
-    <div class="padmap-row"><div class="act">Music volume<small>Original solarpunk ambient score</small></div><input type="range" id="setMusicVol" min="0" max="100" step="1" value="75"></div>
     <div class="padmap-row"><div class="act">SFX volume<small>Combat laser, ballistic & mechanical impacts</small></div><input type="range" id="setSfxVol" min="0" max="100" step="1" value="85"></div>
     <div class="padmap-row"><div class="act">Ambience volume<small>Verdant winds & sanctuary nature</small></div><input type="range" id="setAmbienceVol" min="0" max="100" step="1" value="65"></div>
     <div class="padmap-row"><div class="act">Explosion volume<small>Mortar and blast punch</small></div><input type="range" id="setExplosionVol" min="0" max="100" step="1" value="80"></div>
@@ -1947,7 +1946,6 @@ function resumeAudioContext(){
   if(AC.state === 'running'){
     audioUnlocked = true;
     removeAudioGestureListeners();
-    if(typeof MUSIC_ENGINE !== 'undefined') MUSIC_ENGINE.start();
     return Promise.resolve(true);
   }
   if(resumingAudioPromise) return resumingAudioPromise;
@@ -1956,7 +1954,6 @@ function resumeAudioContext(){
       audioUnlocked = true;
       resumingAudioPromise = null;
       removeAudioGestureListeners();
-      if(typeof MUSIC_ENGINE !== 'undefined') MUSIC_ENGINE.start();
       return true;
     }).catch(function(err){
       resumingAudioPromise = null;
@@ -2081,414 +2078,15 @@ function toggleAudioMute(){
   setMasterMute(!AUDIO_MUTED);
 }
 
-// ---------- Dynamic Solarpunk Ambient Score & Music Engine ----------
-// Original 16-bit inspired procedural composition: "Verdant Harmonies: Solarpunk Echoes"
-// Multi-stem arrangement: Subterranean crystal ambience, plucked harp arpeggios, clockwork percussion, and colossus bass drive.
-var MUSIC_ENGINE = (function(){
-  var isPlaying = false;
-  var isPaused = false;
-  var schedulerTimer = null;
-  var currentStep = 0;
-  var nextNoteTime = 0;
-  var tempo = 104; // 104 BPM - relaxed, reflective solarpunk tempo
-  var secondsPerStep = (60 / tempo) / 4; // 16th notes
-  var currentState = 'build'; // 'build' | 'combat' | 'boss' | 'pause'
-
-  // Dynamic Stem Gains & Filter
-  var stemGains = {
-    ambience: null,
-    arpeggio: null,
-    percussion: null,
-    bossBass: null,
-    filter: null
-  };
-
-  // E Dorian / Minor Pentatonic scale frequencies (Hz)
-  var NOTES = {
-    E2: 82.41, G2: 98.00, A2: 110.00, B2: 123.47,
-    D3: 146.83, E3: 164.81, G3: 196.00, A3: 220.00, B3: 246.94,
-    D4: 293.66, E4: 329.63, G4: 392.00, A4: 440.00, B4: 493.88,
-    D5: 587.33, E5: 659.25, G5: 783.99
-  };
-
-  // 32-step arpeggio pattern: enchanting ancient forest ruins melody (100% original composition)
-  var ARPEGGIO_PATTERN = [
-    'E4', 'G4', 'B4', 'E5', 'D5', 'B4', 'G4', 'A4',
-    'E4', 'G4', 'A4', 'B4', 'G4', 'E4', 'D4', 'E4',
-    'G4', 'B4', 'D5', 'E5', 'G5', 'E5', 'D5', 'B4',
-    'A4', 'B4', 'D5', 'B4', 'A4', 'G4', 'D4', 'E4'
-  ];
-
-  // 16-step clockwork percussion pattern (engages during combat)
-  // 1: kick, 2: wood click, 3: soft hi-hat, 0: rest
-  var PERCUSSION_PATTERN = [
-    1, 0, 3, 0,  2, 0, 3, 1,  0, 0, 3, 0,  2, 1, 3, 0
-  ];
-
-  // 16-step driving bassline pattern (engages during boss / colossus wave)
-  var BOSS_BASS_PATTERN = [
-    'E2', 'E2', 'G2', 'E2',  'A2', 'E2', 'B2', 'A2',
-    'E2', 'E2', 'D3', 'E2',  'B2', 'A2', 'G2', 'E2'
-  ];
-
-  var ambNodes = null;
-
-  function initStems(ac){
-    if(!ac) return;
-    masterOut();
-    if(!AC._musicBus || !AC._ambienceBus) return;
-
-    // Master filter for pause effect (low-pass underwater reflection)
-    if(!stemGains.filter && ac.createBiquadFilter){
-      try {
-        stemGains.filter = ac.createBiquadFilter();
-        stemGains.filter.type = 'lowpass';
-        stemGains.filter.frequency.setValueAtTime(20000, ac.currentTime);
-        stemGains.filter.connect(AC._musicBus);
-      } catch(e){}
-    }
-
-    var musicDest = stemGains.filter || AC._musicBus;
-
-    if(!stemGains.arpeggio && ac.createGain){
-      try {
-        stemGains.arpeggio = ac.createGain();
-        stemGains.arpeggio.gain.setValueAtTime(0.35, ac.currentTime);
-        stemGains.arpeggio.connect(musicDest);
-      } catch(e){}
-    }
-    if(!stemGains.percussion && ac.createGain){
-      try {
-        stemGains.percussion = ac.createGain();
-        stemGains.percussion.gain.setValueAtTime(0.0, ac.currentTime); // muted in build
-        stemGains.percussion.connect(musicDest);
-      } catch(e){}
-    }
-    if(!stemGains.bossBass && ac.createGain){
-      try {
-        stemGains.bossBass = ac.createGain();
-        stemGains.bossBass.gain.setValueAtTime(0.0, ac.currentTime); // muted in build
-        stemGains.bossBass.connect(musicDest);
-      } catch(e){}
-    }
-    if(!stemGains.ambience && ac.createGain){
-      try {
-        stemGains.ambience = ac.createGain();
-        stemGains.ambience.gain.setValueAtTime(0.40, ac.currentTime);
-        stemGains.ambience.connect(AC._ambienceBus);
-      } catch(e){}
-    }
-
-    initAmbienceLoop(ac);
-  }
-
-  function initAmbienceLoop(ac){
-    if(ambNodes || !ac || !stemGains.ambience) return;
-    try {
-      var osc1 = ac.createOscillator();
-      var osc2 = ac.createOscillator();
-      var ambGain = ac.createGain();
-
-      osc1.type = 'sine'; osc1.frequency.setValueAtTime(82.41, ac.currentTime);
-      osc2.type = 'sine'; osc2.frequency.setValueAtTime(123.47, ac.currentTime);
-      ambGain.gain.setValueAtTime(0.18, ac.currentTime);
-
-      osc1.connect(ambGain);
-      osc2.connect(ambGain);
-      ambGain.connect(stemGains.ambience);
-
-      osc1.start();
-      osc2.start();
-
-      ambNodes = { osc1: osc1, osc2: osc2, gain: ambGain };
-    } catch(e){}
-  }
-
-  function playPluckNote(ac, freq, time, dur){
-    if(!ac || !stemGains.arpeggio || AUDIO_MUTED) return;
-    try {
-      var osc = ac.createOscillator();
-      var gain = ac.createGain();
-      var filter = ac.createBiquadFilter();
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, time);
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(2400, time);
-      if(filter.frequency.exponentialRampToValueAtTime){
-        filter.frequency.exponentialRampToValueAtTime(400, time + dur);
-      }
-
-      gain.gain.setValueAtTime(0.001, time);
-      if(gain.gain.linearRampToValueAtTime){
-        gain.gain.linearRampToValueAtTime(0.22, time + 0.015);
-      }
-      if(gain.gain.exponentialRampToValueAtTime){
-        gain.gain.exponentialRampToValueAtTime(0.0001, time + dur);
-      }
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(stemGains.arpeggio);
-
-      osc.start(time);
-      osc.stop(time + dur + 0.05);
-    } catch(e){}
-  }
-
-  function playPercussion(ac, type, time){
-    if(!ac || !stemGains.percussion || AUDIO_MUTED) return;
-    try {
-      if(type === 1){ // Kick
-        var osc = ac.createOscillator();
-        var gain = ac.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(110, time);
-        if(osc.frequency.exponentialRampToValueAtTime) osc.frequency.exponentialRampToValueAtTime(35, time + 0.12);
-        gain.gain.setValueAtTime(0.25, time);
-        if(gain.gain.exponentialRampToValueAtTime) gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
-        osc.connect(gain); gain.connect(stemGains.percussion);
-        osc.start(time); osc.stop(time + 0.14);
-      } else if(type === 2){ // Woodblock
-        var osc2 = ac.createOscillator();
-        var gain2 = ac.createGain();
-        osc2.type = 'triangle';
-        osc2.frequency.setValueAtTime(680, time);
-        if(osc2.frequency.exponentialRampToValueAtTime) osc2.frequency.exponentialRampToValueAtTime(220, time + 0.05);
-        gain2.gain.setValueAtTime(0.18, time);
-        if(gain2.gain.exponentialRampToValueAtTime) gain2.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
-        osc2.connect(gain2); gain2.connect(stemGains.percussion);
-        osc2.start(time); osc2.stop(time + 0.06);
-      } else if(type === 3 && ac.createBuffer){ // Tick / Hi-hat
-        var n = Math.floor(ac.sampleRate * 0.03);
-        var buf = ac.createBuffer(1, n, ac.sampleRate);
-        var d = buf.getChannelData(0);
-        for(var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
-        var src = ac.createBufferSource(); src.buffer = buf;
-        var hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 5000;
-        var g3 = ac.createGain(); g3.gain.setValueAtTime(0.08, time);
-        if(g3.gain.exponentialRampToValueAtTime) g3.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
-        src.connect(hp); hp.connect(g3); g3.connect(stemGains.percussion);
-        src.start(time);
-      }
-    } catch(e){}
-  }
-
-  function playBossBassNote(ac, freq, time, dur){
-    if(!ac || !stemGains.bossBass || AUDIO_MUTED) return;
-    try {
-      var osc = ac.createOscillator();
-      var gain = ac.createGain();
-      var filter = ac.createBiquadFilter();
-
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(freq, time);
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(600, time);
-
-      gain.gain.setValueAtTime(0.20, time);
-      if(gain.gain.exponentialRampToValueAtTime) gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(stemGains.bossBass);
-
-      osc.start(time);
-      osc.stop(time + dur + 0.05);
-    } catch(e){}
-  }
-
-  function scheduleSteps(){
-    var ac = audio();
-    if(!ac || !isPlaying || isPaused) return;
-
-    var lookahead = 0.25; // schedule 250ms ahead
-    while(nextNoteTime < ac.currentTime + lookahead){
-      var stepInArp = currentStep % ARPEGGIO_PATTERN.length;
-      var noteName = ARPEGGIO_PATTERN[stepInArp];
-      if(noteName && NOTES[noteName]){
-        playPluckNote(ac, NOTES[noteName], nextNoteTime, secondsPerStep * 2.5);
-      }
-
-      var stepInPerc = currentStep % PERCUSSION_PATTERN.length;
-      var pType = PERCUSSION_PATTERN[stepInPerc];
-      if(pType > 0){
-        playPercussion(ac, pType, nextNoteTime);
-      }
-
-      var stepInBass = currentStep % BOSS_BASS_PATTERN.length;
-      var bNote = BOSS_BASS_PATTERN[stepInBass];
-      if(bNote && NOTES[bNote] && (currentStep % 2 === 0)){
-        playBossBassNote(ac, NOTES[bNote], nextNoteTime, secondsPerStep * 1.8);
-      }
-
-      nextNoteTime += secondsPerStep;
-      currentStep++;
-    }
-  }
-
-  function start(){
-    if(isPlaying) return;
-    var ac = audio();
-    if(!ac) return;
-    initStems(ac);
-    isPlaying = true;
-    isPaused = false;
-    currentStep = 0;
-    nextNoteTime = (ac.currentTime || 0) + 0.1;
-    if(!schedulerTimer && typeof setInterval !== 'undefined'){
-      schedulerTimer = setInterval(scheduleSteps, 60);
-    }
-  }
-
-  function stop(){
-    isPlaying = false;
-    if(schedulerTimer){
-      clearInterval(schedulerTimer);
-      schedulerTimer = null;
-    }
-  }
-
-  function pause(){
-    isPaused = true;
-    var ac = audio();
-    if(ac && stemGains.filter && ac.currentTime){
-      try {
-        if(stemGains.filter.frequency.setTargetAtTime){
-          stemGains.filter.frequency.setTargetAtTime(350, ac.currentTime, 0.2);
-        } else {
-          stemGains.filter.frequency.value = 350;
-        }
-      } catch(e){}
-    }
-  }
-
-  function resume(){
-    if(!isPlaying){
-      start();
-      return;
-    }
-    isPaused = false;
-    var ac = audio();
-    if(ac){
-      nextNoteTime = (ac.currentTime || 0) + 0.05;
-      if(stemGains.filter && ac.currentTime){
-        try {
-          if(stemGains.filter.frequency.setTargetAtTime){
-            stemGains.filter.frequency.setTargetAtTime(20000, ac.currentTime, 0.3);
-          } else {
-            stemGains.filter.frequency.value = 20000;
-          }
-        } catch(e){}
-      }
-    }
-  }
-
-  function updateState(state){
-    if(state === currentState && !isPaused) return;
-    currentState = state;
-    var ac = audio();
-    if(!ac || !ac.currentTime) return;
-
-    var now = ac.currentTime;
-    var fadeDur = 0.8;
-
-    if(state === 'pause'){
-      pause();
-      return;
-    }
-    if(isPaused){
-      resume();
-    }
-
-    try {
-      function setGain(node, val){
-        if(!node || !node.gain) return;
-        if(node.gain.setTargetAtTime) node.gain.setTargetAtTime(val, now, fadeDur);
-        else node.gain.value = val;
-      }
-
-      if(state === 'build'){
-        setGain(stemGains.arpeggio, 0.35);
-        setGain(stemGains.percussion, 0.0);
-        setGain(stemGains.bossBass, 0.0);
-      } else if(state === 'combat'){
-        setGain(stemGains.arpeggio, 0.30);
-        setGain(stemGains.percussion, 0.35);
-        setGain(stemGains.bossBass, 0.0);
-      } else if(state === 'boss'){
-        setGain(stemGains.arpeggio, 0.25);
-        setGain(stemGains.percussion, 0.45);
-        setGain(stemGains.bossBass, 0.40);
-      }
-    } catch(e){}
-  }
-
-  function setMusicVolume(v){
-    var ac = audio();
-    if(AC && AC._musicBus && ac){
-      try {
-        var val = Math.max(0, Math.min(1, v));
-        if(AC._musicBus.gain.setTargetAtTime) AC._musicBus.gain.setTargetAtTime(val, ac.currentTime, 0.05);
-        else AC._musicBus.gain.value = val;
-      } catch(e){}
-    }
-  }
-
-  function setAmbienceVolume(v){
-    var ac = audio();
-    if(AC && AC._ambienceBus && ac){
-      try {
-        var val = Math.max(0, Math.min(1, v));
-        if(AC._ambienceBus.gain.setTargetAtTime) AC._ambienceBus.gain.setTargetAtTime(val, ac.currentTime, 0.05);
-        else AC._ambienceBus.gain.value = val;
-      } catch(e){}
-    }
-  }
-
-  function setSfxVolume(v){
-    var ac = audio();
-    if(AC && AC._sfxBus && ac){
-      try {
-        var val = Math.max(0, Math.min(1, v));
-        if(AC._sfxBus.gain.setTargetAtTime) AC._sfxBus.gain.setTargetAtTime(val, ac.currentTime, 0.05);
-        else AC._sfxBus.gain.value = val;
-      } catch(e){}
-    }
-  }
-
-  // Handle visibility changes to duck/pause on tab blur and restore cleanly
-  if(typeof document !== 'undefined' && document.addEventListener){
-    document.addEventListener('visibilitychange', function(){
-      if(document.hidden){
-        pause();
-      } else {
-        if(typeof S !== 'undefined' && S && S.paused){
-          pause();
-        } else {
-          resume();
-        }
-      }
-    });
-  }
-
-  return {
-    start: start,
-    stop: stop,
-    pause: pause,
-    resume: resume,
-    updateState: updateState,
-    setMusicVolume: setMusicVolume,
-    setAmbienceVolume: setAmbienceVolume,
-    setSfxVolume: setSfxVolume,
-    isPlaying: function(){ return isPlaying; },
-    isPaused: function(){ return isPaused; },
-    getCurrentState: function(){ return currentState; },
-    get stemGains(){ return stemGains; }
-  };
-})();
+// ---------- MUSIC_ENGINE (Disabled — replaced by Claude FM Radio) ----------
+// Preserved as a no-op stub so existing references don't crash.
+var MUSIC_ENGINE = {
+  start: function(){}, stop: function(){}, pause: function(){}, resume: function(){},
+  updateState: function(){}, setMusicVolume: function(){}, setAmbienceVolume: function(){},
+  setSfxVolume: function(){}, isPlaying: function(){ return false; },
+  isPaused: function(){ return false; }, getCurrentState: function(){ return 'off'; },
+  get stemGains(){ return {}; }
+};
 
 // ---------- Claude FM Radio Controller (Anthropic 24/7 YouTube Lo-Fi Stream) ----------
 var CLAUDE_FM = (function(){
@@ -5818,18 +5416,6 @@ function rerouteFoes(){
 function update(dt){
   S.time += dt;
 
-  // Dynamic soundtrack state synchronization
-  if(typeof MUSIC_ENGINE !== 'undefined'){
-    if(S.paused){
-      MUSIC_ENGINE.updateState('pause');
-    } else if(S.phase === 'combat'){
-      var hasBoss = S.foes.some(function(f){ return f.type === 'boss' && f.hp > 0 && !f.dead; });
-      MUSIC_ENGINE.updateState(hasBoss ? 'boss' : 'combat');
-    } else {
-      MUSIC_ENGINE.updateState('build');
-    }
-  }
-
   if(S.phase === 'combat' && S.spawnQueue.length){
     S.spawnT += dt;
     while(S.spawnQueue.length && S.spawnQueue[0].at <= S.spawnT)
@@ -7230,7 +6816,6 @@ function applySettings(){
   try { muted = (typeof AUDIO_MUTED !== 'undefined' && AUDIO_MUTED); } catch(e){}
   try {
     if(AC && AC._master) AC._master.gain.setValueAtTime(muted ? 0 : SETTINGS.volume, AC.currentTime);
-    if(AC && AC._musicBus) AC._musicBus.gain.setValueAtTime(SETTINGS.musicVol !== undefined ? SETTINGS.musicVol : 0.75, AC.currentTime);
     if(AC && AC._sfxBus) AC._sfxBus.gain.setValueAtTime(SETTINGS.sfxVol !== undefined ? SETTINGS.sfxVol : 0.85, AC.currentTime);
     if(AC && AC._ambienceBus) AC._ambienceBus.gain.setValueAtTime(SETTINGS.ambienceVol !== undefined ? SETTINGS.ambienceVol : 0.65, AC.currentTime);
     if(AC && AC._explosionBus) AC._explosionBus.gain.setValueAtTime(SETTINGS.explosionVol !== undefined ? SETTINGS.explosionVol : 0.8, AC.currentTime);
@@ -7350,7 +6935,6 @@ function syncSettingsUI(){
   var map = [
     ['setExposure', 'exposure', 100],
     ['setVolume', 'volume', 100],
-    ['setMusicVol', 'musicVol', 100],
     ['setSfxVol', 'sfxVol', 100],
     ['setAmbienceVol', 'ambienceVol', 100],
     ['setExplosionVol', 'explosionVol', 100],
@@ -7393,7 +6977,6 @@ function bindSettingsUI(){
   }
   num('setExposure', 'exposure', 100);
   num('setVolume', 'volume', 100);
-  num('setMusicVol', 'musicVol', 100);
   num('setSfxVol', 'sfxVol', 100);
   num('setAmbienceVol', 'ambienceVol', 100);
   num('setExplosionVol', 'explosionVol', 100);
@@ -7408,13 +6991,11 @@ function bindSettingsUI(){
   var br = document.getElementById('btnSettingsReset');
   if(br) br.addEventListener('click', function(){
     var keepVol = SETTINGS.volume;
-    var keepMusicVol = SETTINGS.musicVol;
     var keepSfxVol = SETTINGS.sfxVol;
     var keepAmbVol = SETTINGS.ambienceVol;
     var keepExpVol = SETTINGS.explosionVol;
     SETTINGS = Object.assign({}, SETTINGS_DEFAULT);
     SETTINGS.volume = keepVol;
-    SETTINGS.musicVol = keepMusicVol;
     SETTINGS.sfxVol = keepSfxVol;
     SETTINGS.ambienceVol = keepAmbVol;
     SETTINGS.explosionVol = keepExpVol;
@@ -7723,11 +7304,9 @@ function togglePause(explicitVal){
   S.paused = (typeof explicitVal === 'boolean') ? explicitVal : !S.paused;
   document.body.classList.toggle('is-paused', S.paused);
   if(S.paused){
-    if(typeof MUSIC_ENGINE !== 'undefined') MUSIC_ENGINE.updateState('pause');
     if(typeof CLAUDE_FM !== 'undefined' && CLAUDE_FM.pause) CLAUDE_FM.pause();
     toast('Game Paused · Press P to Resume');
   } else {
-    if(typeof MUSIC_ENGINE !== 'undefined') MUSIC_ENGINE.resume();
     if(typeof CLAUDE_FM !== 'undefined' && CLAUDE_FM.play) CLAUDE_FM.play();
     toast('Game Resumed');
   }
