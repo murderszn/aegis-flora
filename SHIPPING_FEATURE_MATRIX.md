@@ -118,6 +118,7 @@ This document is the single source of truth for all gameplay, architecture, and 
 
 | System | Feature | Status | Details |
 |---|---|---|---|
-| **Audio Safety** | Safe Explosion Bus | **🟢 Verified** | Master mute immediately sets master gain to 0; explosion bus clamped with exponential decibel curve to prevent clipping. |
-| **Soundtrack** | Web Audio Synths | **🟡 Partial** | Procedural ambient synthesis loops; licensed soundtrack integration in progress (#27). |
-| **Leak / Defeat Audio**| Sanctum Alarm | **🟡 Partial** | Sanctum alarm active; dedicated defeat stinger soundscape in progress (#19). |
+| **Audio Safety** | Safe Explosion Bus | **🟢 Verified** | Master mute immediately sets master gain to 0; explosion bus clamped with exponential decibel curve to prevent clipping (`tests/audio_limiter_mute.test.js`). |
+| **Soundtrack** | Dynamic Solarpunk Score | **🟢 Verified** | *Verdant Harmonies: Solarpunk Echoes* 4-stem dynamic score (Ambience, Plucked Arpeggio, Clockwork Percussion, Boss Bass Drive) with pause filter, visibility handling, and independent sliders (`tests/dynamic_music_soundtrack.test.js`). |
+| **Leak / End Audio**| Sanctum Klaxon & Stingers | **🟢 Verified** | Warning klaxon with anti-stacking throttle on leaks; defeat somber collapse chord and victory fanfare (`tests/leak_alarm_sfx.test.js`). |
+| **Licensing Provenance**| Chrono Trigger Assessment | **🟢 Verified** | Written NO-GO legal determination on copyrighted tracks; full commercial provenance documented in `AUDIO_PROVENANCE_AND_LICENSING.md`. |

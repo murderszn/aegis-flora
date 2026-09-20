@@ -345,9 +345,13 @@ See [`SHIPPING_FEATURE_MATRIX.md`](./SHIPPING_FEATURE_MATRIX.md) for the verifie
 - [x] Gesture-driven AudioContext initialization & auto-resume (#20)
 - [x] Goliath Colossus multi-phase boss encounter with repair drones, EMP, shields, and berserk state (#21)
 - [x] Steam Prowler & Dreadnought Ram enemy archetypes with dodge evasion and siege counterplay (#22)
+- [x] Original solarpunk ambient soundtrack loop & dynamic stem audio engine (#27)
+- [x] Chrono Trigger music licensing investigation and written go/no-go determination (#28)
 
-### 🟡 In Progress / Planned (Open Issues)
-- [ ] Licensed solarpunk ambient soundtrack loop (#27)
+### 🟡 Backlog Enhancements (P2 Open Issues)
+- [ ] Accessibility & high-contrast options (#14)
+- [ ] Additional input remapping conveniences (#15)
+- [ ] Unity parity & telemetry cleanups (#16, #17, #23, #24, #25, #26)
 
 ---
 
