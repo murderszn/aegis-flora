@@ -13,16 +13,8 @@
   background:linear-gradient(90deg,transparent,rgba(237,207,139,.62) 13%,rgba(237,207,139,.15) 50%,rgba(237,207,139,.62) 87%,transparent);
   pointer-events:none;
 }
-#topbar .logo-wrap { min-width:234px; gap:11px; cursor:default; }
-#topbar .logo-thumb {
-  width:45px; height:45px; border-radius:50%; border:1px solid #e6cc8e;
-  padding:2px; background:#1b2824;
-  box-shadow:0 0 0 3px rgba(229,201,136,.11),0 2px 14px rgba(0,0,0,.6);
-}
-.brand-copy { display:flex; flex-direction:column; gap:3px; }
-.brand-copy small { font-size:8px; font-weight:800; letter-spacing:2.1px; color:#a7bdac; }
-#topbar .logo { font-size:20px; letter-spacing:2.2px; line-height:1; color:#f6edd5; text-shadow:none; white-space:nowrap; }
-#topbar .logo em { font-style:normal; color:var(--hud-gold); }
+#topbar .logo-wrap { min-width:190px; }
+#topbar .logo { font-size:20px; letter-spacing:2.2px; line-height:1; color:#fff; text-shadow:none; white-space:nowrap; }
 .resource-group { display:flex; height:45px; align-items:stretch; flex:1 1 300px; min-width:230px; }
 .resource-group .stat { position:relative; min-width:0; flex:1 1 0; padding:2px 15px; border-left:1px solid rgba(226,215,184,.15); line-height:normal; overflow:hidden; }
 .resource-group .stat { position:relative; min-width:0; flex:1 1 0; padding:2px 15px; border-left:1px solid rgba(226,215,184,.15); line-height:normal; overflow:hidden; }
@@ -293,13 +285,7 @@ body.director #letterbox-top, body.director #letterbox-bottom { height:7vh; }
   border-bottom:2px solid #a17d49;
   box-shadow:0 2px 0 #071316,0 13px 28px rgba(0,0,0,.36),inset 0 1px rgba(255,247,214,.14),inset 0 -7px 15px rgba(0,0,0,.22);
 }
-#topbar .logo-wrap { min-width:210px; }
-#topbar .logo-thumb {
-  border:2px ridge #d6b975;
-  box-shadow:0 0 0 3px #0d2023,0 0 0 4px rgba(237,204,138,.55),0 3px 14px #02090b,inset 0 1px rgba(255,255,255,.5);
-}
-#topbar .logo { color:#fff7df; text-shadow:0 1px 0 #302414,0 2px 10px rgba(238,194,116,.28); }
-#topbar .logo em { color:#f2cf91; }
+#topbar .logo { color:#fff; text-shadow:0 1px 0 #302414,0 2px 10px rgba(238,194,116,.28); }
 .resource-group { gap:8px; }
 .resource-group .stat,
 .wave-group {
@@ -401,7 +387,6 @@ body.director #letterbox-top, body.director #letterbox-bottom { height:7vh; }
   #topbar { gap:12px; padding:0 14px; }
   #topbar .logo-wrap { min-width:189px; }
   #topbar .logo { font-size:17px; }
-  .brand-copy small { font-size:7px; }
   .resource-group { flex-basis:275px; min-width:250px; }
   .resource-group .stat { padding-left:9px; padding-right:9px; }
   .wave-group { min-width:110px; padding-left:11px; }
@@ -442,9 +427,7 @@ body.director #letterbox-top, body.director #letterbox-bottom { height:7vh; }
 @media (max-width:650px) {
   #topbar { height:122px; gap:3px; }
   #topbar .logo-wrap { min-width:0; }
-  #topbar .logo-thumb { width:31px; height:31px; }
   #topbar .logo { font-size:14px; }
-  .brand-copy small { display:none; }
   .wave-group { order:1; min-width:95px; padding-left:8px; }
   .wave-value b { font-size:13px; }
   .score-line { display:none; }
@@ -513,10 +496,6 @@ body.director #letterbox-top, body.director #letterbox-bottom { height:7vh; }
 }
 .gta-logo-group {
   display: flex; align-items: center; gap: 14px;
-}
-.gta-brand-logo {
-  width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid #dec28c;
-  box-shadow: 0 0 20px rgba(222,194,140,0.4);
 }
 .gta-title-main {
   font-family: var(--font-serif); font-size: 22px; font-weight: 800; letter-spacing: 3px; color: #fff;

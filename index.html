@@ -10,7 +10,6 @@
   <!-- OpenGraph / Social Metadata -->
   <meta property="og:title" content="Aegis Flora — The Living Labyrinth">
   <meta property="og:description" content="A containerless cinematic scrollytelling experience through the floating island of Olympos. Built with Three.js and Greco-Roman Solarpunk art.">
-  <meta property="og:image" content="assets/aegis_flora_logo.jpg">
   <meta property="og:type" content="website">
 
   <style>
@@ -54,12 +53,7 @@
       -webkit-backdrop-filter: blur(8px);
     }
     .brand {
-      display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit;
-    }
-    .brand-logo {
-      width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+      display: flex; align-items: center; text-decoration: none; color: inherit;
     }
     .brand-title {
       font-family: var(--font-serif); font-size: 17px; letter-spacing: 3.5px;
@@ -88,7 +82,9 @@
     aside.chapter-rail {
       position: fixed; right: 40px; top: 50%; transform: translateY(-50%);
       display: flex; flex-direction: column; gap: 20px; z-index: 40;
+      transition: opacity 0.2s ease;
     }
+    body.cinematic-visible .chapter-rail { opacity: 0; pointer-events: none; }
     .chapter-indicator {
       display: flex; align-items: center; justify-content: flex-end; gap: 12px;
       text-decoration: none; color: rgba(255, 255, 255, 0.3); font-size: 11px;
@@ -129,6 +125,11 @@
     }
     .chapter-content.align-center {
       margin: 0 auto; text-align: center;
+    }
+    /* At maximum scroll the footer occupies the bottom of the viewport.
+       Move the final invitation by that exact height to center it on screen. */
+    #chapter-command .chapter-content {
+      transform: translateY(var(--final-footer-offset, 146px));
     }
 
     /* Containerless Editorial Typography */
@@ -216,6 +217,24 @@
       100% { transform: translate(-50%, 10px); opacity: 0; }
     }
 
+    /* Gameplay interlude between the story and the final invitation */
+    .cinematic-section {
+      position: relative; min-height: 100vh; padding: 90px 6vw 72px;
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(230px, 290px);
+      align-content: center; align-items: center; column-gap: 38px; row-gap: 16px;
+      background: linear-gradient(180deg, transparent, rgba(3, 7, 6, 0.16) 35%, rgba(3, 7, 6, 0.24) 65%, transparent);
+    }
+    .cinematic-heading { grid-column: 2; grid-row: 1; max-width: 720px; }
+    .cinematic-heading .chapter-title { font-size: clamp(34px, 3.8vw, 54px); margin-bottom: 14px; }
+    .cinematic-heading .chapter-prose { margin: 0 auto; font-size: clamp(14px, 1.3vw, 17px); }
+    .cinematic-frame {
+      grid-column: 1; grid-row: 1; width: 100%; max-width: 1080px; overflow: hidden; border-radius: 6px;
+      border: 1px solid rgba(232, 226, 207, 0.18);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+    }
+    .cinematic-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #030706; }
+    .cinematic-caption { grid-column: 1; justify-self: end; color: var(--text-dim); font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; }
+
     /* Minimalist Containerless Footer */
     footer.containerless-footer {
       position: relative; z-index: 20; padding: 80px 8vw 50px;
@@ -235,6 +254,8 @@
       header.site-header { padding: 0 20px; }
       aside.chapter-rail { display: none; }
       section.chapter-section { padding: 100px 24px; }
+      .cinematic-section { display: flex; flex-direction: column; padding: 100px 20px 72px; gap: 20px; text-align: center; }
+      .cinematic-heading .chapter-title { font-size: clamp(32px, 7vw, 48px); }
       .chapter-content.align-right { text-align: left; margin-left: 0; }
       footer.containerless-footer { flex-direction: column; text-align: center; }
     }
@@ -249,7 +270,6 @@
   <!-- Minimalist Floating Navigation Bar -->
   <header class="site-header">
     <a href="#chapter-sanctum" class="brand">
-      <img src="assets/aegis_flora_logo.jpg" alt="Aegis Flora Logo" class="brand-logo">
       <span class="brand-title">AEGIS FLORA</span>
     </a>
     <div class="header-actions">
@@ -358,6 +378,21 @@
       </div>
     </section>
 
+    <!-- Gameplay Cinematic: the world in motion after the story -->
+    <section class="cinematic-section" id="gameplay-cinematic" aria-labelledby="cinematic-title">
+      <div class="cinematic-heading">
+        <span class="chapter-num">FROM THE BATTLEFIELD</span>
+        <h2 class="chapter-title" id="cinematic-title">THE SANCTUM IN <em>MOTION</em></h2>
+        <p class="chapter-prose">Watch a live defense unfold across the floating labyrinth.</p>
+      </div>
+      <div class="cinematic-frame">
+        <video id="gameplayVideo" class="cinematic-video" controls muted loop playsinline preload="none"
+               poster="assets/aegis_gameplay_poster.jpg" src="assets/aegis_gameplay_cinematic.mp4"
+               aria-label="Aegis Flora gameplay cinematic"></video>
+      </div>
+      <p class="cinematic-caption">GAMEPLAY FOOTAGE · 39 SECONDS</p>
+    </section>
+
     <!-- Act VI: Engage & Play -->
     <section class="chapter-section" id="chapter-command" data-scene="5">
       <div class="chapter-content align-center">
@@ -380,7 +415,6 @@
   <!-- Minimalist Containerless Footer -->
   <footer class="containerless-footer">
     <div class="footer-left">
-      <img src="assets/aegis_flora_logo.jpg" alt="Aegis Flora Logo" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.2);">
       <span style="font-family: var(--font-serif); font-size: 13px; letter-spacing: 2px; color: #ffffff;">AEGIS FLORA</span>
       <span style="color: var(--text-dim); font-size: 11px; margin-left: 12px;">© 2026 Aegis Flora Team</span>
     </div>
@@ -397,6 +431,36 @@
       var canvas = document.getElementById('storyCanvas');
       if(!canvas) return;
       var ctx = canvas.getContext('2d');
+      var gameplayVideo = document.getElementById('gameplayVideo');
+      if(gameplayVideo){
+        var videoInView = false;
+        var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var videoLoaded = false;
+        function loadGameplayVideo(){
+          if(videoLoaded) return;
+          videoLoaded = true;
+          gameplayVideo.load();
+        }
+        if('IntersectionObserver' in window){
+          var loadObserver = new IntersectionObserver(function(entries){
+            if(entries[0].isIntersecting){ loadGameplayVideo(); loadObserver.disconnect(); }
+          }, {rootMargin: '400px'});
+          loadObserver.observe(gameplayVideo);
+          var playObserver = new IntersectionObserver(function(entries){
+            document.body.classList.toggle('cinematic-visible', entries[0].intersectionRatio >= 0.2);
+            videoInView = entries[0].intersectionRatio >= 0.45;
+            if(videoInView && !document.hidden && !reducedMotion){
+              loadGameplayVideo();
+              gameplayVideo.play().catch(function(){});
+            } else gameplayVideo.pause();
+          }, {threshold: [0, 0.2, 0.45, 0.75]});
+          playObserver.observe(gameplayVideo);
+        } else loadGameplayVideo();
+        document.addEventListener('visibilitychange', function(){
+          if(document.hidden) gameplayVideo.pause();
+          else if(videoInView && !reducedMotion) gameplayVideo.play().catch(function(){});
+        });
+      }
 
       // The 6 Narrative Scenes using high-res asset paintings
       var SCENES = [
@@ -447,9 +511,11 @@
       });
 
       var width, height;
+      var footer = document.querySelector('footer.containerless-footer');
       function resize(){
         width = canvas.width = window.innerWidth;
         height = canvas.height = window.innerHeight;
+        if(footer) document.documentElement.style.setProperty('--final-footer-offset', footer.offsetHeight + 'px');
       }
       window.addEventListener('resize', resize);
       resize();
@@ -478,7 +544,7 @@
 
       // Smooth Scroll Lerp Interpolation
       var smoothScroll = 0;
-      var currentProgress = 0;
+      var chapters = document.querySelectorAll('.chapter-section');
 
       // Active Chapter Indicator Updates
       var chapterIndicators = document.querySelectorAll('.chapter-indicator');
@@ -516,12 +582,19 @@
         mouseX += (targetMouseX - mouseX) * 0.05;
         mouseY += (targetMouseY - mouseY) * 0.05;
 
-        var maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-        currentProgress = Math.max(0, Math.min(1, smoothScroll / maxScroll));
-
-        // Determine current scene index & blending ratio
+        // Anchor scene changes to chapter positions so the video interlude
+        // does not shift the paintings away from their matching copy.
         var totalScenes = SCENES.length;
-        var rawScene = currentProgress * (totalScenes - 1);
+        var viewportCenter = smoothScroll + height / 2;
+        var rawScene = 0;
+        for(var ci = 0; ci < chapters.length - 1; ci++){
+          var from = chapters[ci].offsetTop + chapters[ci].offsetHeight / 2;
+          var to = chapters[ci + 1].offsetTop + chapters[ci + 1].offsetHeight / 2;
+          if(viewportCenter >= from){
+            rawScene = ci + Math.max(0, Math.min(1, (viewportCenter - from) / Math.max(1, to - from)));
+          }
+        }
+        rawScene = Math.min(totalScenes - 1, rawScene);
         var currentSceneIdx = Math.floor(rawScene);
         var nextSceneIdx = Math.min(totalScenes - 1, currentSceneIdx + 1);
         var blend = rawScene - currentSceneIdx;
@@ -532,6 +605,12 @@
         // Update right-rail active indicator
         var activeIdx = Math.round(rawScene);
         updateActiveChapter(activeIdx);
+
+        // Let the video decoder use the frame budget while footage is playing.
+        if(gameplayVideo && !gameplayVideo.paused && !gameplayVideo.ended){
+          requestAnimationFrame(loop);
+          return;
+        }
 
         // Clear canvas
         ctx.fillStyle = '#030706';
