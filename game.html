@@ -1058,6 +1058,35 @@ function purchaseGlyph(gid){
   return true;
 }
 
+// ---------- Tower Targeting Priorities ----------
+var TARGET_MODES = [
+  { id: 'first', label: 'First', desc: 'Leading enemy closest to the Sanctum' },
+  { id: 'last', label: 'Last', desc: 'Trailing enemy closest to the spawn portal' },
+  { id: 'strongest', label: 'Strongest', desc: 'Target with highest current HP' },
+  { id: 'weakest', label: 'Weakest', desc: 'Target with lowest current HP (execute)' },
+  { id: 'closest', label: 'Closest', desc: 'Target nearest in physical distance to tower' }
+];
+
+function setTowerTargetMode(tower, modeId){
+  if(!tower) return;
+  var valid = TARGET_MODES.some(function(m){ return m.id === modeId; });
+  tower.targetMode = valid ? modeId : 'first';
+  if(S && S.selTower === tower && typeof showInspect === 'function') showInspect();
+}
+
+function cycleTowerTargetMode(tower, dir){
+  if(!tower) return;
+  var curId = tower.targetMode || 'first';
+  var idx = 0;
+  for(var i = 0; i < TARGET_MODES.length; i++){
+    if(TARGET_MODES[i].id === curId){ idx = i; break; }
+  }
+  var next = (idx + (dir || 1) + TARGET_MODES.length) % TARGET_MODES.length;
+  tower.targetMode = TARGET_MODES[next].id;
+  if(S && S.selTower === tower && typeof showInspect === 'function') showInspect();
+  if(typeof sfx === 'function') sfx('click');
+}
+
 // ---------- A* Pathfinding ----------
 function findPath(sx, sy, blocked){
   if(!inB(sx, sy) || !inB(SANCTUM.x, SANCTUM.y)) return null;
@@ -4322,7 +4351,8 @@ function placeAt(gx, gy, key){
     gx: gx, gy: gy, type: key, branch: 0, cd: 0,
     invested: cost, beamTgt: null, beamTime: 0, pulse: 0,
     mesh: mesh, kills: 0, totalDmg: 0,
-    isBlocker: !!(TOWERS[key] && TOWERS[key].isBlocker)
+    isBlocker: !!(TOWERS[key] && TOWERS[key].isBlocker),
+    targetMode: 'first'
   });
 
   rerouteFoes();
@@ -4593,7 +4623,8 @@ function update(dt){
       t.mesh.userData.tierPip.position.y = 2.5 + Math.sin(S.time * 3 + t.gx) * 0.15;
     }
     var range = towerRange(t);
-    var best = null, bp = -1e9;
+    var tMode = t.targetMode || 'first';
+    var best = null, bestScore = -1e12;
     var tPos = { x: t.gx + 0.5, y: t.gy + 0.5 };
 
     for(var f of S.foes){
@@ -4601,13 +4632,29 @@ function update(dt){
       if(f.air && t.type === 'gun' && t.branch && BRANCH.gun[t.branch].aa === false) continue;
       var d = Math.hypot(f.x - tPos.x, f.y - tPos.y);
       if(d <= range + f.r){
-        var prog = (f.wp || 0) - d;
-        if(prog > bp){ bp = prog; best = f; }
+        var prog = (f.wp || 0) * 1000 - d;
+        var score = 0;
+        if(tMode === 'first'){
+          score = prog;
+        } else if(tMode === 'last'){
+          score = -prog;
+        } else if(tMode === 'strongest'){
+          score = f.hp * 100000 + prog;
+        } else if(tMode === 'weakest'){
+          score = -f.hp * 100000 + prog;
+        } else if(tMode === 'closest'){
+          score = -d * 100000 + prog;
+        }
+        if(score > bestScore){
+          bestScore = score;
+          best = f;
+        }
       }
     }
 
     t.curAngle = t.curAngle || 0;
     t.hasTarget = false;
+    t.lastTarget = best || null;
 
     if(best){
       var dx = best.x - tPos.x;
@@ -5120,13 +5167,40 @@ function showInspect(){
   } else {
     html += '<div class="row" style="color:var(--gold-glow)">★ Elite: ' + BRANCH[t.type][t.branch].name + '</div>';
   }
-  html += '<div class="row" style="font-size:11px">Priority: <b>First</b> · Last · Strongest <span style="color:#5a6a60">(click tower to cycle soon)</span></div>';
+
+  if(t.type !== 'blocker'){
+    var curMode = t.targetMode || 'first';
+    html += '<div class="row" style="margin-top:6px;">' +
+      '<div style="font-size:11px;color:#9bb0a4;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">' +
+        '<span>Target Priority (Tab / Y):</span>' +
+        '<strong style="color:#00F5D4;text-transform:uppercase;letter-spacing:0.5px;">' + curMode + '</strong>' +
+      '</div>' +
+      '<div style="display:flex;gap:4px;">';
+    for(var m of TARGET_MODES){
+      var isSel = (curMode === m.id);
+      html += '<button type="button" class="btn btn-target-mode' + (isSel ? ' sel' : '') + '" data-mode="' + m.id + '" title="' + m.desc + '" style="flex:1;padding:4px 0;font-size:9.5px;' + (isSel ? 'background:#00f5d4;color:#031815;font-weight:bold;' : '') + '">' + m.label + '</button>';
+    }
+    html += '</div></div>';
+  } else {
+    html += '<div class="row" style="font-size:11px;color:#9bb0a4;">Greco-Roman Masonry Wall · Obstacle only (no weapon battery)</div>';
+  }
+
   html += '<button class="btn up btn-sell" id="btnSellTower">Sell Tower (+$' + Math.round(t.invested * SELL_RATE) + ')</button>';
   box.innerHTML = html;
   var a = document.getElementById('btnUpA'), b = document.getElementById('btnUpB');
   if(a) a.addEventListener('click', function(){ var r = upgradeTo(t, 'A'); if(!r.ok){ toast(r.why); sfx('error'); } else showInspect(); });
   if(b) b.addEventListener('click', function(){ var r = upgradeTo(t, 'B'); if(!r.ok){ toast(r.why); sfx('error'); } else showInspect(); });
   document.getElementById('btnSellTower').addEventListener('click', function(){ sellTower(t); });
+  var modeBtns = box.querySelectorAll('.btn-target-mode');
+  for(var mi = 0; mi < modeBtns.length; mi++){
+    (function(btn){
+      btn.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        setTowerTargetMode(t, btn.getAttribute('data-mode'));
+        sfx('click');
+      });
+    })(modeBtns[mi]);
+  }
   var closeBtn = document.getElementById('btnCloseInspect');
   if(closeBtn) closeBtn.addEventListener('click', function(ev){
     ev.stopPropagation();
@@ -5238,6 +5312,13 @@ function bindInput(){
     if(document.getElementById('loading-screen')) return;
     audio();
     var k = (ev.key || '').toLowerCase();
+    if(k === 'tab' || (k === 'y' && S && S.selTower)){
+      if(S && S.selTower){
+        ev.preventDefault();
+        cycleTowerTargetMode(S.selTower, ev.shiftKey ? -1 : 1);
+        return;
+      }
+    }
     if(k === 'p') togglePause();
     else if(k === 'escape'){
       var sm = document.getElementById('settings-modal');
@@ -5458,7 +5539,15 @@ function padPress(btn){
     return;
   }
   if(btn === M.pause){ togglePause(); return; }
-  if(btn === M.view){ toggleCameraView(); return; }
+  if(btn === M.view){
+    if(S && S.selTower){
+      cycleTowerTargetMode(S.selTower, 1);
+      padRumble(0.2, 0.4, 80);
+      return;
+    }
+    toggleCameraView();
+    return;
+  }
   if(btn === M.speed){ cycleSpeed(); return; }
   if(btn === M.cancel){
     var sm = document.getElementById('settings-modal');
@@ -6295,7 +6384,10 @@ var API = {
   getMetaScrap: getMetaScrap,
   setMetaScrap: setMetaScrap,
   addMetaScrap: addMetaScrap,
-  GLYPH_DEFS: GLYPH_DEFS
+  GLYPH_DEFS: GLYPH_DEFS,
+  TARGET_MODES: TARGET_MODES,
+  setTowerTargetMode: setTowerTargetMode,
+  cycleTowerTargetMode: cycleTowerTargetMode
 };
 window.RoboFlora = API;
 window.AegisFlora = API;
