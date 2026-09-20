@@ -367,6 +367,7 @@
   #crosshair::before { left: 12px; top: 2px; width: 2px; height: 22px; }
   #crosshair::after { top: 12px; left: 2px; height: 2px; width: 22px; }
   #crosshair.bad::before, #crosshair.bad::after { background: var(--hostile-red); box-shadow: 0 0 6px var(--hostile-red); }
+  #crosshair.inspect-target::before, #crosshair.inspect-target::after { background: var(--gold); box-shadow: 0 0 8px var(--gold-glow); }
   /* --- Gamepad HUD chip (lives in the top bar — never floats over the HUD) --- */
   #btnPad .pad-dot { width: 8px; height: 8px; border-radius: 50%; background: #5a6a60; display: inline-block; margin-right: 6px; }
   #btnPad.connected { border-color: var(--teal-glow); color: #fff; box-shadow: 0 0 10px rgba(0,245,212,0.35); }
@@ -4580,7 +4581,6 @@ function bindInput(){
   });
 
   el.btnWave.addEventListener('click', function(){ audio(); startWave(); });
-  el.btnCam.addEventListener('click', setCameraIsometric);
   var btnPad = document.getElementById('btnPad');
   if(btnPad) btnPad.addEventListener('click', function(){ audio(); sfx('click'); openPadmap(); });
   var btnPadClose = document.getElementById('btnPadClose');
@@ -4593,6 +4593,40 @@ function bindInput(){
   });
   var padModal = document.getElementById('padmap-modal');
   if(padModal) padModal.addEventListener('click', function(ev){ if(ev.target === padModal) closePadmap(); });
+
+  // Native Web Gamepad connect/disconnect events
+  window.addEventListener('gamepadconnected', function(ev){
+    var gp = ev.gamepad;
+    if(gp){
+      PAD.active = true;
+      PAD.lastActiveIndex = gp.index;
+      PAD.name = gp.id || 'Gamepad';
+      PAD.idleFrames = 0;
+      updatePadPill();
+      var cross = document.getElementById('crosshair');
+      if(cross) cross.style.display = 'block';
+      toast('🎮 ' + (gp.id ? gp.id.slice(0, 28) : 'Gamepad') + ' connected');
+      sfx('upgrade');
+      padRumble(0.2, 0.5, 120);
+    }
+  });
+  window.addEventListener('gamepaddisconnected', function(ev){
+    var remaining = getActiveGamepad();
+    if(!remaining){
+      PAD.active = false;
+      PAD.lastActiveIndex = null;
+      PAD.prev = [];
+      updatePadPill();
+      var cross = document.getElementById('crosshair');
+      if(cross) cross.style.display = 'none';
+      toast('🎮 Controller disconnected');
+    } else {
+      PAD.lastActiveIndex = remaining.index;
+      PAD.name = remaining.id || 'Gamepad';
+      updatePadPill();
+      toast('🎮 Switched to controller ' + remaining.index);
+    }
+  });
   // grabbing the canvas hands the camera back: drag (not click) or wheel exits director mode
   var downPos = null;
   renderer.domElement.addEventListener('pointerdown', function(ev){ downPos = { x: ev.clientX, y: ev.clientY }; });
@@ -4657,37 +4691,103 @@ function onWindowResize(){
   applyGraphicsProfile();
 }
 
-// ---------- Gamepad controller support (Standard mapping: Xbox/PS/Switch) ----------
+// ---------- Gamepad controller support (Standard mapping: Xbox/PS/Switch/Generic) ----------
 // Left stick: march across the map · Right stick: look around · LT/RT: zoom
-// A: place/select · B: cancel · X: send wave · Y: camera view · LB/RB: cycle tower · Start: pause
-var PAD = { active: false, prev: [], name: '' };
+// A: place/select · B: cancel · X: send wave · Y: camera view · LB/RB: cycle tower / upgrade · Start: pause · L3/R3: abilities
+var PAD = { active: false, prev: [], name: '', lastActiveIndex: null, idleFrames: 0 };
 var PAD_TOWERS = ['gun', 'rocket', 'beam', 'slow'];
+
+function getActiveGamepad(){
+  var raw = null;
+  try {
+    raw = (typeof navigator.getGamepads === 'function') ? navigator.getGamepads() :
+          ((typeof navigator.webkitGetGamepads === 'function') ? navigator.webkitGetGamepads() : null);
+  } catch(e){}
+  if(!raw) return null;
+
+  var valid = [];
+  for(var i = 0; i < raw.length; i++){
+    var p = raw[i];
+    if(p && p.connected && (p.buttons || p.axes)) valid.push(p);
+  }
+  if(valid.length === 0) return null;
+
+  // 1. Scan for any gamepad with active inputs (buttons pressed or sticks displaced)
+  for(var j = 0; j < valid.length; j++){
+    var pad = valid[j];
+    if(pad.buttons){
+      for(var bi = 0; bi < pad.buttons.length; bi++){
+        var b = pad.buttons[bi];
+        if(b && (b.pressed || (typeof b.value === 'number' && b.value > 0.4) || b === true)){
+          PAD.lastActiveIndex = pad.index;
+          return pad;
+        }
+      }
+    }
+    if(pad.axes){
+      for(var ai = 0; ai < pad.axes.length; ai++){
+        if(Math.abs(pad.axes[ai] || 0) > 0.18){
+          PAD.lastActiveIndex = pad.index;
+          return pad;
+        }
+      }
+    }
+  }
+
+  // 2. Fall back to the last active pad if still connected
+  if(PAD.lastActiveIndex !== null && PAD.lastActiveIndex !== undefined){
+    for(var k = 0; k < valid.length; k++){
+      if(valid[k].index === PAD.lastActiveIndex) return valid[k];
+    }
+  }
+
+  // 3. Fall back to standard mapping or any connected gamepad with controls
+  for(var m = 0; m < valid.length; m++){
+    if(valid[m].mapping === 'standard' || (valid[m].buttons && valid[m].buttons.length >= 4)) return valid[m];
+  }
+  return valid[0];
+}
+
 function padRumble(strong, weak, dur){
   try {
-    var pads = navigator.getGamepads ? navigator.getGamepads() : [];
-    for(var p of pads){
-      if(p && p.connected && p.vibrationActuator && p.vibrationActuator.playEffect){
-        p.vibrationActuator.playEffect('dual-rumble', { strongMagnitude: strong || 0.5, weakMagnitude: weak || 0.3, duration: dur || 120 });
-        break;
-      }
+    var p = getActiveGamepad();
+    if(p && p.vibrationActuator && typeof p.vibrationActuator.playEffect === 'function'){
+      p.vibrationActuator.playEffect('dual-rumble', {
+        startDelay: 0,
+        duration: dur || 120,
+        weakMagnitude: weak || 0.3,
+        strongMagnitude: strong || 0.5
+      }).catch(function(){});
+    } else if(p && p.hapticActuators && p.hapticActuators.length > 0 && typeof p.hapticActuators[0].pulse === 'function'){
+      p.hapticActuators[0].pulse(strong || 0.5, dur || 120);
     }
   } catch(e){}
 }
+
 function centerTile(){
   raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
   var hit = new THREE.Vector3();
-  if(raycaster.ray.intersectPlane(rayPlane, hit)){
+  if(rayPlane && raycaster.ray.intersectPlane(rayPlane, hit)){
     var g = worldToGrid3D(hit);
     if(inB(g.gx, g.gy)) return g;
   }
   return null;
 }
+
 function padCycleTower(dir){
   var i = PAD_TOWERS.indexOf(S.selected);
-  i = (i + dir + PAD_TOWERS.length) % PAD_TOWERS.length;
-  selectBuild(PAD_TOWERS[i]);
+  if(i === -1){
+    i = (dir > 0) ? 0 : (PAD_TOWERS.length - 1);
+  } else {
+    i = (i + dir + PAD_TOWERS.length) % PAD_TOWERS.length;
+  }
+  S.selected = PAD_TOWERS[i];
+  S.selTower = null;
+  hideInspect();
+  paintCards();
   sfx('click');
 }
+
 function padPress(btn){
   audio();
   var M = PADMAP;
@@ -4697,27 +4797,75 @@ function padPress(btn){
     if(S.selected){
       var res = placeAt(g.gx, g.gy, S.selected);
       if(!res.ok){ toast(res.why); sfx('error'); padRumble(0.9, 0.2, 80); }
-      else { padRumble(0.3, 0.7, 90); if(S.cash < TOWERS[S.selected].cost){ S.selected = null; paintCards(); } }
+      else {
+        padRumble(0.3, 0.7, 90);
+        if(S.cash < TOWERS[S.selected].cost){ S.selected = null; paintCards(); }
+      }
     } else {
       var found = null;
-      for(var t of S.towers){ if(t.gx === g.gx && t.gy === g.gy) found = t; }
+      for(var ti = 0; ti < S.towers.length; ti++){
+        if(S.towers[ti].gx === g.gx && S.towers[ti].gy === g.gy){
+          found = S.towers[ti]; break;
+        }
+      }
       S.selTower = found;
       if(found){ showInspect(); sfx('click'); }
       else hideInspect();
     }
   }
-  else if(btn === M.cancel){ S.selected = null; S.selTower = null; hideInspect(); paintCards(); }
-  else if(btn === M.wave){ if(!startWave()){ toast('Wave already raging!'); sfx('error'); } }
+  else if(btn === M.cancel){
+    var sm = document.getElementById('settings-modal');
+    var pm = document.getElementById('padmap-modal');
+    var gs = document.getElementById('glyphShop');
+    if(sm && sm.classList.contains('open')) closeSettings();
+    else if(pm && pm.classList.contains('open')) closePadmap();
+    else if(gs && gs.style.display !== 'none') toggleGlyphShop();
+    else {
+      S.selected = null; S.selTower = null; hideInspect(); paintCards();
+      if(hoverBoxMesh) hoverBoxMesh.visible = false;
+      if(rangeRingMesh) rangeRingMesh.visible = false;
+    }
+  }
+  else if(btn === M.wave){
+    if(!startWave()){ toast('Wave already raging!'); sfx('error'); }
+    else { padRumble(0.3, 0.7, 100); }
+  }
   else if(btn === M.view){ toggleCameraView(); }
-  else if(btn === M.prev){ padCycleTower(-1); }
-  else if(btn === M.next){ padCycleTower(1); }
+  else if(btn === M.prev){
+    if(S.selTower && !S.selTower.branch){
+      var ra = upgradeTo(S.selTower, 'A');
+      if(!ra.ok){ toast(ra.why); sfx('error'); padRumble(0.6, 0.2, 80); }
+      else { sfx('upgrade'); padRumble(0.2, 0.6, 120); showInspect(); refreshHud(); }
+    } else {
+      padCycleTower(-1);
+    }
+  }
+  else if(btn === M.next){
+    if(S.selTower && !S.selTower.branch){
+      var rb = upgradeTo(S.selTower, 'B');
+      if(!rb.ok){ toast(rb.why); sfx('error'); padRumble(0.6, 0.2, 80); }
+      else { sfx('upgrade'); padRumble(0.2, 0.6, 120); showInspect(); refreshHud(); }
+    } else {
+      padCycleTower(1);
+    }
+  }
   else if(btn === M.speed){ cycleSpeed(); }
   else if(btn === M.pause){ togglePause(); }
+  // L3 / R3 ability shortcuts (Left Stick Click = Root, Right Stick Click = Solar Flare)
+  else if(btn === 10){ useSanctumAbility('root'); padRumble(0.4, 0.5, 120); }
+  else if(btn === 11){ useSanctumAbility('flare'); padRumble(0.7, 0.7, 160); }
   // fixed D-pad aliases (always live): Up/Down/Left/Right
   else if(btn === 12){ padCycleTower(-1); }
-  else if(btn === 13){ S.selected = null; S.selTower = null; hideInspect(); paintCards(); }
+  else if(btn === 13){
+    S.selected = null; S.selTower = null; hideInspect(); paintCards();
+    if(hoverBoxMesh) hoverBoxMesh.visible = false;
+    if(rangeRingMesh) rangeRingMesh.visible = false;
+  }
   else if(btn === 14){ padCycleTower(1); }
-  else if(btn === 15){ if(!startWave()){ toast('Wave already raging!'); sfx('error'); } }
+  else if(btn === 15){
+    if(!startWave()){ toast('Wave already raging!'); sfx('error'); }
+    else { padRumble(0.3, 0.7, 100); }
+  }
 }
 
 // ---------- Controller setup modal: remap every action button ----------
@@ -4883,16 +5031,16 @@ function openPadmap(){ renderPadmap(); document.getElementById('padmap-modal').c
 function closePadmap(){ padRebinding = null; document.getElementById('padmap-modal').classList.remove('open'); }
 function startPadRebind(key){
   padRebinding = key; renderPadmap();
-  toast('Press a button for "' + key + '"… (Esc cancels)');
+  toast('Press any button on controller for "' + key + '"… (Esc cancels)');
   var waited = 0;
   var iv = setInterval(function(){
     if(padRebinding !== key){ clearInterval(iv); return; }
-    var pads = [];
-    try { pads = navigator.getGamepads ? navigator.getGamepads() : []; } catch(e){}
-    for(var p of pads){
-      if(!p || !p.connected) continue;
-      for(var b = 0; b < p.buttons.length; b++){
-        if(p.buttons[b] && p.buttons[b].pressed){
+    var gp = getActiveGamepad();
+    if(gp && gp.buttons){
+      for(var b = 0; b < gp.buttons.length; b++){
+        var btn = gp.buttons[b];
+        var pressed = btn && (btn.pressed || (typeof btn.value === 'number' && btn.value > 0.4) || btn === true);
+        if(pressed){
           PADMAP[key] = b;
           try { localStorage.setItem('aegis_padmap', JSON.stringify(PADMAP)); } catch(e){}
           padRebinding = null; renderPadmap(); updatePadPill(); sfx('upgrade');
@@ -4905,32 +5053,44 @@ function startPadRebind(key){
     if((waited += 100) > 12000){ padRebinding = null; renderPadmap(); toast('Rebind timed out'); clearInterval(iv); }
   }, 100);
 }
+
 function pollGamepad(dt){
-  var pads = [];
-  try { pads = navigator.getGamepads ? navigator.getGamepads() : []; } catch(e){}
-  var gp = null;
-  for(var p of pads){ if(p && p.connected){ gp = p; break; } }
+  var gp = getActiveGamepad();
   var cross = document.getElementById('crosshair');
   if(!gp){
-    if(PAD.active){ PAD.active = false; PAD.prev = []; updatePadPill(); if(cross) cross.style.display = 'none'; }
+    if(PAD.active){
+      PAD.idleFrames = (PAD.idleFrames || 0) + 1;
+      // 45 consecutive frames without gamepad before dropping connection state
+      if(PAD.idleFrames > 45){
+        PAD.active = false;
+        PAD.prev = [];
+        updatePadPill();
+        if(cross) cross.style.display = 'none';
+      }
+    }
     return;
   }
+  PAD.idleFrames = 0;
   if(!PAD.active){
-    PAD.active = true; PAD.name = gp.id || 'Gamepad';
+    PAD.active = true;
+    PAD.lastActiveIndex = gp.index;
+    PAD.name = gp.id || 'Gamepad';
     updatePadPill();
     if(cross) cross.style.display = 'block';
-    toast('Gamepad linked — ' + PAD.name.slice(0, 32));
+    toast('🎮 Gamepad linked — ' + PAD.name.slice(0, 28));
   }
   function dz(v){ return Math.abs(v) < 0.16 ? 0 : v; }
-  var lx = dz(gp.axes[0] || 0), ly = dz(gp.axes[1] || 0);
-  var rx = dz(gp.axes[2] || 0), ry = dz(gp.axes[3] || 0);
-  if(lx || ly || rx || ry) releaseDirector(); // stick input takes the camera back instantly
-  // march: left stick SLIDES the map — camera and target travel together so the view never tilts
+  var axes = gp.axes || [];
+  var lx = dz(axes[0] || 0), ly = dz(axes[1] || 0);
+  var rx = dz(axes[2] || 0), ry = dz(axes[3] || 0);
+  if(lx || ly || rx || ry) releaseDirector(); // stick input takes camera back instantly
+
+  // march: left stick SLIDES the map smoothly
   if((lx || ly) && controls){
     var fwd = new THREE.Vector3().subVectors(controls.target, camera.position);
     fwd.y = 0; fwd.normalize();
-    var right = new THREE.Vector3(-fwd.z, 0, fwd.x); // true camera-right (was negated)
-    var spd = 16 * dt * (S && S.camView === 'immersive' ? 0.6 : 1);
+    var right = new THREE.Vector3(-fwd.z, 0, fwd.x); // true camera-right
+    var spd = 20 * dt * (S && S.camView === 'immersive' ? 0.6 : 1);
     var slide = new THREE.Vector3();
     slide.addScaledVector(right, lx * spd);
     slide.addScaledVector(fwd, -ly * spd);
@@ -4941,31 +5101,57 @@ function pollGamepad(dt){
     controls.target.z = Math.max(-lim, Math.min(lim, controls.target.z));
     controls.target.y = 0;
   }
-  // look: right stick turns the view like a strategy game — right means right, up means rise
+
+  // look: right stick turns view like an RTS / strategy camera
   if((rx || ry) && controls){
     var off = new THREE.Vector3().subVectors(camera.position, controls.target);
-    var ang = rx * dt * 2.4; // stick-right orbits the camera so the view turns right
+    var ang = rx * dt * 2.5; // stick-right orbits camera clockwise
     var cos = Math.cos(ang), sin = Math.sin(ang);
     var nx = off.x * cos - off.z * sin, nz = off.x * sin + off.z * cos;
     off.x = nx; off.z = nz;
-    off.y = Math.max(2.5, Math.min(95, off.y - ry * dt * 30)); // stick-up rises to bird view
+    off.y = Math.max(2.5, Math.min(95, off.y - ry * dt * 32)); // stick-up elevates view
     camera.position.copy(controls.target).add(off);
   }
+
   // zoom: triggers dolly
-  var lt = (gp.buttons[6] && gp.buttons[6].value) || 0, rt = (gp.buttons[7] && gp.buttons[7].value) || 0;
-  if((lt > 0.1 || rt > 0.1) && controls){
+  var btns = gp.buttons || [];
+  var ltVal = (btns[6] && typeof btns[6].value === 'number') ? btns[6].value : ((btns[6] && btns[6].pressed) ? 1 : 0);
+  var rtVal = (btns[7] && typeof btns[7].value === 'number') ? btns[7].value : ((btns[7] && btns[7].pressed) ? 1 : 0);
+  if((ltVal > 0.08 || rtVal > 0.08) && controls){
     var off2 = new THREE.Vector3().subVectors(camera.position, controls.target);
-    var len = Math.max(8, Math.min(200, off2.length() * (1 + (lt - rt) * dt * 1.6)));
+    var len = Math.max(8, Math.min(200, off2.length() * (1 + (ltVal - rtVal) * dt * 1.8)));
     off2.setLength(len);
     camera.position.copy(controls.target).add(off2);
   }
+
   // buttons (edge triggered)
-  for(var b = 0; b < Math.min(gp.buttons.length, 16); b++){
-    var down = gp.buttons[b] && gp.buttons[b].pressed;
-    if(down && !PAD.prev[b]) padPress(b);
+  var btnCount = Math.min(btns.length, 18);
+  for(var b = 0; b < btnCount; b++){
+    var btnObj = btns[b];
+    var down = !!(btnObj && (btnObj.pressed || (typeof btnObj.value === 'number' && btnObj.value > 0.4) || btnObj === true));
+    if(down && !PAD.prev[b]){
+      padPress(b);
+    }
     PAD.prev[b] = down;
   }
-  // crosshair tile highlight mirrors the mouse ghost
+
+  // D-pad axis fallback for controllers reporting hat switch on axes
+  if(axes.length >= 6 && btns.length < 16){
+    var dpadX = dz(axes[4] || 0);
+    var dpadY = dz(axes[5] || 0);
+    var dUp = dpadY < -0.5, dDown = dpadY > 0.5;
+    var dLeft = dpadX < -0.5, dRight = dpadX > 0.5;
+    if(dUp && !PAD.prev[12]) padPress(12);
+    if(dDown && !PAD.prev[13]) padPress(13);
+    if(dLeft && !PAD.prev[14]) padPress(14);
+    if(dRight && !PAD.prev[15]) padPress(15);
+    PAD.prev[12] = dUp;
+    PAD.prev[13] = dDown;
+    PAD.prev[14] = dLeft;
+    PAD.prev[15] = dRight;
+  }
+
+  // crosshair tile highlight mirrors mouse ghost & highlights inspectable units
   if(cross){
     var g = centerTile();
     if(g && S.selected){
@@ -4979,9 +5165,26 @@ function pollGamepad(dt){
       var rng = TOWERS[S.selected].range * CELL_SIZE;
       rangeRingMesh.scale.set(rng, rng, 1);
       rangeRingMesh.visible = true;
+    } else if(g && !S.selected){
+      var existingTower = null;
+      for(var ti = 0; ti < S.towers.length; ti++){
+        if(S.towers[ti].gx === g.gx && S.towers[ti].gy === g.gy){
+          existingTower = S.towers[ti]; break;
+        }
+      }
+      if(existingTower){
+        var twPos = gridToWorld3D(g.gx, g.gy, 0.15);
+        hoverBoxMesh.position.copy(twPos);
+        hoverBoxMesh.material.color.setHex(0x00f5d4);
+        hoverBoxMesh.visible = true;
+        cross.className = 'inspect-target';
+      } else {
+        cross.className = '';
+        if(!S.selTower){ hoverBoxMesh.visible = false; rangeRingMesh.visible = false; }
+      }
     } else {
       cross.className = '';
-      if(!S.selected){ hoverBoxMesh.visible = false; rangeRingMesh.visible = false; }
+      if(!S.selected && !S.selTower){ hoverBoxMesh.visible = false; rangeRingMesh.visible = false; }
     }
   }
 }
@@ -5315,6 +5518,7 @@ function boot(){
   initGtaLoadingScreen();
   updateFullscreenIcon();
   updateAudioButton();
+  updatePadPill();
 
   initThreeJS();
   buildDrawer();
