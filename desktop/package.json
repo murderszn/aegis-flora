@@ -5,7 +5,11 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder build --mac",
+    "build": "electron-builder build",
+    "build:mac": "electron-builder build --mac",
+    "build:win": "electron-builder build --win",
+    "build:all": "electron-builder build -mw",
+    "pack": "electron-builder --dir",
     "postinstall": "electron-builder install-app-deps"
   },
   "author": "murderszn",
@@ -20,6 +24,29 @@
     "directories": {
       "output": "dist",
       "buildResources": "build"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64"]
+        }
+      ],
+      "executableName": "AegisFlora",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Aegis Flora",
+      "uninstallDisplayName": "Aegis Flora",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     },
     "mac": {
       "category": "public.app-category.games",
@@ -58,6 +85,7 @@
           "game.html",
           "hud.css",
           "js/**/*",
+          "assets/**/*",
           "blender_pipeline/models/**/*"
         ]
       }
