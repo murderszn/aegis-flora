@@ -2011,6 +2011,46 @@ function playExplosionSFX(customVol){
   } catch(e){}
 }
 
+var lastAlarmTime = 0;
+function playAlarmSFX(){
+  if(AUDIO_MUTED) return;
+  var ac = audio(); if(!ac) return;
+  var now = performance.now();
+  // Anti-stacking: throttle alarm chime to once per 140ms so simultaneous leaks don't clip or stack deafeningly
+  if(lastAlarmTime > 0 && now - lastAlarmTime < 140) return;
+  lastAlarmTime = now;
+
+  // Distinct, restrained dual-tone warning klaxon
+  tone(520, 0.12, 'sawtooth', 0.10, 320);
+  setTimeout(function(){
+    if(!AUDIO_MUTED) tone(260, 0.14, 'triangle', 0.08, 160);
+  }, 75);
+  noiseHit(0.12, 0.07, 450);
+}
+
+function playDefeatSFX(){
+  if(AUDIO_MUTED) return;
+  var ac = audio(); if(!ac) return;
+  // Somber descending collapse chord
+  tone(220, 0.55, 'sawtooth', 0.12, 110);
+  setTimeout(function(){
+    if(!AUDIO_MUTED) tone(174, 0.65, 'triangle', 0.10, 87);
+  }, 120);
+  setTimeout(function(){
+    if(!AUDIO_MUTED) noiseHit(0.5, 0.10, 260);
+  }, 50);
+}
+
+function playVictorySFX(){
+  if(AUDIO_MUTED) return;
+  var ac = audio(); if(!ac) return;
+  // Triumphant ascending harmonic fanfare
+  tone(261.6, 0.18, 'triangle', 0.10);
+  setTimeout(function(){ if(!AUDIO_MUTED) tone(329.6, 0.18, 'triangle', 0.10); }, 100);
+  setTimeout(function(){ if(!AUDIO_MUTED) tone(392.0, 0.22, 'triangle', 0.11); }, 200);
+  setTimeout(function(){ if(!AUDIO_MUTED) tone(523.25, 0.35, 'triangle', 0.12); }, 310);
+}
+
 function sfx(name){
   try {
     if(name === 'click') tone(720, 0.04, 'square', 0.04);
@@ -2018,6 +2058,10 @@ function sfx(name){
     else if(name === 'upgrade'){ tone(440, 0.08, 'triangle', 0.1); setTimeout(function(){ tone(660, 0.08, 'triangle', 0.1); }, 80); }
     else if(name === 'sell') tone(540, 0.12, 'square', 0.07, 180);
     else if(name === 'error') tone(130, 0.2, 'sawtooth', 0.12, 80);
+    else if(name === 'alarm') playAlarmSFX();
+    else if(name === 'defeat') playDefeatSFX();
+    else if(name === 'victory') playVictorySFX();
+    else if(name === 'buy') tone(620, 0.09, 'triangle', 0.09, 880);
     else if(name === 'gun'){ var n = performance.now(); if(n - lastGunSnd > 65){ lastGunSnd = n; tone(160 + Math.random() * 80, 0.035, 'square', 0.04); } }
     else if(name === 'launch') noiseHit(0.28, 0.09, 2200);
     else if(name === 'boom'){ playExplosionSFX(); }
@@ -5346,6 +5390,7 @@ function update(dt){
 var LAST_MATCH_REPORT = '';
 function gameOver(win){
   S.phase = win ? 'win' : 'over';
+  sfx(win ? 'victory' : 'defeat');
 
   // Bank match earnings into permanent Meta-Scrap
   var bankedScrap = Math.max(5, Math.floor((S.score || 0) * 0.1 + (S.wave || 0) * 8 + (win ? 100 : 0)));
@@ -7263,6 +7308,9 @@ var API = {
   toggleAudioMute: toggleAudioMute,
   isAudioMuted: function(){ return AUDIO_MUTED; },
   playExplosionSFX: playExplosionSFX,
+  playAlarmSFX: playAlarmSFX,
+  playDefeatSFX: playDefeatSFX,
+  playVictorySFX: playVictorySFX,
   sfx: sfx,
   getAudioContext: function(){ return audio(); },
   getGlyphLevel: getGlyphLevel,
