@@ -518,6 +518,36 @@
     <button class="btn primary" id="btnPadClose">Done</button>
   </div>
 </div></div>
+<div id="settings-modal"><div id="settings-card">
+  <h2>⚙ SETTINGS</h2>
+  <div class="padmap-sub">Video, audio and gameplay. Everything saves to this browser. <b>Esc</b> closes · opens when nothing is selected.</div>
+  <div class="settings-tabs">
+    <button class="btn settings-tab sel" data-tab="video">Video</button>
+    <button class="btn settings-tab" data-tab="audio">Audio</button>
+    <button class="btn settings-tab" data-tab="game">Game</button>
+  </div>
+  <div class="settings-panel" id="settab-video">
+    <div class="padmap-row"><div class="act">Graphics profile<small>Auto scales resolution to hold FPS</small></div><div class="gfx-btns" id="gfxBtns"></div></div>
+    <div class="padmap-row"><div class="act">Brightness<small>Exposure multiplier</small></div><input type="range" id="setExposure" min="50" max="150" step="5" value="100"></div>
+    <div class="padmap-row"><div class="act">Film grain<small>Cinematic noise overlay</small></div><input type="checkbox" id="setGrain" class="switch" checked></div>
+  </div>
+  <div class="settings-panel" id="settab-audio" style="display:none">
+    <div class="padmap-row"><div class="act">Master volume<small>All synthesized SFX</small></div><input type="range" id="setVolume" min="0" max="100" step="1" value="80"></div>
+    <div class="padmap-row"><div class="act">Mute<small>Silence everything (M)</small></div><input type="checkbox" id="setMute" class="switch"></div>
+  </div>
+  <div class="settings-panel" id="settab-game" style="display:none">
+    <div class="padmap-row"><div class="act">Damage numbers<small>Floating combat text</small></div><input type="checkbox" id="setDmgNums" class="switch" checked></div>
+    <div class="padmap-row"><div class="act">Creep HP bars<small>Overhead health bars</small></div><input type="checkbox" id="setHpBars" class="switch" checked></div>
+    <div class="padmap-row"><div class="act">Screen shake<small>Trauma kick on blasts</small></div><input type="checkbox" id="setShake" class="switch" checked></div>
+    <div class="padmap-row"><div class="act">Reset glyph progress<small>Clears meta upgrades</small></div><button class="btn" id="btnWipeGlyphs">Reset…</button></div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:14px;align-items:center;">
+    <button class="btn" id="btnSettingsReset">Defaults</button>
+    <span style="flex:1"></span>
+    <span style="font-size:11px;color:#9fb3a8;"><kbd>Esc</kbd> to close</span>
+    <button class="btn primary" id="btnSettingsClose">Done</button>
+  </div>
+</div></div>
 
 <!-- Grand Theft Auto Cinematic Solarpunk Loading Screen -->
 <div id="loading-screen" class="gta-loading">
@@ -1647,19 +1677,22 @@ function initGtaLoadingScreen(){
 
   GTA_LOADER.timer = setInterval(function(){
     advanceGtaSlide();
-  }, 4200);
+  }, 3800);
 
-  function onDismiss(){
-    if(GTA_LOADER.readyToDismiss){
+  // Allow click or key to skip / enter immediately
+  screen.addEventListener('click', function(){
+    dismissGtaLoadingScreen();
+  });
+  window.addEventListener('keydown', function(ev){
+    if(ev.key === ' ' || ev.key === 'Enter' || ev.key === 'Escape'){
       dismissGtaLoadingScreen();
     }
-  }
-  screen.addEventListener('click', onDismiss);
-  window.addEventListener('keydown', function(ev){
-    if(ev.key === ' ' || ev.key === 'Enter'){
-      if(GTA_LOADER.readyToDismiss) dismissGtaLoadingScreen();
-    }
   });
+
+  // Guaranteed failsafe: Auto-dismiss loading screen after 3.8s regardless of network/disk state
+  setTimeout(function(){
+    dismissGtaLoadingScreen();
+  }, 3800);
 }
 
 function advanceGtaSlide(){
@@ -1692,9 +1725,9 @@ function advanceGtaSlide(){
 }
 
 function updateGtaProgress(loaded, total){
-  GTA_LOADER.modelsLoaded = loaded;
+  GTA_LOADER.modelsLoaded = Math.max(GTA_LOADER.modelsLoaded, loaded);
   GTA_LOADER.totalModels = total;
-  var pct = Math.min(100, Math.round((loaded / total) * 100));
+  var pct = Math.min(100, Math.round((GTA_LOADER.modelsLoaded / total) * 100));
 
   var fill = document.getElementById('gtaBarFill');
   var text = document.getElementById('gtaPercent');
@@ -1713,26 +1746,21 @@ function updateGtaProgress(loaded, total){
   var mIdx = Math.min(messages.length - 1, Math.floor((pct / 100) * messages.length));
   if(status) status.textContent = messages[mIdx];
 
-  var elapsed = performance.now() - GTA_LOADER.startTime;
-  var remainingTime = Math.max(0, GTA_LOADER.minDuration - elapsed);
-
-  if(pct >= 100){
+  if(pct >= 100 && !GTA_LOADER.readyToDismiss){
+    GTA_LOADER.readyToDismiss = true;
+    var prompt = document.getElementById('gtaPrompt');
+    if(prompt) prompt.style.display = 'block';
     setTimeout(function(){
-      GTA_LOADER.readyToDismiss = true;
-      var prompt = document.getElementById('gtaPrompt');
-      if(prompt) prompt.style.display = 'block';
-      setTimeout(function(){
-        if(GTA_LOADER.readyToDismiss) dismissGtaLoadingScreen();
-      }, 1600);
-    }, remainingTime);
+      dismissGtaLoadingScreen();
+    }, 1200);
   }
 }
 
 function dismissGtaLoadingScreen(){
   var screen = document.getElementById('loading-screen');
-  if(!screen) return;
+  if(!screen || screen.classList.contains('fade-out')) return;
   screen.classList.add('fade-out');
-  clearInterval(GTA_LOADER.timer);
+  if(GTA_LOADER.timer) clearInterval(GTA_LOADER.timer);
   sfx('wave');
   setTimeout(function(){
     if(screen.parentNode) screen.parentNode.removeChild(screen);
@@ -1795,8 +1823,12 @@ function preloadGLTFModels(){
       if(item.key === 'masonry' || item.key === 'column' || item.key === 'wildflowers' || item.key === 'chest' || item.key === 'urn' || item.key === 'lotus' || item.key === 'chrysanthemum'){
         buildRuinVisuals();
       }
+      loaded++;
+      updateGtaProgress(loaded, total);
     }, undefined, function(err){
       console.log('Using procedural 3D model fallback for:', item.key);
+      loaded++;
+      updateGtaProgress(loaded, total);
     });
   });
 }
@@ -4528,9 +4560,17 @@ function bindInput(){
       if(!startWave()){ toast('Wave already raging!'); sfx('error'); }
     }
     else if(k === 'escape'){
-      closePadmap();
-      S.selected = null; S.selTower = null; hideInspect(); paintCards();
-      hoverBoxMesh.visible = false; rangeRingMesh.visible = false;
+      var sm = document.getElementById('settings-modal');
+      var gs = document.getElementById('glyphShop');
+      var pm = document.getElementById('padmap-modal');
+      if(sm && sm.classList.contains('open')) closeSettings();
+      else if(pm && pm.classList.contains('open')) closePadmap();
+      else if(gs && gs.style.display !== 'none') toggleGlyphShop();
+      else if(S.selected || S.selTower){
+        S.selected = null; S.selTower = null; hideInspect(); paintCards();
+        hoverBoxMesh.visible = false; rangeRingMesh.visible = false;
+      }
+      else openSettings();
     }
     else if(k === 'p') togglePause();
     else if(k === 'd') useSanctumAbility('root');
