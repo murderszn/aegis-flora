@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aegis Flora — AAA 3D Solarpunk Mazing Tower Defense</title>
+  <meta name="description" content="Defend the Floating Sanctum of Olympos. A luxury Solarpunk 3D Mazing Tower Defense game powered by Three.js PBR, tactical A* detour manipulation, and Greco-Roman automata warfare.">
+  <meta name="theme-color" content="#0a1714">
+
+  <!-- OpenGraph / Social Metadata -->
+  <meta property="og:title" content="Aegis Flora — 3D Solarpunk Mazing Tower Defense">
+  <meta property="og:description" content="Shape the labyrinth. Defend the Sanctum. Repel 50 waves of clockwork automata with living brass and floral ballistics.">
+  <meta property="og:image" content="assets/aegis_flora_logo.jpg">
+  <meta property="og:type" content="website">
+
+  <style>
+    :root {
+      --bg-dark: #040908;
+      --bg-panel: rgba(12, 24, 21, 0.88);
+      --bg-card: rgba(16, 32, 28, 0.75);
+      --bronze: #c9a227;
+      --gold: #f4c444;
+      --gold-bright: #ffe680;
+      --teal: #00f5d4;
+      --emerald: #2ec4b6;
+      --amber: #ff9f1c;
+      --coral: #ff5964;
+      --text-main: #f0ebe1;
+      --text-muted: #9eb5aa;
+      --border-filigree: rgba(201, 162, 39, 0.35);
+      --border-glow: rgba(0, 245, 212, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Ambient Canvas for Floating Pollen & Sunbeams */
+    #ambientCanvas {
+      position: fixed; inset: 0; width: 100vw; height: 100vh;
+      pointer-events: none; z-index: 1;
+    }
+
+    /* Navigation Bar */
+    header.site-nav {
+      position: fixed; top: 0; left: 0; right: 0; height: 74px;
+      background: rgba(4, 9, 8, 0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-filigree);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; z-index: 100;
+      transition: background 0.3s ease;
+    }
+    .brand-wrap {
+      display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit;
+    }
+    .brand-icon {
+      width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+      border: 1.5px solid var(--bronze); box-shadow: 0 0 14px rgba(201, 162, 39, 0.5);
+    }
+    .brand-text h1 {
+      font-family: Georgia, "Playfair Display", serif; font-size: 20px;
+      letter-spacing: 2.5px; color: var(--gold); text-transform: uppercase;
+      font-weight: 700; line-height: 1.1;
+    }
+    .brand-text small {
+      font-size: 10px; letter-spacing: 2px; color: var(--emerald);
+      text-transform: uppercase; font-weight: 600;
+    }
+
+    nav.nav-links {
+      display: flex; align-items: center; gap: 28px;
+    }
+    nav.nav-links a {
+      color: var(--text-muted); text-decoration: none; font-size: 14px;
+      font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      transition: color 0.2s ease;
+    }
+    nav.nav-links a:hover { color: var(--gold); }
+
+    .nav-actions { display: flex; align-items: center; gap: 14px; }
+    .btn-play-nav {
+      background: linear-gradient(180deg, #f4c444 0%, #c99316 100%);
+      color: #1a1202; font-weight: 800; font-size: 13px; letter-spacing: 1.5px;
+      text-transform: uppercase; padding: 10px 22px; border-radius: 4px;
+      text-decoration: none; box-shadow: 0 0 16px rgba(244, 196, 68, 0.45);
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .btn-play-nav:hover {
+      filter: brightness(1.12); transform: translateY(-1px);
+    }
+    .btn-gh-nav {
+      border: 1px solid var(--border-filigree); background: rgba(20, 36, 32, 0.6);
+      color: var(--gold); padding: 9px 16px; border-radius: 4px; text-decoration: none;
+      font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-gh-nav:hover {
+      border-color: var(--gold); background: rgba(30, 54, 48, 0.85);
+    }
+
+    /* Hero Section */
+    section.hero {
+      position: relative; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 120px 24px 80px; z-index: 2;
+      background: radial-gradient(circle at 50% 35%, rgba(0, 245, 212, 0.08) 0%, rgba(4, 9, 8, 0.95) 75%),
+                  url('assets/battlefield_map.jpg') center center / cover no-repeat;
+    }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(4,9,8,0.7) 0%, rgba(4,9,8,0.5) 40%, rgba(4,9,8,0.98) 100%);
+      pointer-events: none;
+    }
+    .hero-content {
+      position: relative; z-index: 3; max-width: 960px; margin: 0 auto;
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+    }
+    .hero-logo-wrap {
+      position: relative; width: 200px; height: 200px; margin-bottom: 4px;
+    }
+    .hero-logo {
+      width: 100%; height: 100%; object-fit: contain; border-radius: 50%;
+      border: 2px solid var(--bronze);
+      box-shadow: 0 0 45px rgba(244, 196, 68, 0.4), 0 0 20px rgba(0, 245, 212, 0.3);
+      animation: float 6s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(1deg); }
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 18px; border-radius: 20px;
+      background: rgba(0, 245, 212, 0.1); border: 1px solid var(--emerald);
+      color: var(--teal); font-size: 12px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .hero-badge .pulse-dot {
+      width: 8px; height: 8px; background: var(--teal); border-radius: 50%;
+      box-shadow: 0 0 10px var(--teal); animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.75); }
+    }
+
+    .hero-title {
+      font-family: Georgia, "Playfair Display", serif;
+      font-size: clamp(38px, 6.5vw, 68px); font-weight: 400;
+      color: #ffffff; letter-spacing: 4px; line-height: 1.1;
+      text-shadow: 0 4px 24px rgba(0,0,0,0.8), 0 0 30px rgba(244,196,68,0.25);
+    }
+    .hero-title em {
+      font-style: italic; color: var(--gold);
+    }
+    .hero-desc {
+      font-size: clamp(16px, 2vw, 19px); color: #c4d7cc;
+      max-width: 720px; line-height: 1.7; font-weight: 400;
+    }
+
+    .hero-cta-group {
+      display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap; justify-content: center;
+    }
+    .btn-hero-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(180deg, #fadb53 0%, #c99316 100%);
+      color: #171003; font-weight: 900; font-size: 16px; letter-spacing: 2px;
+      text-transform: uppercase; padding: 16px 38px; border-radius: 6px;
+      text-decoration: none; box-shadow: 0 0 28px rgba(244, 196, 68, 0.5);
+      transition: transform 0.2s, filter 0.2s, box-shadow 0.2s;
+    }
+    .btn-hero-primary:hover {
+      transform: translateY(-2px) scale(1.02); filter: brightness(1.15);
+      box-shadow: 0 0 38px rgba(244, 196, 68, 0.7);
+    }
+    .btn-hero-secondary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(18, 36, 31, 0.8); border: 1.5px solid var(--bronze);
+      color: var(--text-main); font-weight: 700; font-size: 15px; letter-spacing: 1.5px;
+      text-transform: uppercase; padding: 15px 32px; border-radius: 6px;
+      text-decoration: none; backdrop-filter: blur(10px);
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .btn-hero-secondary:hover {
+      background: rgba(30, 60, 52, 0.9); border-color: var(--gold);
+      color: var(--gold-bright);
+    }
+
+    .hero-stats-banner {
+      display: flex; gap: 36px; margin-top: 36px; padding: 16px 36px;
+      background: rgba(12, 24, 21, 0.75); border: 1px solid var(--border-filigree);
+      border-radius: 8px; backdrop-filter: blur(12px); flex-wrap: wrap; justify-content: center;
+    }
+    .hero-stat-item { text-align: center; }
+    .hero-stat-item strong {
+      display: block; font-size: 22px; font-weight: 800; color: var(--gold);
+      font-family: Georgia, serif;
+    }
+    .hero-stat-item span {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--text-muted); font-weight: 600;
+    }
+
+    /* Section Styling */
+    section.content-section {
+      position: relative; z-index: 2; padding: 90px 30px;
+      max-width: 1240px; margin: 0 auto;
+    }
+    .section-header {
+      text-align: center; margin-bottom: 56px;
+    }
+    .section-kicker {
+      font-size: 12px; font-weight: 800; letter-spacing: 3px; color: var(--teal);
+      text-transform: uppercase; margin-bottom: 8px; display: inline-block;
+    }
+    .section-title {
+      font-family: Georgia, "Playfair Display", serif;
+      font-size: clamp(30px, 4vw, 44px); font-weight: 400; color: #ffffff;
+      letter-spacing: 2px;
+    }
+    .section-title em { font-style: italic; color: var(--gold); }
+    .section-subtitle {
+      font-size: 16px; color: var(--text-muted); max-width: 640px; margin: 12px auto 0;
+      line-height: 1.6;
+    }
+
+    /* Bento Grid: Game Features */
+    .bento-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    }
+    .bento-card {
+      background: var(--bg-card); border: 1px solid var(--border-filigree);
+      border-radius: 10px; padding: 32px 28px; backdrop-filter: blur(10px);
+      display: flex; flex-direction: column; gap: 14px; position: relative;
+      overflow: hidden; transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .bento-card:hover {
+      transform: translateY(-4px); border-color: var(--gold);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(201,162,39,0.2);
+    }
+    .bento-card.span-2 { grid-column: span 2; }
+    .bento-card.span-3 { grid-column: span 3; }
+    .bento-icon {
+      font-size: 28px; width: 54px; height: 54px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(201, 162, 39, 0.12); border: 1px solid var(--border-filigree);
+      color: var(--gold); margin-bottom: 4px;
+    }
+    .bento-card h3 {
+      font-family: Georgia, serif; font-size: 22px; color: var(--gold);
+      letter-spacing: 1px; font-weight: normal;
+    }
+    .bento-card p {
+      font-size: 14px; color: #c4d7cc; line-height: 1.6;
+    }
+    .bento-card-bg-img {
+      position: absolute; right: 0; bottom: 0; width: 45%; height: 100%;
+      object-fit: cover; opacity: 0.18; mask-image: linear-gradient(to left, black 30%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to left, black 30%, transparent 100%);
+      pointer-events: none;
+    }
+
+    /* Tower Battery Arsenal */
+    .tower-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 24px;
+    }
+    .tower-card {
+      background: linear-gradient(180deg, rgba(20, 38, 34, 0.9) 0%, rgba(10, 20, 18, 0.95) 100%);
+      border: 1.5px solid var(--border-filigree); border-radius: 10px;
+      overflow: hidden; display: flex; flex-direction: column;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .tower-card:hover {
+      transform: translateY(-5px); border-color: var(--teal);
+      box-shadow: 0 12px 35px rgba(0, 245, 212, 0.15);
+    }
+    .tower-media {
+      position: relative; height: 210px; background: #06110e;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      border-bottom: 1px solid var(--border-filigree);
+    }
+    .tower-media img {
+      width: 100%; height: 100%; object-fit: contain; padding: 14px;
+      transition: transform 0.3s ease;
+    }
+    .tower-card:hover .tower-media img { transform: scale(1.06); }
+    .tower-tag {
+      position: absolute; top: 12px; left: 12px; font-size: 10px; font-weight: 800;
+      letter-spacing: 1.5px; padding: 3px 10px; border-radius: 3px;
+      text-transform: uppercase;
+    }
+    .tag-kinetic { background: rgba(244, 196, 68, 0.15); border: 1px solid var(--gold); color: var(--gold); }
+    .tag-blast { background: rgba(255, 89, 100, 0.15); border: 1px solid var(--coral); color: var(--coral); }
+    .tag-energy { background: rgba(0, 245, 212, 0.15); border: 1px solid var(--teal); color: var(--teal); }
+    .tag-control { background: rgba(142, 215, 196, 0.15); border: 1px solid #8ed7c4; color: #8ed7c4; }
+
+    .tower-body { padding: 22px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .tower-header-row { display: flex; justify-content: space-between; align-items: baseline; }
+    .tower-header-row h4 {
+      font-family: Georgia, serif; font-size: 20px; color: #fff; font-weight: 400;
+    }
+    .tower-cost { font-size: 14px; font-weight: 700; color: var(--gold); }
+    .tower-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+    .tower-branches {
+      margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px; display: flex; flex-direction: column; gap: 4px;
+    }
+    .branch-item { display: flex; gap: 6px; }
+    .branch-item strong { color: var(--gold); }
+
+    /* Creep Bestiary Gallery */
+    .bestiary-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;
+    }
+    .bestiary-card {
+      background: var(--bg-card); border: 1px solid var(--border-filigree);
+      border-radius: 10px; padding: 20px; display: flex; gap: 18px; align-items: center;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .bestiary-card:hover {
+      transform: translateY(-3px); border-color: var(--gold);
+    }
+    .bestiary-thumb {
+      width: 110px; height: 110px; border-radius: 8px; object-fit: contain;
+      background: #06110e; border: 1px solid var(--border-filigree); flex-shrink: 0;
+      padding: 8px;
+    }
+    .bestiary-info h4 {
+      font-family: Georgia, serif; font-size: 18px; color: var(--gold); margin-bottom: 2px;
+      font-weight: normal;
+    }
+    .bestiary-meta {
+      font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--teal);
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .bestiary-desc {
+      font-size: 12px; color: #b7cbbf; line-height: 1.4;
+    }
+
+    /* Architecture & Solarpunk Lore Showcase */
+    .lore-banner {
+      background: linear-gradient(135deg, rgba(16, 32, 28, 0.95) 0%, rgba(8, 16, 14, 0.98) 100%);
+      border: 2px solid var(--bronze); border-radius: 12px; padding: 48px;
+      display: flex; gap: 48px; align-items: center; margin-top: 30px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+    }
+    .lore-text { flex: 1.2; display: flex; flex-direction: column; gap: 16px; }
+    .lore-text h3 {
+      font-family: Georgia, serif; font-size: 30px; color: var(--gold); font-weight: normal;
+    }
+    .lore-text p { font-size: 15px; color: #cfdcd3; line-height: 1.7; }
+    .lore-media { flex: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--bronze); }
+    .lore-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* Post-Game Telemetry Feature Banner */
+    .telemetry-preview {
+      background: rgba(10, 22, 19, 0.85); border: 1px solid var(--border-filigree);
+      border-radius: 12px; padding: 36px; margin-top: 30px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center;
+    }
+    .telemetry-card-mock {
+      background: rgba(5, 12, 10, 0.9); border: 1.5px solid var(--bronze);
+      border-radius: 8px; padding: 20px; font-family: monospace; font-size: 12px;
+      color: #9eb5aa; line-height: 1.6; box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    }
+    .telemetry-card-mock strong { color: var(--gold); }
+    .telemetry-card-mock .teal { color: var(--teal); }
+
+    /* Controls Showcase */
+    .controls-strip {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 24px;
+    }
+    .ctrl-box {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 18px; text-align: center;
+    }
+    .ctrl-key {
+      display: inline-block; background: rgba(201, 162, 39, 0.2); border: 1px solid var(--gold);
+      color: var(--gold); font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 4px;
+      margin-bottom: 8px; font-family: monospace;
+    }
+    .ctrl-label { font-size: 13px; color: #fff; font-weight: 600; }
+    .ctrl-sub { font-size: 11px; color: var(--text-muted); }
+
+    /* Call to Action Final Section */
+    section.cta-final {
+      text-align: center; padding: 110px 24px; position: relative; z-index: 2;
+      background: radial-gradient(circle at 50% 50%, rgba(201, 162, 39, 0.12) 0%, rgba(4, 9, 8, 0.95) 70%),
+                  url('assets/sanctum_core.jpg') center center / cover no-repeat;
+      border-top: 1px solid var(--border-filigree);
+    }
+    .cta-final-card {
+      max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 24px;
+    }
+    .cta-final h2 {
+      font-family: Georgia, serif; font-size: clamp(34px, 5vw, 52px);
+      font-weight: normal; color: #ffffff; letter-spacing: 2px;
+    }
+    .cta-final p {
+      font-size: 17px; color: #c4d7cc; line-height: 1.6;
+    }
+
+    /* Footer */
+    footer.site-footer {
+      border-top: 1px solid var(--border-filigree); background: #030605;
+      padding: 60px 40px 30px; position: relative; z-index: 2; color: var(--text-muted);
+      font-size: 13px;
+    }
+    .footer-grid {
+      max-width: 1200px; margin: 0 auto; display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 40px;
+    }
+    .footer-brand h3 {
+      font-family: Georgia, serif; font-size: 20px; color: var(--gold);
+      letter-spacing: 2px; margin-bottom: 10px;
+    }
+    .footer-col h4 {
+      font-size: 13px; font-weight: 700; letter-spacing: 1.5px; color: #fff;
+      text-transform: uppercase; margin-bottom: 14px;
+    }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .footer-col ul a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .footer-col ul a:hover { color: var(--gold); }
+    .footer-bottom {
+      max-width: 1200px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 24px; display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 14px;
+    }
+
+    @media(max-width: 900px){
+      header.site-nav { padding: 0 20px; }
+      nav.nav-links { display: none; }
+      .bento-grid { grid-template-columns: 1fr; }
+      .bento-card.span-2, .bento-card.span-3 { grid-column: span 1; }
+      .lore-banner { flex-direction: column; padding: 28px; }
+      .telemetry-preview { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Interactive Floating Pollen Canvas Background -->
+  <canvas id="ambientCanvas"></canvas>
+
+  <!-- Sticky Global Navigation -->
+  <header class="site-nav">
+    <a href="#hero" class="brand-wrap">
+      <img src="assets/aegis_flora_logo.jpg" alt="Aegis Flora Logo" class="brand-icon">
+      <div class="brand-text">
+        <h1>AEGIS FLORA</h1>
+        <small>Verdant Defense</small>
+      </div>
+    </a>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#arsenal">Towers</a>
+      <a href="#bestiary">Bestiary</a>
+      <a href="#lore">Sanctum Lore</a>
+      <a href="#telemetry">Telemetry</a>
+      <a href="#controls">Controls</a>
+    </nav>
+    <div class="nav-actions">
+      <a href="https://github.com/murderszn/aegis-flora" target="_blank" rel="noopener" class="btn-gh-nav">
+        <span>GitHub</span>
+      </a>
+      <a href="index.html" class="btn-play-nav">⚔️ Play Game</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-logo-wrap">
+        <img src="assets/aegis_flora_logo.jpg" alt="Aegis Flora Official Emblem" class="hero-logo">
+      </div>
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        <span>Three.js PBR Engine · 50 Waves · Zero Downloads</span>
+      </div>
+      <h2 class="hero-title">SHAPE THE <em>LABYRINTH</em>.<br>DEFEND THE SANCTUM.</h2>
+      <p class="hero-desc">
+        A Solarpunk 3D Mazing Tower Defense masterpiece. Manipulate living A* creep pathing tile-by-tile, harness botanical weaponry, and repel relentless clockwork mecha legions across the floating island of Olympos.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="index.html" class="btn-hero-primary">⚔️ Play Now in Browser</a>
+        <a href="#features" class="btn-hero-secondary">📜 Explore Codex</a>
+      </div>
+
+      <div class="hero-stats-banner">
+        <div class="hero-stat-item">
+          <strong>50 WAVES</strong>
+          <span>Escalating Assaults</span>
+        </div>
+        <div class="hero-stat-item">
+          <strong>36 × 20 GRID</strong>
+          <span>Pure Freeform Mazing</span>
+        </div>
+        <div class="hero-stat-item">
+          <strong>4 BATTERIES × 8 BRANCHES</strong>
+          <span>Kinetic · Blast · Energy · Sonic</span>
+        </div>
+        <div class="hero-stat-item">
+          <strong>GAMEPAD READY</strong>
+          <span>Xbox · PlayStation · Switch</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Features Bento Grid -->
+  <section class="content-section" id="features">
+    <div class="section-header">
+      <span class="section-kicker">ARCHITECTURAL DESIGN</span>
+      <h3 class="section-title">ENGINEERED FOR <em>TACTICAL MASTERY</em></h3>
+      <p class="section-subtitle">
+        Combining classic Warcraft III mazing purity with modern Dota 2 damage mechanics and Solarpunk Greco-Roman aesthetics.
+      </p>
+    </div>
+
+    <div class="bento-grid">
+      <!-- Feature 1: Pure Mazing -->
+      <div class="bento-card span-2">
+        <div class="bento-icon">🏛️</div>
+        <h3>Total Mazing Freedom (A* Realtime Pathing)</h3>
+        <p>
+          No pre-baked tracks or static lanes. Build your labyrinth anywhere across a spacious 36×20 floating island grid. Every battery placed recalculates the shortest path in real-time, allowing you to stretch creep journey lengths by upwards of 200%.
+        </p>
+        <img src="assets/battlefield_map.jpg" alt="Battlefield Grid" class="bento-card-bg-img">
+      </div>
+
+      <!-- Feature 2: Solarpunk Visuals -->
+      <div class="bento-card">
+        <div class="bento-icon">🌿</div>
+        <h3>Solarpunk Botanical Art</h3>
+        <p>
+          Living marble columns, clockwork brass gears, bioluminescent cyan flora, and 460+ volumetric pollen particles drifting along simulated wind vector currents.
+        </p>
+      </div>
+
+      <!-- Feature 3: Damage Matrix -->
+      <div class="bento-card">
+        <div class="bento-icon">⚔️</div>
+        <h3>Dota 2 Armor & Damage Types</h3>
+        <p>
+          Target armored tread-tanks and flying leviathans using 4 specialized ballistics: <strong>Kinetic</strong> rapid-fire, <strong>Blast</strong> area fissures, <strong>Energy</strong> armor-piercing lasers, and <strong>Sonic</strong> pure resonance.
+        </p>
+      </div>
+
+      <!-- Feature 4: Meta Glyphs -->
+      <div class="bento-card span-2">
+        <div class="bento-icon">✧</div>
+        <h3>Verdant Glyphs & Sanctum Sorcery</h3>
+        <p>
+          Spend harvested scrap between runs to unlock persistent blessings: Foundry Engineering (+tower damage), Ancient Vaults (+starting scrap), and Flora Symbiosis (+Sanctum durability). In combat, channel Solar Flare strikes from orbit or trigger Verdant Overgrowth roots.
+        </p>
+        <img src="assets/sanctum_core.jpg" alt="Sanctum Core" class="bento-card-bg-img">
+      </div>
+    </div>
+  </section>
+
+  <!-- Tower Battery Arsenal -->
+  <section class="content-section" id="arsenal">
+    <div class="section-header">
+      <span class="section-kicker">VERDANT ARTILLERY</span>
+      <h3 class="section-title">SANCTUM <em>DEFENSE BATTERIES</em></h3>
+      <p class="section-subtitle">
+        Construct modular defensive towers and specialize each into elite branch configurations to counter distinct enemy chassis.
+      </p>
+    </div>
+
+    <div class="tower-grid">
+      <!-- Tower 1: Petal Gatling -->
+      <div class="tower-card">
+        <div class="tower-media">
+          <span class="tower-tag tag-kinetic">Kinetic</span>
+          <img src="blender_pipeline/renders/tower_prism_gatling_render.png" alt="Petal Gatling Tower">
+        </div>
+        <div class="tower-body">
+          <div class="tower-header-row">
+            <h4>Petal Gatling</h4>
+            <span class="tower-cost">¤ 5 Scrap</span>
+          </div>
+          <p class="tower-desc">
+            High-rate rotary cannon with hydraulic recoil and rotating brass barrels. Shreds unarmored swarms with kinetic ballistics.
+          </p>
+          <div class="tower-branches">
+            <div class="branch-item"><strong>[A] Vulcan Spire:</strong> Spin-up rate of fire to ~75 DPS</div>
+            <div class="branch-item"><strong>[B] Rail-Needler:</strong> Piercing darts penetrating 3 creeps</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tower 2: Bloom Mortar -->
+      <div class="tower-card">
+        <div class="tower-media">
+          <span class="tower-tag tag-blast">Blast</span>
+          <img src="blender_pipeline/renders/tower_bloom_cannon_render.png" alt="Bloom Mortar Tower">
+        </div>
+        <div class="tower-body">
+          <div class="tower-header-row">
+            <h4>Bloom Mortar</h4>
+            <span class="tower-cost">¤ 12 Scrap</span>
+          </div>
+          <p class="tower-desc">
+            Arcing botanical siege mortar firing parabolic floral shells with massive ground-shaking explosive splash.
+          </p>
+          <div class="tower-branches">
+            <div class="branch-item"><strong>[A] Cataclysm Bloom:</strong> Cratering blast fissures + slowing tar</div>
+            <div class="branch-item"><strong>[B] Skyburst Flak:</strong> 2.5x damage against aerial cruisers</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tower 3: Prism Pillar -->
+      <div class="tower-card">
+        <div class="tower-media">
+          <span class="tower-tag tag-energy">Energy</span>
+          <img src="assets/resonance_monolith.jpg" alt="Prism Pillar Monolith">
+        </div>
+        <div class="tower-body">
+          <div class="tower-header-row">
+            <h4>Prism Pillar</h4>
+            <span class="tower-cost">¤ 20 Scrap</span>
+          </div>
+          <p class="tower-desc">
+            Channeling crystalline monolith focusing continuous solar beams that ramp from 40 to 240 DPS, melting armored hulls.
+          </p>
+          <div class="tower-branches">
+            <div class="branch-item"><strong>[A] Sol Invictus:</strong> Persistent scorching ground laser beam</div>
+            <div class="branch-item"><strong>[B] Refraction Prism:</strong> 3-way split beam targeting simultaneous creeps</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tower 4: Resonance Obelisk -->
+      <div class="tower-card">
+        <div class="tower-media">
+          <span class="tower-tag tag-control">Sonic Pure</span>
+          <img src="blender_pipeline/renders/tower_resonance_monolith_render.png" alt="Resonance Obelisk">
+        </div>
+        <div class="tower-body">
+          <div class="tower-header-row">
+            <h4>Resonance Obelisk</h4>
+            <span class="tower-cost">¤ 18 Scrap</span>
+          </div>
+          <p class="tower-desc">
+            Pulsing harmonic spire emitting concentric acoustic shockwaves that slow enemy velocity and shatter armor plating.
+          </p>
+          <div class="tower-branches">
+            <div class="branch-item"><strong>[A] Chrono-Stutter:</strong> Time-dilation pulses with 25% freeze chance</div>
+            <div class="branch-item"><strong>[B] Resonance Shatter:</strong> Afflicts creeps with +35% damage taken</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Threat Dossier / Bestiary -->
+  <section class="content-section" id="bestiary">
+    <div class="section-header">
+      <span class="section-kicker">ENEMY CLASSIFICATION</span>
+      <h3 class="section-title">THE <em>AUTOMATA LEGION</em></h3>
+      <p class="section-subtitle">
+        6 distinct biomechanical combat chassis deployed by the rogue Clockwork Empire to breach your Sanctum.
+      </p>
+    </div>
+
+    <div class="bestiary-grid">
+      <!-- 1. Skitter Scout -->
+      <div class="bestiary-card">
+        <img src="blender_pipeline/renders/enemy_skitter_scout_render.png" alt="Skitter Scout" class="bestiary-thumb">
+        <div class="bestiary-info">
+          <h4>Skitter Scout</h4>
+          <div class="bestiary-meta">Ground · Light Chassis · 2.7 Speed</div>
+          <p class="bestiary-desc">
+            Rapid multi-legged reconnaissance arachnid. Deploys in high-density swarm formations to overwhelm single-target batteries.
+          </p>
+        </div>
+      </div>
+
+      <!-- 2. Tread Tank -->
+      <div class="bestiary-card">
+        <img src="blender_pipeline/renders/enemy_tread_tank_render.png" alt="Tread Tank" class="bestiary-thumb">
+        <div class="bestiary-info">
+          <h4>Tread Tank</h4>
+          <div class="bestiary-meta">Ground · Heavy Armored (8) · 1.35 Speed</div>
+          <p class="bestiary-desc">
+            Continuous-track iron siege tortoise. Highly resilient against kinetic rounds; requires energy beams to pierce its outer shell.
+          </p>
+        </div>
+      </div>
+
+      <!-- 3. Rotor Drone -->
+      <div class="bestiary-card">
+        <img src="blender_pipeline/renders/enemy_rotor_drone_render.png" alt="Rotor Drone" class="bestiary-thumb">
+        <div class="bestiary-info">
+          <h4>Rotor Drone</h4>
+          <div class="bestiary-meta">Air Skirmisher · Flying · 2.2 Speed</div>
+          <p class="bestiary-desc">
+            Gyroscopic flyer that ignores labyrinth walls, soaring straight from spawn to Sanctum. High priority for flak mortars.
+          </p>
+        </div>
+      </div>
+
+      <!-- 4. Diesel Walker -->
+      <div class="bestiary-card">
+        <img src="blender_pipeline/renders/enemy_diesel_walker_render.png" alt="Diesel Walker" class="bestiary-thumb">
+        <div class="bestiary-info">
+          <h4>Diesel Walker</h4>
+          <div class="bestiary-meta">Ground · Armored Biped (10) · 0.95 Speed</div>
+          <p class="bestiary-desc">
+            Imposing bipedal mecha with high hit-point reserves. Stepping steadily through maze turns while absorbing immense firepower.
+          </p>
+        </div>
+      </div>
+
+      <!-- 5. Zeppelin Sky-Hull -->
+      <div class="bestiary-card">
+        <img src="blender_pipeline/renders/enemy_zeppelin_sky_hull_render.png" alt="Zeppelin Sky-Hull" class="bestiary-thumb">
+        <div class="bestiary-info">
+          <h4>Zeppelin Sky-Hull</h4>
+          <div class="bestiary-meta">Air Dreadnought · Heavy Armored (6) · 0.8 Speed</div>
+          <p class="bestiary-desc">
+            Massive aerial leviathan carrying extensive durability. Leaking this titan will deal 6 lethal wounds to the Sanctum.
+          </p>
+        </div>
+      </div>
+
+      <!-- 6. Goliath Colossus -->
+      <div class="bestiary-card">
+        <img src="blender_pipeline/renders/enemy_goliath_colossus_render.png" alt="Goliath Colossus" class="bestiary-thumb">
+        <div class="bestiary-info">
+          <h4>Goliath Colossus</h4>
+          <div class="bestiary-meta">Raid Boss · Maximum Armor (16) · 0.65 Speed</div>
+          <p class="bestiary-desc">
+            Catastrophic boss automata appearing on decennial waves. With 4,400+ HP and 10 leak penalty, failure to contain means defeat.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lore & Solarpunk World -->
+  <section class="content-section" id="lore">
+    <div class="lore-banner">
+      <div class="lore-text">
+        <span class="section-kicker">THE CHRONICLES OF OLYMPOS</span>
+        <h3>SACRED FLORA & CLOCKWORK RUINS</h3>
+        <p>
+          Suspended high above the bronze-age cloudline drifts the Floating Sanctum of Olympos. Within its temple peristyles, radiant clockwork flora—golden chrysanthemums, blooming lotus chronometers, and ancient olive spires—pulse with harmonic solar energy.
+        </p>
+        <p>
+          When the Automata Empire shattered the peace to harvest the Sanctum's infinite core, the temple priests forged the Aegis Defense Grid: converting living vegetation and marble stonework into an impenetrable tactical labyrinth.
+        </p>
+      </div>
+      <div class="lore-media">
+        <img src="assets/treasure_vault_relics.jpg" alt="Sanctum Vault & Relics">
+      </div>
+    </div>
+  </section>
+
+  <!-- Post-Match Telemetry & Competitive Stats -->
+  <section class="content-section" id="telemetry">
+    <div class="section-header">
+      <span class="section-kicker">DEEP TELEMETRY & MATCH DEBRIEFING</span>
+      <h3 class="section-title">POST-GAME <em>COMBAT ANALYTICS</em></h3>
+      <p class="section-subtitle">
+        Every match concludes with a comprehensive Dota 2-style telemetry dashboard tracking scrap farm rate, kill efficiency, and battery performance.
+      </p>
+    </div>
+
+    <div class="telemetry-preview">
+      <div class="telemetry-text">
+        <h4 style="font-family: Georgia, serif; font-size: 24px; color: var(--gold); margin-bottom: 12px; font-weight: normal;">
+          Track Every Scrap & Shrapnel
+        </h4>
+        <p style="font-size: 14px; color: #cfdcd3; line-height: 1.6; margin-bottom: 16px;">
+          Evaluate your tactical execution with detailed analytics:
+        </p>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #9eb5aa;">
+          <li>💰 <strong>Farm Rate (SPM):</strong> Real-time scrap yield per minute and net surplus.</li>
+          <li>⚔️ <strong>Containment Efficiency:</strong> Kills vs leaks percentage across all 6 archetypes.</li>
+          <li>🎯 <strong>MVP Battery Detection:</strong> Identifies your most lethal tower and its total damage share.</li>
+          <li>🏛️ <strong>Labyrinth Detour Metric:</strong> Measures the exact path detour percentage achieved by your maze.</li>
+          <li>📋 <strong>One-Click Clipboard Export:</strong> Copy complete match scorecards to share in Discord or forums.</li>
+        </ul>
+      </div>
+
+      <div class="telemetry-card-mock">
+        <div style="border-bottom: 1px solid rgba(201,162,39,0.3); padding-bottom: 8px; margin-bottom: 10px;">
+          <strong>SANCTUM SECURED · MATCH REPORT</strong><br>
+          Wave 50/50 Repelled · Score: 142,500 · Duration: 08:42
+        </div>
+        <div>💰 Harvested: <strong>$1,420</strong> · Farm Rate: <strong>163 SPM</strong></div>
+        <div>⚔️ Slain: <strong>184</strong> · Leaks: <span class="teal">0 (100% Efficiency)</span></div>
+        <div>💥 Damage: <strong>142,900 HP</strong> dealt</div>
+        <div>🏆 MVP: <strong>Rail-Needler (14,10)</strong> · 58,200 dmg (41% share)</div>
+        <div>🏛️ Labyrinth: <strong>68 tiles (+183% detour)</strong></div>
+        <div>✧ Glyphs: <strong>Foundry Lv.3, Vault Lv.1</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls & Accessibility -->
+  <section class="content-section" id="controls">
+    <div class="section-header">
+      <span class="section-kicker">CONTROL SCHEME</span>
+      <h3 class="section-title">INTUITIVE <em>COMMAND MATRIX</em></h3>
+      <p class="section-subtitle">
+        Play seamlessly via mouse & keyboard, touch drawer, or plug in any Xbox, PlayStation, or Nintendo Switch gamepad.
+      </p>
+    </div>
+
+    <div class="controls-strip">
+      <div class="ctrl-box">
+        <span class="ctrl-key">Q · W · E · R</span>
+        <div class="ctrl-label">Select Tower Battery</div>
+        <div class="ctrl-sub">Gatling / Mortar / Beam / Obelisk</div>
+      </div>
+      <div class="ctrl-box">
+        <span class="ctrl-key">D / F</span>
+        <div class="ctrl-label">Sanctum Sorcery</div>
+        <div class="ctrl-sub">Verdant Overgrowth / Solar Flare</div>
+      </div>
+      <div class="ctrl-box">
+        <span class="ctrl-key">SPACE / ENTER</span>
+        <div class="ctrl-label">Send Next Wave</div>
+        <div class="ctrl-sub">Speed up downtime</div>
+      </div>
+      <div class="ctrl-box">
+        <span class="ctrl-key">TAB / V</span>
+        <div class="ctrl-label">Camera Perspective</div>
+        <div class="ctrl-sub">Tactical Top-Down ↔ Immersive 3D</div>
+      </div>
+      <div class="ctrl-box">
+        <span class="ctrl-key">1 · 2 · 4</span>
+        <div class="ctrl-label">Game Speed</div>
+        <div class="ctrl-sub">Toggle 1x, 2x, or 4x simulation</div>
+      </div>
+      <div class="ctrl-box">
+        <span class="ctrl-key">🎮 GAMEPAD</span>
+        <div class="ctrl-label">Controller Support</div>
+        <div class="ctrl-sub">Full stick nav + trigger zoom + rumble</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final Call to Action -->
+  <section class="cta-final">
+    <div class="cta-final-card">
+      <h2>DEFEND THE VERDANT SANCTUM</h2>
+      <p>
+        No installation required. Jump straight into the action with instant 60 FPS Three.js graphics and procedural audio right in your web browser.
+      </p>
+      <a href="index.html" class="btn-hero-primary" style="font-size: 18px; padding: 18px 46px;">
+        ⚔️ LAUNCH AEGIS FLORA NOW
+      </a>
+    </div>
+  </section>
+
+  <!-- Global Footer -->
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img src="assets/aegis_flora_logo.jpg" alt="Aegis Flora Logo" style="width: 50px; height: 50px; border-radius: 50%; border: 1.5px solid var(--bronze); margin-bottom: 12px;">
+        <h3>AEGIS FLORA</h3>
+        <p style="max-width: 320px; line-height: 1.6;">
+          An AAA Solarpunk 3D Mazing Tower Defense game created with Three.js, WebGL PBR rendering, and procedural audio synthesis.
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="index.html">Play Game</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#arsenal">Defense Batteries</a></li>
+          <li><a href="#bestiary">Automata Dossier</a></li>
+          <li><a href="#telemetry">Telemetry System</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Game Systems</h4>
+        <ul>
+          <li><a href="index.html">A* Maze Pathing</a></li>
+          <li><a href="index.html">Verdant Glyphs Shop</a></li>
+          <li><a href="index.html">Sanctum Sorcery</a></li>
+          <li><a href="index.html">Dota 2 Armor Rules</a></li>
+          <li><a href="index.html">Gamepad Setup</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Open Source</h4>
+        <ul>
+          <li><a href="https://github.com/murderszn/aegis-flora" target="_blank" rel="noopener">GitHub Repository</a></li>
+          <li><a href="https://github.com/murderszn/aegis-flora/issues" target="_blank" rel="noopener">Issue Tracker</a></li>
+          <li><a href="https://github.com/murderszn/aegis-flora/commits/main" target="_blank" rel="noopener">Changelog</a></li>
+          <li><a href="https://github.com/elijah" target="_blank" rel="noopener">Contributor: @elijah</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Aegis Flora Team. Open source on GitHub.</span>
+      <span>Engineered with Three.js PBR · Designed with Solarpunk & Greco-Roman Aesthetics</span>
+    </div>
+  </footer>
+
+  <!-- Ambient Pollen Animation Script -->
+  <script>
+    (function(){
+      var canvas = document.getElementById('ambientCanvas');
+      if(!canvas) return;
+      var ctx = canvas.getContext('2d');
+      var width, height;
+      var particles = [];
+      var PARTICLE_COUNT = 65;
+
+      function resize(){
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      for(var i = 0; i < PARTICLE_COUNT; i++){
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          radius: Math.random() * 2.2 + 0.8,
+          vx: Math.random() * 0.45 + 0.15,
+          vy: Math.random() * 0.3 - 0.15,
+          alpha: Math.random() * 0.5 + 0.2,
+          pulse: Math.random() * Math.PI * 2,
+          color: Math.random() > 0.4 ? 'rgba(244, 196, 68, ' : 'rgba(0, 245, 212, '
+        });
+      }
+
+      function render(){
+        ctx.clearRect(0, 0, width, height);
+        for(var i = 0; i < particles.length; i++){
+          var p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.pulse += 0.03;
+          if(p.x > width + 10) p.x = -10;
+          if(p.y > height + 10) p.y = -10;
+          if(p.y < -10) p.y = height + 10;
+
+          var a = p.alpha * (0.7 + Math.sin(p.pulse) * 0.3);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = p.color + a + ')';
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = p.color + '0.6)';
+          ctx.fill();
+        }
+        requestAnimationFrame(render);
+      }
+      render();
+    })();
+  </script>
+</body>
+</html>

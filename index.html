@@ -518,10 +518,10 @@
 
 <!-- Sanctum command bar -->
 <div class="bar" id="topbar">
-  <div class="logo-wrap" id="logoClick">
-    <img src="assets/sanctum_core.jpg" class="logo-thumb" alt="" onerror="this.style.display='none'">
+  <a class="logo-wrap" id="logoClick" href="landing.html" title="Open Aegis Flora Codex & Landing Page" style="text-decoration:none; color:inherit;">
+    <img src="assets/aegis_flora_logo.jpg" class="logo-thumb" alt="Aegis Flora Logo" onerror="this.style.display='none'">
     <span class="brand-copy"><small>THE VERDANT SANCTUM</small><span class="logo">AEGIS <em>FLORA</em></span></span>
-  </div>
+  </a>
   <div class="resource-group" aria-label="Sanctum resources">
     <div class="stat lives" title="Sanctum HP"><small><i class="resource-icon">✦</i> Sanctum</small><span class="stat-value"><b id="lives">20</b><span class="stat-unit" id="maxLivesLabel"> / 20 HP</span></span><span class="stat-meter"><i id="healthFill"></i></span></div>
     <div class="stat cash" title="Scrap gold"><small><i class="resource-icon">◇</i> Scrap</small><span class="stat-value"><span class="stat-unit">¤ </span><b id="cash">0</b></span></div>
@@ -529,6 +529,7 @@
   </div>
   <div class="wave-group"><small id="phaseLabel">PREPARE DEFENSES</small><span class="wave-value">WAVE <b id="wave">0 / 50</b></span><span class="score-line">SCORE <b id="score">0</b></span></div>
   <div class="command-group">
+    <a href="landing.html" class="btn utility" title="Sanctum Codex & Landing Page" style="text-decoration:none;"><span class="btn-icon">📜</span><span class="btn-label">Codex</span></a>
     <button class="btn utility" id="btnCam" title="Toggle Camera (C)"><span class="btn-icon">◈</span><span class="btn-label">View</span><kbd>C</kbd></button>
     <button class="btn utility" id="btnPad" title="Controller mapping — no pad connected"><span class="btn-icon">🎮</span><span class="btn-label" id="btnPadLabel"><i class="pad-dot"></i>No pad</span></button>
     <span class="command-divider"></span>
