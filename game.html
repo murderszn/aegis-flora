@@ -360,13 +360,24 @@
   /* --- Boss HP bar --- */
   #bosshp {
     position: fixed; top: 104px; left: 50%; transform: translateX(-50%); z-index: 13;
-    width: min(560px, 52vw); display: none; pointer-events: none;
-    background: rgba(8,12,10,0.85); border: 1px solid var(--hostile-red); border-radius: 4px; padding: 5px 10px 7px;
-    box-shadow: 0 0 18px rgba(255,59,48,0.35);
+    width: min(580px, 54vw); display: none; pointer-events: none;
+    background: rgba(8,12,10,0.92); border: 1px solid var(--hostile-red); border-radius: 4px; padding: 6px 12px 8px;
+    box-shadow: 0 0 20px rgba(255,59,48,0.4);
   }
   #bosshp .boss-name { font-family: var(--font-display); font-size: 12px; letter-spacing: 3px; color: #ffb3ab; }
-  #bosshp .boss-track { height: 8px; background: #2a0f0d; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  #bosshp .boss-phase-badge {
+    font-family: var(--font-stats); font-size: 9.5px; color: #ffd15c; letter-spacing: 1.5px;
+    background: rgba(255,183,3,0.15); padding: 2px 7px; border-radius: 3px; border: 1px solid rgba(255,183,3,0.4);
+    text-transform: uppercase; font-weight: 700;
+  }
+  #bosshp .boss-track { position: relative; height: 10px; background: #2a0f0d; border-radius: 3px; overflow: hidden; margin-top: 5px; }
   #bosshp .boss-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #FF3B30, #FF6B35); transition: width 0.2s ease; }
+  #bosshp .boss-shield-fill {
+    position: absolute; top: 0; left: 0; height: 100%; width: 0%;
+    background: linear-gradient(90deg, rgba(0,245,212,0.8), rgba(0,245,212,1.0));
+    box-shadow: 0 0 8px rgba(0,245,212,0.7); transition: width 0.15s ease;
+  }
+  #bosshp .boss-sub { font-family: var(--font-stats); font-size: 10px; color: #8e9e94; margin-top: 4px; display: flex; justify-content: space-between; }
   /* --- Gamepad crosshair + status --- */
   #crosshair {
     position: fixed; left: 50%; top: 50%; width: 26px; height: 26px; z-index: 9;
@@ -554,7 +565,20 @@
 <div id="letterbox-bottom" class="letterbox"></div>
 <div id="filmgrain"></div>
 <div id="wavebanner"><div class="wb-title"></div><div class="wb-sub"></div></div>
-<div id="bosshp"><div class="boss-name">☠ GOLIATH COLOSSUS</div><div class="boss-track"><div class="boss-fill"></div></div></div>
+<div id="bosshp">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="boss-name">☠ GOLIATH COLOSSUS</div>
+    <div class="boss-phase-badge" id="bossPhaseBadge">PHASE 1: SIEGE</div>
+  </div>
+  <div class="boss-track">
+    <div class="boss-fill"></div>
+    <div class="boss-shield-fill" id="bossShieldFill"></div>
+  </div>
+  <div class="boss-sub">
+    <span id="bossMechanicDesc">Armored Chassis (16 Armor)</span>
+    <span id="bossHpNumbers">4400 / 4400</span>
+  </div>
+</div>
 <div id="crosshair"></div>
 <div id="padmap-modal"><div id="padmap-card">
   <h2>🎮 CONTROLLER MAPPING</h2>
@@ -925,6 +949,15 @@ function applyDamage(f, dmg, dtype, shatteredBonus, isTowerDmg){
   // Shattered bonus (+35% damage taken)
   if(shatteredBonus && f.shattered > 0) mult *= 1.35;
   var actual = Math.max(0, dmg * mult);
+  if(f.shield && f.shield > 0){
+    if(f.shield >= actual){
+      f.shield -= actual;
+      actual = 0;
+    } else {
+      actual -= f.shield;
+      f.shield = 0;
+    }
+  }
   f.hp -= actual;
   if(S) S.totalDamageDealt = (S.totalDamageDealt || 0) + actual;
   return Math.round(actual);
@@ -4384,8 +4417,159 @@ function updateBossBar(){
   for(var f of S.foes){ if(f.type === 'boss' && f.hp > 0 && !f.dead){ boss = f; break; } }
   if(boss){
     bb.style.display = 'block';
-    bb.querySelector('.boss-fill').style.width = Math.max(0, boss.hp / boss.maxhp * 100) + '%';
+    var hpFrac = Math.max(0, boss.hp / boss.maxhp);
+    var fill = bb.querySelector('.boss-fill');
+    if(fill) fill.style.width = (hpFrac * 100) + '%';
+
+    var shieldFill = document.getElementById('bossShieldFill');
+    if(shieldFill){
+      if(boss.shield && boss.phaseShieldMax > 0){
+        shieldFill.style.display = 'block';
+        shieldFill.style.width = Math.max(0, Math.min(100, (boss.shield / boss.phaseShieldMax) * 100)) + '%';
+      } else {
+        shieldFill.style.display = 'none';
+      }
+    }
+
+    var badge = document.getElementById('bossPhaseBadge');
+    if(badge){
+      if(boss.phase === 1){
+        badge.textContent = 'PHASE 1: SIEGE';
+        badge.style.color = '#ffd15c';
+        badge.style.borderColor = 'rgba(255,183,3,0.5)';
+      } else if(boss.phase === 2){
+        badge.textContent = 'PHASE 2: EMP OVERCHARGE';
+        badge.style.color = '#00F5D4';
+        badge.style.borderColor = 'rgba(0,245,212,0.6)';
+      } else if(boss.phase === 3){
+        badge.textContent = 'PHASE 3: BERSERK MELTDOWN';
+        badge.style.color = '#FF3B30';
+        badge.style.borderColor = 'rgba(255,59,48,0.7)';
+      }
+    }
+
+    var desc = document.getElementById('bossMechanicDesc');
+    if(desc){
+      if(boss.phase === 1) desc.textContent = 'Heavy Armor (16) · Deploys Repair Drones';
+      else if(boss.phase === 2) desc.textContent = 'Hardlight Shield Active · Seismic EMP Shock';
+      else if(boss.phase === 3) desc.textContent = 'Berserk Speed (+35%) · Core Exposed (8 Armor)';
+    }
+
+    var hpNum = document.getElementById('bossHpNumbers');
+    if(hpNum){
+      var shieldText = (boss.shield && boss.shield > 0) ? ' [🛡️ ' + Math.round(boss.shield) + ']' : '';
+      hpNum.textContent = Math.round(boss.hp) + ' / ' + boss.maxhp + shieldText;
+    }
   } else bb.style.display = 'none';
+}
+
+function spawnBossSupportDrone(boss, offsetX, offsetY){
+  if(!boss || boss.dead || boss.hp <= 0) return;
+  var base = FOES['drone'], sc = hpScale(Math.max(1, S.wave));
+  var hp = Math.round(base.hp * sc * 0.85);
+  var mesh = create3DCreepMesh('drone');
+  mesh.scale.multiplyScalar(CHUNK_CREEP * 0.9);
+  var d = {
+    type: 'drone', air: true, armored: false,
+    isSupportDrone: true,
+    targetBoss: boss,
+    healTimer: 2.5,
+    hp: hp, maxhp: hp,
+    x: boss.x + offsetX, y: boss.y + offsetY,
+    speed: base.speed * 0.75,
+    reward: 15, leak: 1, r: base.r,
+    path: boss.path ? boss.path.slice(boss.wp) : [], wp: 0,
+    slowT: 0, slowF: 1, rooted: 0, id: Math.random(),
+    mesh: mesh
+  };
+  attachHpBar(d, false);
+  S.foes.push(d);
+  scene.add(mesh);
+}
+
+function updateBossMechanics(boss, dt){
+  if(!boss || boss.hp <= 0 || boss.dead) return;
+  var hpFrac = boss.hp / boss.maxhp;
+
+  // Phase 1 -> Phase 2 Transition (at <= 66% HP)
+  if(boss.phase === 1 && hpFrac <= 0.66){
+    boss.phase = 2;
+    waveBanner('⚡ BOSS PHASE 2', 'EMP OVERCHARGE — TOWERS DISABLED', true);
+    toast('⚡ Goliath Colossus triggered EMP OVERCHARGE!');
+    sfx('zap');
+    addTrauma(0.6);
+    padRumble(0.8, 0.5, 400);
+
+    var bPos = gridToWorld3D(boss.x, boss.y, 0);
+    spawnResonanceRing(bPos, 4.8, true);
+    fxLight(0x00F5D4, 8, 16).position.copy(bPos);
+
+    // Hardlight kinetic shield (15% of max HP)
+    var shieldAmt = Math.round(boss.maxhp * 0.15);
+    boss.shield = shieldAmt;
+    boss.phaseShieldMax = shieldAmt;
+
+    // EMP Burst: Disables all towers within 5.5 tiles for 3.0 seconds
+    for(var t of S.towers){
+      if(t.type === 'blocker') continue;
+      var dist = Math.hypot(t.gx + 0.5 - boss.x, t.gy + 0.5 - boss.y);
+      if(dist <= 5.5){
+        t.cd = Math.max(t.cd, 3.0);
+        t.empDisabled = 3.0;
+        var tPos = gridToWorld3D(t.gx + 0.5, t.gy + 0.5, 1.2);
+        spawnResonanceRing(tPos, 1.2, false);
+      }
+    }
+  }
+
+  // Phase 2 -> Phase 3 Transition (at <= 33% HP)
+  if(boss.phase === 2 && hpFrac <= 0.33){
+    boss.phase = 3;
+    waveBanner('🔥 BOSS PHASE 3', 'CORE MELTDOWN — BERSERK RAGE', true);
+    toast('🔥 Goliath Colossus CORE MELTDOWN! Speed +35%, Armor Exposed!');
+    sfx('alarm');
+    addTrauma(0.8);
+    padRumble(1.0, 0.8, 600);
+
+    var bPos3 = gridToWorld3D(boss.x, boss.y, 0);
+    spawnResonanceRing(bPos3, 5.5, true);
+    fxLight(0xFF3B30, 9, 20).position.copy(bPos3);
+
+    // Berserk speed boost (+35%)
+    boss.speed *= 1.35;
+    // Core exposed: armor drops from 16 to 8
+    boss.armor = 8;
+  }
+
+  // Phase 1: Periodic Support Drones deployment
+  if(boss.phase === 1){
+    boss.droneTimer = (boss.droneTimer || 10.0) - dt;
+    if(boss.droneTimer <= 0){
+      boss.droneTimer = 14.0;
+      spawnBossSupportDrone(boss, -0.8, -0.4);
+      spawnBossSupportDrone(boss, 0.8, -0.4);
+      toast('🛰️ Goliath Colossus deployed Support Drones!');
+    }
+  }
+
+  // Phase 3: Periodic Seismic Stomp
+  if(boss.phase === 3){
+    boss.stompTimer = (boss.stompTimer || 6.0) - dt;
+    if(boss.stompTimer <= 0){
+      boss.stompTimer = 6.0;
+      var bPosStomp = gridToWorld3D(boss.x, boss.y, 0);
+      spawnResonanceRing(bPosStomp, 4.0, true);
+      addTrauma(0.4);
+      sfx('boom');
+      for(var t2 of S.towers){
+        if(t2.type === 'blocker') continue;
+        var dtower = Math.hypot(t2.gx + 0.5 - boss.x, t2.gy + 0.5 - boss.y);
+        if(dtower <= 4.0){
+          t2.cd = Math.max(t2.cd, 1.2);
+        }
+      }
+    }
+  }
 }
 function spawnPrismBeam(from, to){
   var dir = to.clone().sub(from); var len = dir.length();
@@ -4690,6 +4874,12 @@ function killFoe(f){
   if(!S.killsByType) S.killsByType = { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0 };
   if(f.type) S.killsByType[f.type] = (S.killsByType[f.type] || 0) + 1;
   S.peakCash = Math.max(S.peakCash || 0, S.cash);
+  if(f.type === 'boss'){
+    waveBanner('👑 COLOSSUS DESTROYED', 'TITAN SLAIN · ¤' + f.reward + ' SCRAP HARVESTED', false);
+    sfx('victory');
+    addTrauma(0.7);
+    padRumble(1.0, 0.8, 500);
+  }
 }
 
 // Centralized Gameplay Mutation Guard: blocks state mutations when paused, game over, or victory
@@ -4870,6 +5060,12 @@ function spawnEnemy(type){
   }
   attachHpBar(f, type === 'boss');
   if(type === 'boss'){ // colossus entrance: shockwave + ground thump
+    f.phase = 1;
+    f.shield = 0;
+    f.phaseShieldMax = 0;
+    f.droneTimer = 8.0;
+    f.stompTimer = 6.0;
+    f.armor = base.armor || 16;
     var bp = gridToWorld3D(f.x, f.y, 0);
     spawnResonanceRing(bp, 3.2, true);
     fxLight(0xFF3B30, 6, 14).position.copy(bp);
@@ -4994,6 +5190,18 @@ function update(dt){
     if(f.mesh.userData.turret && dist > 0.01){
       f.mesh.userData.turret.rotation.y = Math.atan2(ddx, ddy) - f.mesh.rotation.y;
     }
+    if(f.type === 'boss'){
+      updateBossMechanics(f, dt);
+    }
+    if(f.isSupportDrone && f.targetBoss && f.targetBoss.hp > 0 && !f.targetBoss.dead){
+      f.healTimer = (f.healTimer || 2.5) - dt;
+      if(f.healTimer <= 0){
+        f.healTimer = 2.5;
+        var healAmt = Math.round(f.targetBoss.maxhp * 0.015);
+        f.targetBoss.hp = Math.min(f.targetBoss.maxhp, f.targetBoss.hp + healAmt);
+        damageNumber(gridToWorld3D(f.targetBoss.x, f.targetBoss.y, 2.0), healAmt, 'Energy');
+      }
+    }
     updateHpBar(f);
   }
   updateBossBar();
@@ -5002,6 +5210,13 @@ function update(dt){
   if(typeof buildSpatialIndex === 'function') buildSpatialIndex();
   for(var t of S.towers){
     if(t.type === 'blocker') continue;
+    if(t.empDisabled > 0){
+      t.empDisabled -= dt;
+      if(t.mesh && t.mesh.userData && t.mesh.userData.turn){
+        t.mesh.userData.turn.rotation.z = Math.sin(S.time * 25) * 0.08;
+      }
+      continue;
+    }
     t.cd -= dt;
     // idle breathing: crystal bob, gear glow pulse, petal sway + fire-animation decay
     if(t.mesh.userData.crystal){
@@ -7420,6 +7635,10 @@ var API = {
   getFlowPath: getFlowPath,
   buildSpatialIndex: buildSpatialIndex,
   queryFoesInRadius: queryFoesInRadius,
+  updateBossMechanics: updateBossMechanics,
+  spawnBossSupportDrone: spawnBossSupportDrone,
+  updateBossBar: updateBossBar,
+  applyDamage: applyDamage,
   damageNumber: damageNumber,
   renderCombatFX: renderCombatFX,
   get DMG_POOL(){ return DMG_POOL; },

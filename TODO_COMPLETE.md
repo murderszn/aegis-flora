@@ -71,9 +71,9 @@ For the verified feature matrix, see [SHIPPING_FEATURE_MATRIX.md](./SHIPPING_FEA
 
 ## 🟡 PLANNED & ROADMAP (Open GitHub Issues)
 
-- [ ] **Windows-First Release Checklist** (#13) — Standalone packaging and release verification
-- [ ] **Sanctum Leak & Defeat Audio** (#19) — Enhanced leak alarm and game over audio
-- [ ] **Gesture-Driven Audio Startup** (#20) — Strict user-gesture gating for AudioContext
-- [ ] **Boss Affixes & Wave-10 Climax** (#21) — Multi-phase boss encounter mechanics
+- [x] **Windows-First Release Checklist** (#13) — Standalone packaging, Steamworks plan, and release verification
+- [x] **Sanctum Leak & Defeat Audio** (#19) — Enhanced leak alarm klaxon with anti-stacking and game over audio
+- [x] **Gesture-Driven Audio Startup** (#20) — Strict user-gesture gating for AudioContext and diagnostics
+- [x] **Boss Affixes & Wave-10 Climax** (#21) — Multi-phase boss encounter mechanics, hardlight shield, and EMP
 - [ ] **Missing Enemy Archetypes** (#22) — Steam Prowler and Dreadnought Ram chassis
 - [ ] **Licensed Solarpunk Soundtrack** (#27, #28) — Commissioned / licensed ambient loops
