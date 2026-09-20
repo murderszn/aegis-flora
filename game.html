@@ -728,10 +728,39 @@
   <button class="tp-btn square" id="btnSpeed" title="Cycle Game Speed (V)">1x</button>
   <button class="tp-btn square" id="btnFullscreen" title="Toggle Fullscreen (F11 / Shift+F)">⛶</button>
   <button class="tp-btn square" id="btnAudio" title="Toggle Mute (M)">🔊</button>
+  <button class="tp-btn" id="btnClaudeRadio" title="Claude FM Radio — 24/7 Lo-Fi Stream (clau.de/radio)"><span class="btn-icon">📻</span><span>Claude FM</span><span class="live-dot" id="claudeFmDot" style="width:7px;height:7px;border-radius:50%;background:#00F5D4;display:inline-block;margin-left:4px;box-shadow:0 0 8px #00F5D4;"></span></button>
   <button class="tp-btn square" id="btnClarity" title="Toggle Tactical Clarity Mode (K)">👁</button>
   <button class="tp-btn square" id="btnTutorial" title="Tutorial & Mazing Guide (?)">?</button>
   <button class="tp-btn" id="btnCam" title="Toggle Camera View (C)"><span class="btn-icon">◈</span><span>View</span><kbd>C</kbd></button>
   <button class="tp-btn" id="btnPad" title="Controller Mapping"><span class="btn-icon">🎮</span><span id="btnPadLabel">Pad</span></button>
+</div>
+
+<!-- Claude FM Radio Tuner Popover -->
+<div id="claude-fm-popover" style="display:none;position:fixed;top:62px;right:18px;z-index:1150;background:linear-gradient(180deg,#18241f 0%,#0c1512 100%);border:1px solid #8c733e;outline:1px solid rgba(0,245,212,0.35);outline-offset:-3px;border-radius:8px;padding:14px 18px;color:#efe6cf;box-shadow:0 12px 36px rgba(0,0,0,0.85);width:280px;backdrop-filter:blur(8px);">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <div style="font-family:var(--font-display,sans-serif);font-size:12px;font-weight:bold;color:var(--gold,#FFD60A);letter-spacing:1px;display:flex;align-items:center;gap:6px;">
+      <span>📻 CLAUDE FM</span>
+      <span style="font-size:9.5px;color:#00F5D4;background:rgba(0,245,212,0.15);padding:2px 5px;border-radius:3px;font-weight:bold;">LIVE</span>
+    </div>
+    <button type="button" id="btnClaudeFmClose" style="background:none;border:none;color:#8fa89b;font-size:15px;cursor:pointer;line-height:1;padding:2px 6px;">✕</button>
+  </div>
+  <div style="font-size:11px;color:#9fb3a8;margin-bottom:12px;line-height:1.45;">24/7 Lo-Fi for Thinking & Building curated by Anthropic</div>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+    <button class="btn primary" id="btnClaudeFmTogglePlay" style="flex:1;padding:6px 12px;font-size:12px;">⏸ Pause</button>
+    <a href="https://clau.de/radio" target="_blank" rel="noopener" class="btn" style="padding:6px 10px;font-size:11.5px;text-decoration:none;" title="Open official YouTube stream in new tab">YouTube ↗</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;font-size:11.5px;color:#9fb3a8;">
+    <span>Vol</span>
+    <input type="range" id="claudeFmVolSlider" min="0" max="100" value="75" style="flex:1;accent-color:#00F5D4;">
+    <span id="claudeFmVolLabel" style="min-width:32px;text-align:right;font-family:monospace;color:#ffd873;">75%</span>
+  </div>
+</div>
+
+<!-- Embedded YouTube Audio Stream Container (clau.de/radio -> tRsQsTMvPNg) -->
+<div id="claude-fm-container" style="position:fixed;bottom:-9999px;left:-9999px;width:240px;height:140px;opacity:0.01;pointer-events:none;z-index:-10;">
+  <iframe id="claude-fm-iframe" width="240" height="140"
+    src="https://www.youtube.com/embed/tRsQsTMvPNg?enablejsapi=1&autoplay=1&playsinline=1&controls=0"
+    frameborder="0" allow="autoplay; encrypted-media"></iframe>
 </div>
 
 <!-- Floating Tactical Ability Cluster (Bottom-Right Overlays) -->
@@ -2042,6 +2071,7 @@ function setMasterMute(muted, silent){
     }
   }
   if(typeof updateAudioButton === 'function') updateAudioButton();
+  if(typeof CLAUDE_FM !== 'undefined' && CLAUDE_FM.mute) CLAUDE_FM.mute(AUDIO_MUTED);
   var mu = document.getElementById('setMute');
   if(mu) mu.checked = AUDIO_MUTED;
   if(!silent) toast(AUDIO_MUTED ? 'Audio Muted' : 'Audio Enabled');
@@ -2457,6 +2487,147 @@ var MUSIC_ENGINE = (function(){
     isPaused: function(){ return isPaused; },
     getCurrentState: function(){ return currentState; },
     get stemGains(){ return stemGains; }
+  };
+})();
+
+// ---------- Claude FM Radio Controller (Anthropic 24/7 YouTube Lo-Fi Stream) ----------
+var CLAUDE_FM = (function(){
+  var isPlaying = true;
+  var isMuted = false;
+  var active = true; // Enabled as user's primary soundtrack
+  var volume = (typeof SETTINGS !== 'undefined' && SETTINGS.musicVol !== undefined) ? Math.round(SETTINGS.musicVol * 100) : 75;
+  var streamId = 'tRsQsTMvPNg'; // Official Claude FM live stream (clau.de/radio)
+
+  function sendCommand(func, args){
+    if(typeof document === 'undefined') return;
+    var iframe = document.getElementById('claude-fm-iframe');
+    if(iframe && iframe.contentWindow && typeof iframe.contentWindow.postMessage === 'function'){
+      try {
+        iframe.contentWindow.postMessage(JSON.stringify({
+          event: 'command',
+          func: func,
+          args: args || []
+        }), '*');
+      } catch(e){}
+    }
+  }
+
+  function play(){
+    if(!active) return;
+    isPlaying = true;
+    sendCommand('playVideo');
+    updateUI();
+  }
+
+  function pause(){
+    isPlaying = false;
+    sendCommand('pauseVideo');
+    updateUI();
+  }
+
+  function toggle(){
+    if(isPlaying) pause();
+    else play();
+  }
+
+  function setVolume(vol){
+    volume = Math.max(0, Math.min(100, Math.round(vol)));
+    sendCommand('setVolume', [volume]);
+    if(typeof SETTINGS !== 'undefined'){
+      SETTINGS.musicVol = volume / 100;
+      saveSettings();
+    }
+    updateUI();
+  }
+
+  function mute(m){
+    isMuted = !!m;
+    if(isMuted) sendCommand('mute');
+    else {
+      sendCommand('unMute');
+      sendCommand('setVolume', [volume]);
+    }
+    updateUI();
+  }
+
+  function setActive(val){
+    active = !!val;
+    if(active){
+      if(typeof MUSIC_ENGINE !== 'undefined' && MUSIC_ENGINE.stop) MUSIC_ENGINE.stop();
+      play();
+    } else {
+      pause();
+    }
+  }
+
+  function updateUI(){
+    if(typeof document === 'undefined') return;
+    var btn = document.getElementById('btnClaudeFmTogglePlay');
+    if(btn) btn.textContent = isPlaying ? '⏸ Pause' : '▶ Play';
+    var dot = document.getElementById('claudeFmDot');
+    if(dot){
+      dot.style.background = isPlaying ? '#00F5D4' : '#6a7872';
+      dot.style.boxShadow = isPlaying ? '0 0 8px #00F5D4' : 'none';
+    }
+    var slider = document.getElementById('claudeFmVolSlider');
+    if(slider) slider.value = volume;
+    var lbl = document.getElementById('claudeFmVolLabel');
+    if(lbl) lbl.textContent = volume + '%';
+  }
+
+  function init(){
+    if(typeof document === 'undefined') return;
+    var btnRadio = document.getElementById('btnClaudeRadio');
+    var popover = document.getElementById('claude-fm-popover');
+    var btnClose = document.getElementById('btnClaudeFmClose');
+    var btnToggle = document.getElementById('btnClaudeFmTogglePlay');
+    var slider = document.getElementById('claudeFmVolSlider');
+
+    if(btnRadio && popover){
+      btnRadio.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        var open = popover.style.display === 'block';
+        popover.style.display = open ? 'none' : 'block';
+        if(typeof sfx === 'function') sfx('click');
+      });
+    }
+    if(btnClose && popover){
+      btnClose.addEventListener('click', function(){
+        popover.style.display = 'none';
+        if(typeof sfx === 'function') sfx('click');
+      });
+    }
+    if(btnToggle){
+      btnToggle.addEventListener('click', function(){
+        toggle();
+        if(typeof sfx === 'function') sfx('click');
+      });
+    }
+    if(slider){
+      slider.addEventListener('input', function(){
+        setVolume(slider.value);
+      });
+    }
+
+    // Suppress synthesized procedural music since Claude FM is active
+    if(typeof MUSIC_ENGINE !== 'undefined' && MUSIC_ENGINE.stop){
+      MUSIC_ENGINE.stop();
+    }
+    updateUI();
+  }
+
+  return {
+    init: init,
+    play: play,
+    pause: pause,
+    toggle: toggle,
+    setVolume: setVolume,
+    mute: mute,
+    setActive: setActive,
+    isActive: function(){ return active; },
+    isPlaying: function(){ return isPlaying; },
+    getVolume: function(){ return volume; },
+    streamId: streamId
   };
 })();
 
@@ -4877,7 +5048,7 @@ function spawnExplosion(worldPos, splash){
   var g = worldToGrid3D(worldPos);
   spawnDecal('scorch', g.gx, g.gy, 2.6);
   if(Math.random() < 0.4) spawnDecal('crater', g.gx, g.gy, 2.0);
-  addTrauma(Math.min(0.45, 0.12 + splash * 0.08));
+  addTrauma(Math.min(0.12, 0.03 + splash * 0.02));
   sfx('boom');
 }
 // Dota-style announcements: wave banner + boss HP bar + sanctum damage flash
@@ -6900,12 +7071,12 @@ function padRumble(strong, weak, dur){
     if(p && p.vibrationActuator && typeof p.vibrationActuator.playEffect === 'function'){
       p.vibrationActuator.playEffect('dual-rumble', {
         startDelay: 0,
-        duration: dur || 120,
-        weakMagnitude: weak || 0.3,
-        strongMagnitude: strong || 0.5
+        duration: Math.min(100, Math.round((dur || 120) * 0.45)),
+        weakMagnitude: Math.min(0.2, (weak || 0.3) * 0.35),
+        strongMagnitude: Math.min(0.25, (strong || 0.5) * 0.35)
       }).catch(function(){});
     } else if(p && p.hapticActuators && p.hapticActuators.length > 0 && typeof p.hapticActuators[0].pulse === 'function'){
-      p.hapticActuators[0].pulse(strong || 0.5, dur || 120);
+      p.hapticActuators[0].pulse(Math.min(0.25, (strong || 0.5) * 0.35), Math.min(100, Math.round((dur || 120) * 0.45)));
     }
   } catch(e){}
 }
@@ -7068,6 +7239,10 @@ function applySettings(){
   var fg = document.getElementById('filmgrain');
   if(fg) fg.style.display = SETTINGS.grain ? 'block' : 'none';
   applyTacticalClarityScenery(SETTINGS.tacticalClarity);
+  // Sync Claude FM radio volume with musicVol setting
+  if(typeof CLAUDE_FM !== 'undefined' && CLAUDE_FM.setVolume){
+    CLAUDE_FM.setVolume((SETTINGS.musicVol !== undefined ? SETTINGS.musicVol : 0.75) * 100);
+  }
 }
 
 function applyTacticalClarityScenery(active){
@@ -7549,9 +7724,11 @@ function togglePause(explicitVal){
   document.body.classList.toggle('is-paused', S.paused);
   if(S.paused){
     if(typeof MUSIC_ENGINE !== 'undefined') MUSIC_ENGINE.updateState('pause');
+    if(typeof CLAUDE_FM !== 'undefined' && CLAUDE_FM.pause) CLAUDE_FM.pause();
     toast('Game Paused · Press P to Resume');
   } else {
     if(typeof MUSIC_ENGINE !== 'undefined') MUSIC_ENGINE.resume();
+    if(typeof CLAUDE_FM !== 'undefined' && CLAUDE_FM.play) CLAUDE_FM.play();
     toast('Game Resumed');
   }
   refreshHud();
@@ -7725,7 +7902,8 @@ var clock = new THREE.Clock();
 function addTrauma(amount){
   if(!S) return;
   if(typeof SETTINGS !== 'undefined' && SETTINGS.shake === false) return;
-  S.trauma = Math.min(1, (S.trauma || 0) + amount);
+  // Scaled down by ~65% to provide gentle tactile kick without nauseating screen violence
+  S.trauma = Math.min(0.35, (S.trauma || 0) + (amount || 0.1) * 0.35);
 }
 function animate(){
   requestAnimationFrame(animate);
@@ -7828,12 +8006,12 @@ function animate(){
   stepDirector(dt);
   controls.update();
   pollGamepad(dt);
-  // trauma decay → camera kick (mortars, flares, leaks)
+  // trauma decay → gentle, brief camera kick (mortars, flares, leaks)
   if(S && S.trauma > 0){
-    S.trauma = Math.max(0, S.trauma - dt * 1.6);
-    var sh = S.trauma * S.trauma * 1.4;
+    S.trauma = Math.max(0, S.trauma - dt * 4.5);
+    var sh = S.trauma * S.trauma * 0.25;
     camera.position.x += (Math.random() - 0.5) * sh;
-    camera.position.y += (Math.random() - 0.5) * sh * 0.6;
+    camera.position.y += (Math.random() - 0.5) * sh * 0.35;
     camera.position.z += (Math.random() - 0.5) * sh;
   }
   if(POST.enabled && POST.renderTarget && POST.postScene && GFX.profile !== 'perf'){
@@ -8030,6 +8208,7 @@ function boot(){
   bindSettingsUI();
   bindTutorialUI();
   applySettings();
+  if(typeof CLAUDE_FM !== 'undefined' && CLAUDE_FM.init) CLAUDE_FM.init();
   updatePathVisualizer();
   refreshHud();
   if(!document.getElementById('loading-screen')) checkFirstRunTutorial();
@@ -8218,6 +8397,7 @@ var API = {
   updateBossBar: updateBossBar,
   updateRamMechanics: updateRamMechanics,
   MUSIC_ENGINE: MUSIC_ENGINE,
+  CLAUDE_FM: CLAUDE_FM,
   gameOver: gameOver,
   applyDamage: applyDamage,
   damageNumber: damageNumber,
