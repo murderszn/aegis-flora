@@ -1,0 +1,3861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aegis Flora 3D — Solarpunk-Mecha Mazing Tower Defense</title>
+<style>
+  :root {
+    /* 60% Foundation — Carrara / travertine / gunmetal */
+    --marble-ivory: #F0E5CF;
+    --travertine: #C8B696;
+    --gunmetal: #273035;
+    --gunbronze: #534537;
+    /* 30% Organic life */
+    --peony: #DD858A;
+    --chrys-gold: #EAB14D;
+    --clover: #315F49;
+    --verdigris: #75A69F;
+    /* 10% Combat telemetry */
+    --solar-cyan: #00F5D4;
+    --explosive-amber: #FF6B35;
+    --resonance: #7209B7;
+    --hostile-red: #FF3B30;
+    --teal: #164456;
+    --teal-dk: #0C2732;
+    --teal-glow: #00f5d4;
+    --bronze: #C5A66D;
+    --bronze-dk: #826A42;
+    --gold: #DDBA78;
+    --gold-glow: #F5D99B;
+    --marble: #cfc4a8;
+    --ink: #06100e;
+    --panel: rgba(12, 22, 19, 0.94);
+    --panel2: #162420;
+    --panel-border: #3d4f45;
+    --ember: #e0572e;
+    --ok: #7fe08a;
+    --bad: #ff5d5d;
+    --font-display: Georgia, 'Cinzel', 'Times New Roman', serif;
+    --font-stats: 'Courier New', 'Roboto Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--teal-dk); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #efe6cf;
+    -webkit-user-select: none; user-select: none;
+  }
+  #game-container {
+    position: fixed; inset: 0; width: 100vw; height: 100vh; display: block;
+    cursor: crosshair; overflow: hidden;
+  }
+  #game-container canvas { width: 100% !important; height: 100% !important; display: block; }
+
+  /* --- Top Bar Console (Dota 2 Architecture) --- */
+  .bar {
+    position: fixed; left: 0; right: 0; z-index: 10; display: flex; align-items: center;
+    gap: 16px; padding: 6px 18px; background: var(--panel);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-bottom: 2px solid var(--bronze-dk);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.65);
+  }
+  #topbar { top: 0; height: 54px; }
+  #topbar .logo-wrap { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  #topbar .logo-thumb {
+    width: 38px; height: 38px; border-radius: 4px; border: 1.5px solid var(--bronze);
+    object-fit: cover; box-shadow: 0 0 10px rgba(201,162,39,0.35);
+  }
+  #topbar .logo {
+    font-family: var(--font-display); letter-spacing: 2px; color: var(--gold);
+    font-size: 18px; font-weight: bold; text-shadow: 0 0 12px rgba(240,168,30,0.45);
+  }
+  .stat {
+    font-family: var(--font-stats); font-size: 16px; font-weight: bold;
+    white-space: nowrap; display: flex; flex-direction: column; line-height: 1.1;
+  }
+  .stat small {
+    font-family: -apple-system, sans-serif; font-weight: 600; font-size: 9px;
+    letter-spacing: 1px; color: #9fb3a8; text-transform: uppercase;
+  }
+  .stat b { color: #fff; }
+  .stat.lives b { color: #ff7676; text-shadow: 0 0 8px rgba(255,100,100,0.4); }
+  .stat.cash b { color: #ffd15c; text-shadow: 0 0 8px rgba(255,209,92,0.4); }
+  .stat.mana b { color: #5ce1e6; text-shadow: 0 0 8px rgba(92,225,230,0.4); }
+  #topbar .sp { flex: 1; }
+
+  .btn {
+    background: #24352c; color: #efe6cf; border: 1.5px solid var(--bronze-dk);
+    border-radius: 4px; font-family: inherit; font-size: 13px; font-weight: 600;
+    padding: 6px 14px; cursor: pointer; transition: all 0.15s ease;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .btn:hover { border-color: var(--gold); color: #fff; transform: translateY(-1px); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary {
+    background: linear-gradient(180deg, #f0c040 0%, #c99316 100%);
+    border-color: #ffd873; color: #211602; font-weight: bold;
+    box-shadow: 0 0 14px rgba(240,192,64,0.4);
+  }
+  .btn.primary:hover {
+    background: linear-gradient(180deg, #ffd359 0%, #db9f18 100%);
+    box-shadow: 0 0 20px rgba(240,192,64,0.65);
+  }
+
+  /* --- Bottom Console Drawer (Dota 2 Bottom Tray: cast iron + beveled brass) --- */
+  #drawer {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; height: 148px;
+    display: flex; gap: 10px; align-items: stretch; padding: 10px 18px 12px;
+    background:
+      linear-gradient(180deg, rgba(74,59,50,0.35) 0%, rgba(0,0,0,0) 18%),
+      linear-gradient(180deg, #1b211e 0%, #0c1412 60%, #070d0b 100%);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-top: 2px solid var(--bronze-dk);
+    outline: 1px solid rgba(201,162,39,0.35); outline-offset: -3px;
+    box-shadow: 0 -4px 22px rgba(0,0,0,0.65), inset 0 1px 0 rgba(244,238,221,0.12);
+  }
+  #drawer::before {
+    content: ""; position: absolute; top: 0; left: 8%; right: 8%; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--bronze) 20%, #ffe9a8 50%, var(--bronze) 80%, transparent);
+    opacity: 0.7; pointer-events: none;
+  }
+  #minimap-wrap {
+    width: 140px; height: 100%; border-radius: 4px; border: 1.5px solid var(--bronze-dk);
+    background: #091310; position: relative; overflow: hidden; flex-shrink: 0;
+  }
+  #minimap { width: 100%; height: 100%; display: block; }
+  .minimap-lbl {
+    position: absolute; bottom: 2px; left: 4px; font-size: 8.5px;
+    color: #9fb3a8; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  .card {
+    flex: 1; max-width: 270px; background: var(--panel2); border: 1.5px solid var(--panel-border);
+    border-bottom: 3px solid var(--panel-border); border-radius: 6px; padding: 8px 10px;
+    cursor: pointer; position: relative; overflow: hidden; display: flex; gap: 10px;
+    transition: all 0.15s ease;
+  }
+  .card:hover { border-color: var(--bronze); background: #1c2c26; }
+  .card.sel {
+    border-color: var(--gold); border-bottom-color: var(--gold);
+    background: linear-gradient(180deg, #24382e 0%, #1a2a23 100%);
+    box-shadow: 0 0 14px rgba(240,168,30,0.3);
+  }
+  .card.cant { opacity: 0.45; cursor: not-allowed; filter: grayscale(40%); }
+  .card .card-thumb {
+    width: 58px; height: 100%; border-radius: 4px; object-fit: cover;
+    border: 1px solid rgba(201,162,39,0.5); flex-shrink: 0; background: #07100e;
+  }
+  .card .card-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .card .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+  .card .key {
+    background: var(--gold); color: #211602; font-weight: bold;
+    font-size: 11px; padding: 1px 6px; border-radius: 3px; font-family: var(--font-stats);
+  }
+  .card .nm { font-size: 13px; font-weight: bold; color: #fff; font-family: var(--font-display); letter-spacing: 0.4px; }
+  .card .cost { font-size: 13px; color: var(--gold); font-family: var(--font-stats); font-weight: bold; }
+  .card .ds { font-size: 11px; color: #a9baa9; line-height: 1.3; margin-top: 2px; }
+  .card .tip {
+    display: none; position: absolute; left: 0; right: 0; bottom: calc(100% + 8px);
+    background: rgba(8,14,12,0.97); border: 1px solid var(--bronze); border-top: 3px solid var(--gold);
+    border-radius: 5px; padding: 8px 10px; font-size: 11px; line-height: 1.45; color: #e8e2cd;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.7); pointer-events: none; z-index: 20; white-space: normal;
+  }
+  .card:hover .tip { display: block; }
+  .card .tip b { color: var(--gold-glow); font-family: var(--font-stats); }
+  .card .tip .dmg-Kinetic { color: #FFD60A; } .card .tip .dmg-Blast { color: var(--explosive-amber); }
+  .card .tip .dmg-Energy { color: var(--solar-cyan); } .card .tip .dmg-Sonic { color: #C77DFF; }
+
+  /* --- Preview & Wave Caller Banner --- */
+  #preview {
+    position: fixed; left: 18px; bottom: 142px; z-index: 9; font-size: 12px; color: #f2e7c9;
+    background: rgba(10, 20, 17, 0.88); backdrop-filter: blur(4px);
+    border: 1px solid var(--panel-border); border-left: 3px solid var(--gold);
+    padding: 6px 14px; border-radius: 4px; max-width: 50vw; box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+  }
+
+  /* --- Camera Mode Pill --- */
+  #btnRoot, #btnFlare {
+    background: linear-gradient(180deg, #2d7246 0%, #1a4d2c 100%);
+    border-color: #4a8a5a;
+    color: #c8f0c8;
+    box-shadow: 0 0 10px rgba(45,114,70,0.3);
+  }
+  #btnRoot:hover, #btnFlare:hover {
+    border-color: #7fe08a;
+    box-shadow: 0 0 16px rgba(45,114,70,0.5);
+  }
+  #btnRoot:disabled, #btnFlare:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  #cam-mode {
+    position: fixed; left: 18px; top: 64px; z-index: 9; font-size: 11px; color: #e0f4ec;
+    background: rgba(10, 24, 20, 0.85); border: 1px solid var(--bronze-dk);
+    padding: 5px 12px; border-radius: 12px; display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  }
+  #cam-mode .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal-glow); box-shadow: 0 0 6px var(--teal-glow); }
+
+  /* --- Unit & Tower Inspector Card --- */
+  #inspect {
+    position: fixed; right: 18px; bottom: 142px; z-index: 12; width: 330px; display: none;
+    background: rgba(16, 27, 23, 0.96); backdrop-filter: blur(8px);
+    border: 1.5px solid var(--bronze); border-top: 4px solid var(--gold);
+    border-radius: 6px; padding: 12px 14px; font-size: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+  }
+  #inspect .inspect-header { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+  #inspect .inspect-thumb {
+    width: 48px; height: 48px; border-radius: 4px; object-fit: cover;
+    border: 1px solid var(--bronze); background: #07100e; flex-shrink: 0;
+  }
+  #inspect h4 {
+    font-family: Georgia, serif; font-size: 15px; color: var(--gold);
+    letter-spacing: 1px; font-weight: bold; margin: 0;
+  }
+  #inspect .sub { font-size: 11px; color: #9bb0a4; margin-top: 2px; }
+  #inspect .row { margin: 6px 0; color: #d6e0d3; line-height: 1.5; font-size: 11.5px; }
+  #inspect .up {
+    display: block; width: 100%; margin: 6px 0; text-align: left;
+    padding: 6px 10px; font-size: 12px;
+  }
+  #inspect .up:disabled { opacity: 0.45; cursor: not-allowed; }
+  #inspect .btn-sell { background: #3d2424; border-color: #8f3d3d; color: #ffb8b8; }
+  #inspect .btn-sell:hover { background: #542d2d; border-color: #ff5d5d; color: #fff; }
+  #inspect .dmg-Kinetic { color: #FFD60A; } #inspect .dmg-Blast { color: var(--explosive-amber); }
+  #inspect .dmg-Energy { color: var(--solar-cyan); } #inspect .dmg-Sonic { color: #C77DFF; }
+
+  /* --- Toast Message --- */
+  #toast {
+    position: fixed; left: 50%; bottom: 180px; transform: translateX(-50%);
+    background: rgba(28, 15, 8, 0.94); border: 2px solid var(--ember); color: #ffe2d2;
+    padding: 8px 22px; font-size: 14px; font-weight: 600; display: none; z-index: 15;
+    max-width: 75vw; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.65);
+    text-align: center; pointer-events: none;
+  }
+
+  /* --- Victory / Defeat Modal Banner --- */
+  #banner {
+    position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px; background: rgba(7, 16, 14, 0.9); z-index: 30;
+    text-align: center; backdrop-filter: blur(10px);
+  }
+  #banner .banner-art {
+    width: 220px; height: 130px; object-fit: cover; border-radius: 6px;
+    border: 2px solid var(--bronze); box-shadow: 0 0 25px rgba(201,162,39,0.4);
+    margin-bottom: 6px;
+  }
+  #banner h1 {
+    font-family: Georgia, serif; font-size: 44px; letter-spacing: 4px;
+    color: var(--gold); font-weight: normal; text-shadow: 0 0 20px rgba(240,168,30,0.5);
+  }
+  #banner p { font-size: 15px; color: #e6dfcb; max-width: 520px; line-height: 1.5; }
+  #banner button {
+    background: linear-gradient(180deg, #f0c040 0%, #c99316 100%);
+    border: none; font-size: 16px; padding: 10px 32px; border-radius: 4px;
+    cursor: pointer; font-family: inherit; font-weight: bold; color: #211602;
+    box-shadow: 0 0 16px rgba(240,192,64,0.4);
+  }
+
+  /* --- Cinematic vignette + sanctum damage flash (post feel without postprocessing) --- */
+  #vignette {
+    position: fixed; inset: 0; z-index: 5; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 52%, rgba(4,10,9,0.42) 100%);
+  }
+  #dmgflash {
+    position: fixed; inset: 0; z-index: 6; pointer-events: none; opacity: 0;
+    background: radial-gradient(ellipse at center, rgba(255,59,48,0) 45%, rgba(255,59,48,0.35) 100%);
+    transition: opacity 0.12s ease;
+  }
+  /* --- Wave announcement banner --- */
+  #wavebanner {
+    position: fixed; top: 22%; left: 0; right: 0; z-index: 14; pointer-events: none;
+    text-align: center; opacity: 0; transition: opacity 0.4s ease;
+  }
+  #wavebanner .wb-title {
+    font-family: var(--font-display); font-size: 42px; letter-spacing: 8px; color: var(--marble-ivory);
+    text-shadow: 0 0 24px rgba(0,245,212,0.5), 0 2px 6px #000;
+  }
+  #wavebanner .wb-sub { font-family: var(--font-stats); font-size: 14px; letter-spacing: 2px; color: var(--gold-glow); margin-top: 4px; }
+  #wavebanner.show { opacity: 1; }
+  #wavebanner.danger .wb-title { color: #ffb3ab; text-shadow: 0 0 24px rgba(255,59,48,0.7), 0 2px 6px #000; }
+  /* --- Boss HP bar --- */
+  #bosshp {
+    position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 13;
+    width: min(560px, 60vw); display: none; pointer-events: none;
+    background: rgba(8,12,10,0.85); border: 1px solid var(--hostile-red); border-radius: 4px; padding: 5px 10px 7px;
+    box-shadow: 0 0 18px rgba(255,59,48,0.35);
+  }
+  #bosshp .boss-name { font-family: var(--font-display); font-size: 12px; letter-spacing: 3px; color: #ffb3ab; }
+  #bosshp .boss-track { height: 8px; background: #2a0f0d; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  #bosshp .boss-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #FF3B30, #FF6B35); transition: width 0.2s ease; }
+  /* --- Gamepad crosshair + status --- */
+  #crosshair {
+    position: fixed; left: 50%; top: 50%; width: 26px; height: 26px; z-index: 9;
+    transform: translate(-50%, -50%); pointer-events: none; display: none;
+  }
+  #crosshair::before, #crosshair::after {
+    content: ""; position: absolute; background: var(--teal-glow);
+    box-shadow: 0 0 6px var(--teal-glow);
+  }
+  #crosshair::before { left: 12px; top: 2px; width: 2px; height: 22px; }
+  #crosshair::after { top: 12px; left: 2px; height: 2px; width: 22px; }
+  #crosshair.bad::before, #crosshair.bad::after { background: var(--hostile-red); box-shadow: 0 0 6px var(--hostile-red); }
+  #gamepad-status {
+    position: fixed; right: 18px; top: 64px; z-index: 9; display: none;
+    font-family: var(--font-stats); font-size: 11px; color: #e0f4ec;
+    background: rgba(10, 24, 20, 0.85); border: 1px solid var(--bronze-dk);
+    padding: 5px 12px; border-radius: 12px;
+  }
+</style>
+<link rel="stylesheet" href="hud.css">
+
+<!-- Self-contained local Three.js, OrbitControls & GLTFLoader -->
+<script src="js/three.min.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/GLTFLoader.js"></script>
+</head>
+<body>
+
+<div id="game-container"></div>
+<div id="vignette"></div>
+<div id="dmgflash"></div>
+<div id="wavebanner"><div class="wb-title"></div><div class="wb-sub"></div></div>
+<div id="bosshp"><div class="boss-name">☠ GOLIATH COLOSSUS</div><div class="boss-track"><div class="boss-fill"></div></div></div>
+<div id="crosshair"></div>
+<div id="gamepad-status">🎮 <span id="gamepad-name">Gamepad</span> · LS move · RS look · A place · X wave</div>
+
+<!-- Sanctum command bar -->
+<div class="bar" id="topbar">
+  <div class="logo-wrap" id="logoClick">
+    <img src="assets/sanctum_core.jpg" class="logo-thumb" alt="" onerror="this.style.display='none'">
+    <span class="brand-copy"><small>THE VERDANT SANCTUM</small><span class="logo">AEGIS <em>FLORA</em></span></span>
+  </div>
+  <div class="resource-group" aria-label="Sanctum resources">
+    <div class="stat lives"><small><i class="resource-icon">✦</i> Sanctum</small><span class="stat-value"><b id="lives">20</b><span class="stat-unit" id="maxLivesLabel"> / 20 HP</span></span><span class="stat-meter"><i id="healthFill"></i></span></div>
+    <div class="stat cash"><small><i class="resource-icon">◇</i> Scrap</small><span class="stat-value"><span class="stat-unit">¤ </span><b id="cash">0</b></span></div>
+    <div class="stat mana"><small><i class="resource-icon">✧</i> Solar energy</small><span class="stat-value"><b id="mana">100</b><span class="stat-unit"> / 100</span></span><span class="stat-meter"><i id="manaFill"></i></span></div>
+  </div>
+  <div class="wave-group"><small id="phaseLabel">PREPARE DEFENSES</small><span class="wave-value">WAVE <b id="wave">0 / 50</b></span><span class="score-line">SCORE <b id="score">0</b></span></div>
+  <div class="command-group">
+    <button class="btn utility" id="btnCam" title="Toggle Camera (C)"><span class="btn-icon">◈</span><span class="btn-label">View</span><kbd>C</kbd></button>
+    <span class="command-divider"></span>
+    <button class="btn ability" id="btnRoot" title="Verdant Overgrowth (D) — 35 Mana"><span class="btn-icon">✿</span><span class="btn-label">Root</span><kbd>D</kbd></button>
+    <button class="btn ability" id="btnFlare" title="Solar Flare (F) — 75 Mana"><span class="btn-icon">☼</span><span class="btn-label">Flare</span><kbd>F</kbd></button>
+    <button class="btn primary" id="btnWave">Start Wave (Space)</button>
+    <button class="btn utility square" id="btnPause" title="Pause Game (P)" aria-label="Pause game">Ⅱ</button>
+    <button class="btn utility square" id="btnSpeed" title="Cycle Game Speed (V)">1x</button>
+    <button class="btn ability" id="btnGlyph" title="Verdant Glyphs (G) — Meta Upgrades"><span class="btn-icon">✧</span><span class="btn-label">Glyphs</span><kbd>G</kbd></button>
+  </div>
+</div>
+
+<div id="cam-mode"><div class="dot"></div><span>TACTICAL VIEW <span class="cam-hint">· Right drag to orbit · Scroll to zoom</span></span></div>
+<div class="preview-wrap"><span class="preview-kicker">NEXT THREAT <span class="preview-pulse"></span></span><div id="preview"></div></div>
+
+<!-- Defense arsenal -->
+<div id="drawer">
+  <div class="dock-content">
+    <div class="radar-panel">
+      <div class="dock-heading"><span class="heading-mark"></span> BATTLEFIELD <span class="heading-end">01 / RADAR</span></div>
+      <div id="minimap-wrap">
+        <canvas id="minimap" width="140" height="110"></canvas>
+        <div class="minimap-lbl">LIVE GRID</div>
+      </div>
+    </div>
+    <div class="arsenal-panel">
+      <div class="dock-heading"><span class="heading-mark"></span> BUILD DEFENSES <span class="heading-end">SELECT Q — R · CLICK GRID TO DEPLOY</span></div>
+      <div id="build-grid"></div>
+    </div>
+  </div>
+</div>
+
+<div id="inspect"></div>
+<div id="toast"></div>
+
+<div id="banner">
+  <img src="assets/aegis_master.jpg" class="banner-art" alt="End Banner" onerror="this.style.display='none'">
+  <h1 id="bannerTitle">GRID SECURED</h1>
+  <p id="bannerSub"></p>
+  <button id="btnAgain">Play Again</button>
+</div>
+
+<script>
+'use strict';
+/* ============================================================
+   AEGIS FLORA 3D — Professional AAA Mazing Tower Defense
+   Graphics: Three.js PBR Engine + GLTF Models + Procedural Fallback
+   ============================================================ */
+
+// ---------- Configuration ----------
+var COLS = 36, ROWS = 20;
+var CELL_SIZE = 2.0;
+// Chunky toy-like presence (Roblox vibe): everything slightly oversized
+var CHUNK_TOWER = 1.3, CHUNK_CREEP = 1.28, CHUNK_TREE = 1.28, CHUNK_RUIN = 1.18;
+var SPAWN = { x: 0, y: 10 }, SANCTUM = { x: COLS - 1, y: 10 };
+var WAVE_MAX = 50, START_CASH = 35, START_LIVES = 20, SELL_RATE = 0.75;
+
+var TOWERS = {
+  gun: {
+    key: 'Q', numKey: '1', name: 'Petal Gatling', cost: 5, range: 2.8,
+    img: 'assets/3d_turret_pbr.jpg', glb: 'blender_pipeline/models/tower_prism_gatling.glb',
+    desc: 'Rapid kinetic fire. Fluted marble plinth with spinning rotary brass barrels.'
+  },
+  rocket: {
+    key: 'W', numKey: '2', name: 'Bloom Mortar', cost: 10, range: 5.0,
+    img: 'assets/3d_mortar_pbr.jpg', glb: 'blender_pipeline/models/tower_bloom_cannon.glb',
+    desc: 'Mechanical lotus flak artillery. Arcing explosive spore shells with fiery splash.'
+  },
+  beam: {
+    key: 'E', numKey: '3', name: 'Prism Pillar', cost: 12, range: 3.6,
+    img: 'assets/3d_turret_pbr.jpg', glb: 'blender_pipeline/models/tower_prism_gatling.glb',
+    desc: 'Hovering cyan crystal laser beam. Continuous ramping single-target DPS.'
+  },
+  slow: {
+    key: 'R', numKey: '4', name: 'Resonance Obelisk', cost: 15, range: 2.6,
+    img: 'blender_pipeline/renders/tower_resonance_monolith_render.png', glb: 'blender_pipeline/models/tower_resonance_monolith.glb',
+    desc: 'Acoustic shockwaves. 40% radial slow + strips creep armor.'
+  }
+};
+
+var BRANCH = {
+  gun: {
+    A: { name: 'Vulcan Pedestal', cost: 15, dmg: 4, iv: 0.08, aa: true },
+    B: { name: 'Rail-Needler', cost: 20, dmg: 24, iv: 0.75, aa: true, ap: true }
+  },
+  rocket: {
+    A: { name: 'Cataclysm Bloom', cost: 30, dmg: 95, iv: 2.4, splash: 1.8 },
+    B: { name: 'Skyburst Flak', cost: 25, dmg: 26, iv: 0.85, splash: 0.9, aaOnly: true, range: 6.2 }
+  },
+  beam: {
+    A: { name: 'Sol Invictus', cost: 25, dps: 60, range: 4.6, ramp: 2.5 },
+    B: { name: 'Refraction Lens', cost: 30, dps: 38, range: 4.0, split: 3 }
+  },
+  slow: {
+    A: { name: 'Chrono-Stutter', cost: 25, range: 3.6, slowF: 0.5, chill: 2.5, dps: 8, stun: true },
+    B: { name: 'Resonance Shatter', cost: 30, range: 3.2, dps: 46, hold: 0.25, shatter: true }
+  }
+};
+
+var FOES = {
+  spider: { hp: 28, speed: 2.7, reward: 4, leak: 1, r: 0.22, kind: 'gnd', name: 'Skitter Scout', armor: 0, dmgMod: { Kinetic: 1.25, Blast: 1.0, Energy: 1.0, Sonic: 1.0 } },
+  tank:   { hp: 160, speed: 1.35, reward: 10, leak: 2, r: 0.32, kind: 'gnd', armored: true, name: 'Tread Tank', armor: 8, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
+  walker: { hp: 540, speed: 0.95, reward: 22, leak: 4, r: 0.38, kind: 'gnd', armored: true, name: 'Diesel Walker', armor: 10, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
+  boss:   { hp: 4400, speed: 0.65, reward: 150, leak: 10, r: 0.58, kind: 'gnd', armored: true, name: 'Goliath Colossus', armor: 16, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
+  drone:  { hp: 45, speed: 2.2, reward: 7, leak: 1, r: 0.25, kind: 'air', name: 'Rotor Drone', armor: 1, dmgMod: { Kinetic: 1.0, Blast: 1.0, Energy: 1.0, Sonic: 1.0 } },
+  ship:   { hp: 980, speed: 0.8, reward: 50, leak: 6, r: 0.48, kind: 'air', armored: true, name: 'Zeppelin Sky-Hull', armor: 6, dmgMod: { Kinetic: 0.7, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } }
+};
+
+// Dota 2 armor formula: diminishing returns on effective HP
+function armorMultiplier(armor){
+  if(armor >= 0) return 1 - (0.06 * armor) / (1 + 0.06 * armor);
+  return 2 - Math.pow(0.94, Math.abs(armor));
+}
+
+// Apply damage with armor mitigation and damage-type modifiers
+function applyDamage(f, dmg, dtype, shatteredBonus){
+  var mod = (f.dmgMod && f.dmgMod[dtype]) || 1.0;
+  var mult = mod;
+  // Energy ignores 50% armor
+  if(dtype === 'Energy') mult *= (1 - 0.5 * armorMultiplier(f.armor || 0));
+  // Sonic is pure damage (ignores armor)
+  if(dtype === 'Sonic') mult *= 1;
+  // Kinetic/Blast use armor multiplier
+  if(dtype === 'Kinetic' || dtype === 'Blast') mult *= armorMultiplier(f.armor || 0);
+  // Shattered bonus (+35% damage taken)
+  if(shatteredBonus && f.shattered > 0) mult *= 1.35;
+  f.hp -= dmg * mult;
+  return Math.round(dmg * mult);
+}
+
+function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
+function idx(x, y){ return y * COLS + x; }
+function inB(x, y){ return x >= 0 && y >= 0 && x < COLS && y < ROWS; }
+function mulberry(seed){
+  var t = seed >>> 0;
+  return function(){
+    t += 0x6D2B79F5;
+    var r = Math.imul(t ^ t >>> 15, 1 | t);
+    r ^= r + Math.imul(r ^ r >>> 7, 61 | r);
+    return ((r ^ r >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function gridToWorld3D(gx, gy, yOffset){
+  var ox = -(COLS * CELL_SIZE) / 2;
+  var oz = -(ROWS * CELL_SIZE) / 2;
+  return new THREE.Vector3(
+    ox + gx * CELL_SIZE + CELL_SIZE * 0.5,
+    yOffset || 0,
+    oz + gy * CELL_SIZE + CELL_SIZE * 0.5
+  );
+}
+
+function worldToGrid3D(pos){
+  var ox = -(COLS * CELL_SIZE) / 2;
+  var oz = -(ROWS * CELL_SIZE) / 2;
+  var gx = Math.floor((pos.x - ox) / CELL_SIZE);
+  var gy = Math.floor((pos.z - oz) / CELL_SIZE);
+  return { gx: gx, gy: gy };
+}
+
+// ---------- Game State ----------
+var S = null;
+function newState(seed){
+  return {
+    seed: seed,
+    blocked: new Uint8Array(COLS * ROWS),
+    ruin: new Uint8Array(COLS * ROWS),
+    ruinMeshes: [],
+    towers: [],
+    foes: [], missiles: [], shells: [],
+    parts: [], tracers: [], beams: [], zones: [],
+    spawnQueue: [], spawnT: 0,
+    cash: START_CASH, lives: START_LIVES, mana: 100, score: 0,
+    wave: 0, phase: 'build', waveT: 0,
+    paused: false, speed: 1,
+    selected: null, selTower: null,
+    kills: 0, leaked: 0, time: 0,
+    sanctum: { abilityCD: 0, rootCD: 0, rootTargets: [] },
+    glyphs: loadGlyphs()
+  };
+}
+
+// ---------- Meta-Progression: Verdant Glyphs ----------
+var GLYPH_DEFS = {
+  foundry: { name: 'Foundry Engineering', desc: '+2% tower damage per level', maxLvl: 15, cost: 50, icon: '⚙' },
+  vault: { name: 'Ancient Vault', desc: '+50 starting Scrap per level', maxLvl: 3, cost: 80, icon: '💰' },
+  flora: { name: 'Flora Symbiosis', desc: '+15% Sanctum HP per level', maxLvl: 5, cost: 60, icon: '🌿' },
+  mazing: { name: 'Mazing Mastery', desc: 'Unlock decorative blocker walls', maxLvl: 1, cost: 100, icon: '🧱' }
+};
+
+function loadGlyphs(){
+  try { return JSON.parse(localStorage.getItem('aegis_glyphs') || '{}'); }
+  catch(e){ return {}; }
+}
+function saveGlyphs(){
+  try { localStorage.setItem('aegis_glyphs', JSON.stringify(S.glyphs)); }
+  catch(e){}
+}
+function getGlyphLevel(gid){ return S.glyphs[gid] || 0; }
+function canAffordGlyph(gid){ var def = GLYPH_DEFS[gid]; var lvl = getGlyphLevel(gid); return lvl < def.maxLvl && S.cash >= def.cost * (lvl + 1); }
+function purchaseGlyph(gid){
+  var def = GLYPH_DEFS[gid]; var lvl = getGlyphLevel(gid);
+  if(lvl >= def.maxLvl) return false;
+  var cost = def.cost * (lvl + 1);
+  if(S.cash < cost) return false;
+  S.cash -= cost;
+  S.glyphs[gid] = lvl + 1;
+  saveGlyphs();
+  return true;
+}
+function getGlyphBonus(){
+  var fLvl = getGlyphLevel('foundry');
+  var vLvl = getGlyphLevel('vault');
+  var fLvl2 = getGlyphLevel('flora');
+  return {
+    dmgMult: 1 + fLvl * 0.02,
+    startCash: START_CASH + vLvl * 50,
+    maxLives: START_LIVES + fLvl2 * Math.round(START_LIVES * 0.15),
+    hasMazingWall: getGlyphLevel('mazing') >= 1
+  };
+}
+
+// ---------- A* Pathfinding ----------
+function findPath(sx, sy, blocked){
+  if(!inB(sx, sy) || !inB(SANCTUM.x, SANCTUM.y)) return null;
+  var W = COLS, H = ROWS;
+  var g = new Float32Array(W * H).fill(Infinity);
+  var came = new Int32Array(W * H).fill(-1);
+  var closed = new Uint8Array(W * H);
+  var start = idx(sx, sy), goal = idx(SANCTUM.x, SANCTUM.y);
+  if(blocked[start] || blocked[goal]) return null;
+  g[start] = 0;
+  var hf = [], hc = [];
+  function push(f, c){
+    hf.push(f); hc.push(c); var i = hf.length - 1;
+    while(i > 0){
+      var p = (i - 1) >> 1;
+      if(hf[p] <= hf[i]) break;
+      var t = hf[p]; hf[p] = hf[i]; hf[i] = t;
+      var u = hc[p]; hc[p] = hc[i]; hc[i] = u;
+      i = p;
+    }
+  }
+  function pop(){
+    var top = hc[0], lf = hf.pop(), lc = hc.pop();
+    if(hf.length){
+      hf[0] = lf; hc[0] = lc; var i = 0;
+      for(;;){
+        var l = 2 * i + 1, r = l + 1, m = i;
+        if(l < hf.length && hf[l] < hf[m]) m = l;
+        if(r < hf.length && hf[r] < hf[m]) m = r;
+        if(m === i) break;
+        var t = hf[m]; hf[m] = hf[i]; hf[i] = t;
+        var u = hc[m]; hc[m] = hc[i]; hc[i] = u;
+        i = m;
+      }
+    }
+    return top;
+  }
+  function h(c){ return Math.abs((c % W) - SANCTUM.x) + Math.abs(((c / W) | 0) - SANCTUM.y); }
+  push(h(start), start);
+  var DX = [1, -1, 0, 0], DY = [0, 0, 1, -1];
+  while(hf.length){
+    var c = pop();
+    if(closed[c]) continue;
+    closed[c] = 1;
+    if(c === goal){
+      var path = [], cur = goal;
+      while(cur !== -1){ path.push({ x: cur % W, y: (cur / W) | 0 }); cur = came[cur]; }
+      path.reverse(); return path;
+    }
+    var cx = c % W, cy = (c / W) | 0;
+    for(var d = 0; d < 4; d++){
+      var nx = cx + DX[d], ny = cy + DY[d];
+      if(!inB(nx, ny)) continue;
+      var n = idx(nx, ny);
+      if(blocked[n] || closed[n]) continue;
+      var ng = g[c] + 1;
+      if(ng < g[n]){ g[n] = ng; came[n] = c; push(ng + h(n), n); }
+    }
+  }
+  return null;
+}
+function mazeValid(blocked){ return findPath(SPAWN.x, SPAWN.y, blocked) !== null; }
+
+function seedRuins(){
+  var r = mulberry((S.seed ^ 0x9e37) >>> 0);
+  var tries = 0, placed = 0, test = S.blocked.slice();
+  while(placed < 10 && tries < 400){
+    tries++;
+    var gx = 3 + ((r() * (COLS - 6)) | 0), gy = ((r() * ROWS) | 0);
+    if(Math.abs(gy - SPAWN.y) < 2 && (gx < 6 || gx > COLS - 7)) continue;
+    var i = idx(gx, gy);
+    if(test[i]) continue;
+    test[i] = 1;
+    var p = findPath(SPAWN.x, SPAWN.y, test);
+    if(p && p.length > COLS + 4){ S.blocked[i] = 1; S.ruin[i] = 1; placed++; }
+    else test[i] = 0;
+  }
+  buildRuinVisuals();
+}
+
+// ---------- Ruin obstacles: visible jungle-swallowed temple fragments (not white blocks) ----------
+function clearRuinVisuals(){
+  if(S && S.ruinMeshes) for(var m of S.ruinMeshes) scene.remove(m);
+  if(S) S.ruinMeshes = [];
+}
+function ruinCluster(wp, seed){
+  var g = new THREE.Group();
+  var R = mulberry(seed);
+  var variant = (seed % 6);
+
+  // If high-fidelity GLTF models are available, use them!
+  if(variant === 0 && GLTF_CACHE.column){
+    var clone = GLTF_CACHE.column.clone();
+    clone.scale.set(0.65, 0.65, 0.65);
+    clone.rotation.y = R() * Math.PI * 2;
+    g.add(clone);
+    return g;
+  }
+  if(variant === 1 && GLTF_CACHE.masonry){
+    var clone = GLTF_CACHE.masonry.clone();
+    clone.scale.set(0.6, 0.6, 0.6);
+    clone.rotation.y = R() * Math.PI * 2;
+    g.add(clone);
+    return g;
+  }
+  if(variant === 2 && GLTF_CACHE.wildflowers){
+    var clone = GLTF_CACHE.wildflowers.clone();
+    clone.scale.set(0.75, 0.75, 0.75);
+    clone.rotation.y = R() * Math.PI * 2;
+    g.add(clone);
+    return g;
+  }
+  if(variant === 3 && GLTF_CACHE.chest){
+    var clone = GLTF_CACHE.chest.clone();
+    clone.scale.set(0.68, 0.68, 0.68);
+    clone.rotation.y = R() * Math.PI * 2;
+    g.add(clone);
+    return g;
+  }
+  if(variant === 4 && GLTF_CACHE.urn){
+    var clone = GLTF_CACHE.urn.clone();
+    clone.scale.set(0.65, 0.65, 0.65);
+    clone.rotation.y = R() * Math.PI * 2;
+    g.add(clone);
+    return g;
+  }
+  if(variant === 5 && (GLTF_CACHE.lotus || GLTF_CACHE.chrysanthemum)){
+    var src = (seed % 2 === 0) ? (GLTF_CACHE.lotus || GLTF_CACHE.chrysanthemum) : (GLTF_CACHE.chrysanthemum || GLTF_CACHE.lotus);
+    var clone = src.clone();
+    clone.scale.set(0.65, 0.65, 0.65);
+    clone.rotation.y = R() * Math.PI * 2;
+    g.add(clone);
+    return g;
+  }
+
+  var aged = MATS.stone; // weathered travertine, never pure white
+  if(variant === 0){
+    // broken fluted stump + tilted fallen capital
+    var h = 1.0 + R() * 1.2;
+    var stump = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.68, h, 14), aged);
+    stump.position.y = h / 2; stump.castShadow = true; stump.receiveShadow = true; g.add(stump);
+    var cap = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.3, 1.4), MATS.marble);
+    cap.position.set(0.9, 0.25, 0.5); cap.rotation.set(0.15, R() * 1.2, 0.22); cap.castShadow = true; g.add(cap);
+    var drum = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.1, 12), aged);
+    drum.position.set(-0.9, 0.45, -0.4); drum.rotation.set(Math.PI / 2, 0, 0.5 + R()); drum.castShadow = true; g.add(drum);
+  } else if(variant === 1){
+    // cracked wall fragment with moss wash
+    var wall = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.1 + R() * 0.7, 0.45), aged);
+    wall.position.y = 0.6; wall.rotation.y = (R() - 0.5) * 0.9; wall.castShadow = true; wall.receiveShadow = true; g.add(wall);
+    var lintel = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.28, 0.6), MATS.marble);
+    lintel.position.set(0, 1.35, 0); lintel.rotation.y = wall.rotation.y + 0.12; lintel.rotation.z = 0.08; g.add(lintel);
+  } else {
+    // toppled pediment block half-buried
+    var block = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.8, 1.2), aged);
+    block.position.y = 0.35; block.rotation.set(0.1, R() * 3, 0.12); block.castShadow = true; block.receiveShadow = true; g.add(block);
+    var col = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.46, 1.5, 12), MATS.marble);
+    col.position.set(0.4, 1.0, -0.3); col.rotation.set(0.3, 0, 1.1); g.add(col);
+  }
+  // jungle swallow: ivy + peony + chrysanthemum bursting from every crevice
+  var n = 6 + ((R() * 4) | 0);
+  for(var k = 0; k < n; k++){
+    var pick = R();
+    var fm = pick < 0.45 ? MATS.leaf : (pick < 0.7 ? MATS.peony : MATS.goldFlower);
+    var bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.28 + R() * 0.3, 0), fm);
+    bush.position.set((R() - 0.5) * 2.2, 0.25 + R() * 1.1, (R() - 0.5) * 2.2);
+    bush.scale.y = 0.75;
+    g.add(bush);
+  }
+  // moss skirt ring so the base melts into the flagstones
+  var skirt = new THREE.Mesh(new THREE.CircleGeometry(1.35, 18),
+    new THREE.MeshStandardMaterial({ color: 0x2D7246, roughness: 0.95, transparent: true, opacity: 0.55 }));
+  skirt.rotation.x = -Math.PI / 2; skirt.position.y = 0.035;
+  g.add(skirt);
+  g.position.copy(wp);
+  return g;
+}
+function buildRuinVisuals(){
+  if(!scene || !S) return;
+  clearRuinVisuals();
+  for(var gy = 0; gy < ROWS; gy++) for(var gx = 0; gx < COLS; gx++){
+    if(S.ruin[idx(gx, gy)]){
+      var wp = gridToWorld3D(gx, gy, 0);
+      var grp = ruinCluster(wp, (gx * 73 + gy * 191 + S.seed) >>> 0);
+      grp.scale.multiplyScalar(CHUNK_RUIN);
+      scene.add(grp);
+      S.ruinMeshes.push(grp);
+    }
+  }
+}
+
+// ---------- Background: jungle perimeter + ruined temple buildings (built once) ----------
+function jungleTree(x, z, s, R){
+  var g = new THREE.Group();
+  var barkMat = new THREE.MeshStandardMaterial({ color: 0x4A3B32, roughness: 0.95 });
+  var trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * s, 0.36 * s, 2.8 * s, 7), barkMat);
+  trunk.position.y = 1.4 * s; trunk.castShadow = true; g.add(trunk);
+  // buttress roots gripping the earth
+  for(var rt = 0; rt < 3; rt++){
+    var ra = rt / 3 * Math.PI * 2 + R() * 1.2;
+    var root = new THREE.Mesh(new THREE.CylinderGeometry(0.09 * s, 0.16 * s, 1.1 * s, 5), barkMat);
+    root.position.set(Math.cos(ra) * 0.5 * s, 0.35 * s, Math.sin(ra) * 0.5 * s);
+    root.rotation.set(Math.sin(ra) * 0.6, 0, -Math.cos(ra) * 0.6);
+    g.add(root);
+  }
+  var greens = [0x315f49, 0x477854, 0x4a8079, 0x284b3b, 0x668b61];
+  var lite = new THREE.MeshStandardMaterial({ color: 0x83a36a, roughness: 0.85, flatShading: true });
+  // lower skirt + mid mass + crown: 6 full organic blobs for a lush jungle silhouette
+  for(var c = 0; c < 6; c++){
+    var lower = c < 2;
+    var can = new THREE.Mesh(new THREE.IcosahedronGeometry((1.0 + R() * 0.9) * s, 1),
+      new THREE.MeshStandardMaterial({ color: greens[(R() * greens.length) | 0], roughness: 0.9, flatShading: true }));
+    var spread = lower ? 2.0 : 1.5;
+    can.position.set((R() - 0.5) * spread * s, (lower ? 2.0 + R() * 0.8 : 3.0 + R() * 1.6) * s, (R() - 0.5) * spread * s);
+    can.scale.y = 0.8;
+    can.castShadow = true;
+    g.add(can);
+  }
+  // sun-kissed top highlight
+  var top = new THREE.Mesh(new THREE.IcosahedronGeometry(0.9 * s, 1), lite);
+  top.position.set((R() - 0.5) * s, (4.2 + R() * 0.8) * s, (R() - 0.5) * s);
+  g.add(top);
+  // flowering crown clusters
+  for(var f = 0; f < 7; f++){
+    var fl = new THREE.Mesh(new THREE.SphereGeometry(0.2 * s, 7, 7), f % 3 === 0 ? MATS.peony : (f % 3 === 1 ? MATS.goldFlower : MATS.wisteria));
+    fl.position.set((R() - 0.5) * 2.8 * s, (2.4 + R() * 2.0) * s, (R() - 0.5) * 2.8 * s);
+    g.add(fl);
+  }
+  // hanging moss strands
+  for(var ms = 0; ms < 3; ms++){
+    var moss = new THREE.Mesh(new THREE.PlaneGeometry(0.35 * s, (1.2 + R() * 1.2) * s), MATS.wisteria);
+    moss.position.set((R() - 0.5) * 2.4 * s, (2.6 + R()) * s, (R() - 0.5) * 2.4 * s);
+    moss.rotation.y = R() * 3;
+    g.add(moss);
+    if(!scene.userData.vines) scene.userData.vines = [];
+    scene.userData.vines.push({ mesh: moss, phase: R() * 10 });
+  }
+  // climbing vine trunk wrap
+  var vine = new THREE.Mesh(new THREE.PlaneGeometry(0.5 * s, 2.4 * s), MATS.wisteria);
+  vine.position.set(0.32 * s, 1.7 * s, 0.2 * s); vine.rotation.y = R() * 3;
+  g.add(vine);
+  // fern ring at the base
+  for(var fn = 0; fn < 6; fn++){
+    var fa = fn / 6 * Math.PI * 2 + R() * 0.5;
+    var fern = new THREE.Mesh(new THREE.ConeGeometry(0.14 * s, (0.5 + R() * 0.4) * s, 5), MATS.leaf);
+    fern.position.set(Math.cos(fa) * 0.9 * s, 0.25 * s, Math.sin(fa) * 0.9 * s);
+    fern.rotation.set((R() - 0.5) * 0.5, 0, (R() - 0.5) * 0.9);
+    g.add(fern);
+  }
+  g.position.set(x, 0, z);
+  g.rotation.y = R() * 6.28;
+  return g;
+}
+function ruinedFacade(x, z, rotY, seed){
+  var g = new THREE.Group();
+  var R = mulberry(seed);
+  var aged = MATS.stone;
+  // pediment triangle (prism via cylinder 3-seg)
+  var ped = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 3.4, 1.4, 3, 1), aged);
+  ped.rotation.y = Math.PI; ped.position.y = 7.6; ped.castShadow = true; g.add(ped);
+  var beam = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.7, 1.2), MATS.marble);
+  beam.position.y = 6.4; beam.castShadow = true; g.add(beam);
+  // row of columns, some truncated / toppled, all flora-choked
+  for(var ci = 0; ci < 5; ci++){
+    var cx = -3.4 + ci * 1.7;
+    var broken = R() < 0.45;
+    var ch = broken ? 1.5 + R() * 2 : 6.0;
+    var colm = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, ch, 12), broken ? aged : MATS.marble);
+    colm.position.set(cx, ch / 2, 0); colm.castShadow = true; colm.receiveShadow = true; g.add(colm);
+    if(broken){
+      var fallen = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 2.4, 10), aged);
+      fallen.position.set(cx + 0.8, 0.45, 1.4 + R()); fallen.rotation.set(Math.PI / 2, 0, R() * 3);
+      fallen.castShadow = true; g.add(fallen);
+    }
+    for(var b = 0; b < 3; b++){
+      var bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.35 + R() * 0.4, 0), b % 2 ? MATS.leaf : MATS.goldFlower);
+      bush.position.set(cx + (R() - 0.5) * 1.6, 0.3 + R() * Math.min(3, ch), (R() - 0.5) * 1.6);
+      g.add(bush);
+    }
+  }
+  g.position.set(x, 0, z); g.rotation.y = rotY;
+  g.scale.multiplyScalar(1.15); // chunky backdrop presence
+  return g;
+}
+function buildJunglePerimeter(){
+  if(scene.userData.jungleBuilt) return;
+  scene.userData.jungleBuilt = true;
+  var R = mulberry(4242);
+  var W = COLS * CELL_SIZE, H = ROWS * CELL_SIZE;
+  var islR = Math.max(W, H) * 0.72;
+  function clampToIsland(x, z, margin){
+    var r = Math.hypot(x, z), maxR = islR - (margin == null ? 2.5 : margin);
+    if(r > maxR){ var k = maxR / r; return [x * k, z * k]; }
+    return [x, z];
+  }
+  // jungle tree ring
+  for(var ti = 0; ti < 46; ti++){
+    var side = ti % 4, t = R();
+    var x, z;
+    if(side === 0){ x = -W / 2 - 4 - R() * 14; z = -H / 2 + t * H; }
+    else if(side === 1){ x = W / 2 + 4 + R() * 14; z = -H / 2 + t * H; }
+    else if(side === 2){ z = -H / 2 - 6 - R() * 14; x = -W / 2 - 6 + t * (W + 12); }
+    else { z = H / 2 + 6 + R() * 14; x = -W / 2 - 6 + t * (W + 12); }
+    var c1 = clampToIsland(x, z, 3.5);
+    var tree = jungleTree(c1[0], c1[1], 0.9 + R() * 1.3, R);
+    tree.scale.multiplyScalar(CHUNK_TREE);
+    scene.add(tree);
+  }
+  // background ruined temple buildings beyond the colonnades
+  scene.add(ruinedFacade(-14, -H / 2 - 13, 0.15, 101));
+  scene.add(ruinedFacade(16, -H / 2 - 15, -0.2, 202));
+  scene.add(ruinedFacade(-10, H / 2 + 13, Math.PI - 0.15, 303));
+  scene.add(ruinedFacade(20, H / 2 + 15, Math.PI + 0.2, 404));
+  scene.add(ruinedFacade(-W / 2 - 8, 2, Math.PI / 2 + 0.2, 505));
+  // undergrowth bushes carpeting the perimeter
+  for(var bi = 0; bi < 150; bi++){
+    var a = R() * Math.PI * 2, rad = Math.max(W, H) * 0.62 + R() * 16;
+    var bx = Math.cos(a) * rad, bz = Math.sin(a) * rad * 0.7;
+    if(Math.abs(bx) < W / 2 + 1 && Math.abs(bz) < H / 2 + 1) continue;
+    var c2 = clampToIsland(bx, bz, 1.5);
+    bx = c2[0]; bz = c2[1];
+    if(Math.abs(bx) < W / 2 + 1 && Math.abs(bz) < H / 2 + 1) continue;
+    var pick = R();
+    var bm = pick < 0.45 ? MATS.leaf : (pick < 0.65 ? MATS.goldFlower : (pick < 0.85 ? MATS.peony : MATS.wisteria));
+    var bigr = R() < 0.25; // occasional hero bush
+    var bush = new THREE.Mesh(new THREE.IcosahedronGeometry((bigr ? 1.0 : 0.5) + R() * 0.8, 1), bm);
+    bush.position.set(bx, bigr ? 0.6 : 0.35, bz); bush.scale.y = 0.72; bush.rotation.y = R() * 3;
+    bush.castShadow = bigr;
+    scene.add(bush);
+    if(bigr){ // flower crown on hero bushes
+      for(var hb = 0; hb < 4; hb++){
+        var hbf = new THREE.Mesh(new THREE.SphereGeometry(0.16, 7, 7), hb % 2 ? MATS.peony : MATS.goldFlower);
+        hbf.position.set(bx + (R() - 0.5) * 2.2, 0.9 + R() * 0.6, bz + (R() - 0.5) * 2.2);
+        scene.add(hbf);
+      }
+    }
+  }
+  // wild ruins scattered through the jungle ring: drums, beams, stairs, obelisks
+  scatterWildRuins(R, W, H, clampToIsland);
+  // in-grid ground flora: grass tufts + tiny blooms tucked at tile corners (visual only)
+  var tuftG = new THREE.ConeGeometry(0.09, 0.42, 5);
+  var fernG = new THREE.ConeGeometry(0.13, 0.55, 5);
+  for(var fi = 0; fi < 430; fi++){
+    var gx = (R() * COLS) | 0, gy = (R() * ROWS) | 0;
+    if(S && (S.blocked[idx(gx, gy)] || S.ruin[idx(gx, gy)])) continue;
+    if(gx === SPAWN.x && gy === SPAWN.y) continue;
+    if(gx === SANCTUM.x && gy === SANCTUM.y) continue;
+    var wp = gridToWorld3D(gx, gy, 0);
+    var off = (R() - 0.5) * 1.5;
+    var isFern = R() < 0.25;
+    var tuft = new THREE.Mesh(isFern ? fernG : tuftG, R() < 0.55 ? MATS.leaf : (R() < 0.5 ? MATS.goldFlower : (R() < 0.7 ? MATS.peony : MATS.wisteria)));
+    tuft.position.set(wp.x + off, 0.2, wp.z + (R() - 0.5) * 1.5);
+    tuft.rotation.set((R() - 0.5) * 0.4, R() * 3, (R() - 0.5) * 0.4);
+    var tsc = 0.8 + R() * 0.9; tuft.scale.set(tsc, tsc, tsc);
+    scene.add(tuft);
+    if(!scene.userData.groundFlora) scene.userData.groundFlora = [];
+    scene.userData.groundFlora.push(tuft);
+  }
+  buildMeadows(R, W, H, clampToIsland);
+}
+
+// ---------- Meadows: flower fields, titan blooms, mana flowers, rim hedges ----------
+function buildMeadows(R, W, H, clampToIsland){
+  var stemG = new THREE.CylinderGeometry(0.035, 0.055, 0.8, 5);
+  var bloomG = new THREE.SphereGeometry(0.16, 8, 7);
+  var stemM = new THREE.MeshStandardMaterial({ color: 0x2D7246, roughness: 1 });
+  var petalMs = [MATS.peony, MATS.goldFlower, MATS.wisteria,
+    new THREE.MeshStandardMaterial({ color: 0xf5f0e0, roughness: 0.6, side: THREE.DoubleSide, emissive: 0x555550, emissiveIntensity: 0.15 })];
+  var placed = 0, guard = 0;
+  while(placed < 120 && guard++ < 900){ // wildflower meadow on the grass ring
+    var mx = (R() - 0.5) * (W + 20), mz = (R() - 0.5) * (H + 26);
+    if(Math.abs(mx) < W / 2 + 2 && Math.abs(mz) < H / 2 + 2) continue;
+    if(Math.hypot(mx, mz) > 48) continue;
+    var stem = new THREE.Mesh(stemG, stemM);
+    stem.position.set(mx, 0.4, mz);
+    stem.rotation.set((R() - 0.5) * 0.3, 0, (R() - 0.5) * 0.3);
+    scene.add(stem);
+    var bloom = new THREE.Mesh(bloomG, petalMs[(R() * petalMs.length) | 0]);
+    bloom.position.set(mx, 0.85, mz);
+    var bs = 0.8 + R() * 0.9; bloom.scale.set(bs, bs * 0.85, bs);
+    scene.add(bloom);
+    placed++;
+  }
+  // titan blooms: five giant statement flowers ringing the courtyard
+  [[-34, -12], [30, -16], [-28, 15], [34, 10], [0, 25]].forEach(function(p, ti){
+    var g = new THREE.Group();
+    var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.34, 4.4, 7), stemM);
+    stem.position.y = 2.2; stem.castShadow = true; g.add(stem);
+    for(var lf = 0; lf < 4; lf++){
+      var leaf = new THREE.Mesh(new THREE.ConeGeometry(0.3, 1.2, 5), MATS.leaf);
+      var la = lf / 4 * Math.PI * 2;
+      leaf.position.set(Math.cos(la) * 0.55, 1.4 + (lf % 2), Math.sin(la) * 0.55);
+      leaf.rotation.set(Math.sin(la) * 0.9, 0, -Math.cos(la) * 0.9);
+      g.add(leaf);
+    }
+    var headM = [MATS.peony, MATS.goldFlower][ti % 2];
+    var head = new THREE.Mesh(new THREE.IcosahedronGeometry(1.15, 1), headM);
+    head.position.y = 4.9; head.castShadow = true; g.add(head);
+    for(var pt = 0; pt < 7; pt++){
+      var pa = pt / 7 * Math.PI * 2;
+      var petal = new THREE.Mesh(new THREE.SphereGeometry(0.5, 7, 6), headM);
+      petal.position.set(Math.cos(pa) * 1.25, 4.7, Math.sin(pa) * 1.25);
+      petal.scale.set(1, 0.55, 1);
+      g.add(petal);
+    }
+    g.position.set(p[0], 0, p[1]);
+    g.rotation.y = R() * 6.28;
+    scene.add(g);
+  });
+  // mana blooms: cyan soul-flowers glowing against the gloom
+  for(var mb = 0; mb < 14; mb++){
+    var ma = R() * Math.PI * 2, mr = 24 + R() * 20;
+    var bx = Math.cos(ma) * mr, bz = Math.sin(ma) * mr * 0.75;
+    if(Math.abs(bx) < W / 2 + 2 && Math.abs(bz) < H / 2 + 2) continue;
+    if(Math.hypot(bx, bz) > 48) continue;
+    var mbloom = new THREE.Mesh(new THREE.OctahedronGeometry(0.3, 0), MATS.cyanGlow);
+    mbloom.position.set(bx, 0.55, bz);
+    scene.add(mbloom);
+    var mstem = new THREE.Mesh(stemG, stemM);
+    mstem.position.set(bx, 0.25, bz); mstem.scale.y = 0.6;
+    scene.add(mstem);
+  }
+  // rim hedge: a lush flowering wall tracing the island edge
+  for(var hg = 0; hg < 40; hg++){
+    var ha = hg / 40 * Math.PI * 2;
+    var hx = Math.cos(ha) * 46.5, hz = Math.sin(ha) * 46.5 * 0.8;
+    if(Math.hypot(hx, hz) > 50) continue;
+    var hm = hg % 3 === 0 ? MATS.peony : (hg % 3 === 1 ? MATS.leaf : MATS.goldFlower);
+    var hedge = new THREE.Mesh(new THREE.IcosahedronGeometry(0.9 + R() * 0.7, 1), hm);
+    hedge.position.set(hx, 0.55, hz);
+    hedge.scale.y = 0.8; hedge.rotation.y = R() * 3;
+    hedge.castShadow = true;
+    scene.add(hedge);
+  }
+}
+
+// ---------- Wild ruins: forgotten fragments swallowed by the jungle ring ----------
+function scatterWildRuins(R, W, H, clampToIsland){
+  var aged = MATS.stone;
+  function wildSpot(){
+    for(var tries = 0; tries < 20; tries++){
+      var a = R() * Math.PI * 2, rad = 20 + R() * 18;
+      var x = Math.cos(a) * rad, z = Math.sin(a) * rad * 0.75;
+      if(Math.abs(x) < W / 2 + 2.5 && Math.abs(z) < H / 2 + 2.5) continue; // keep the courtyard clear
+      var c = clampToIsland(x, z, 3);
+      return c;
+    }
+    return [W / 2 + 4, H / 2 + 4];
+  }
+  function overgrow(g, n, spread){
+    for(var k = 0; k < n; k++){
+      var pick = R();
+      var fm = pick < 0.5 ? MATS.leaf : (pick < 0.7 ? MATS.peony : (pick < 0.9 ? MATS.goldFlower : MATS.wisteria));
+      var b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.25 + R() * 0.35, 0), fm);
+      b.position.set((R() - 0.5) * spread, 0.25 + R() * 0.9, (R() - 0.5) * spread);
+      b.scale.y = 0.75;
+      g.add(b);
+    }
+    var skirt = new THREE.Mesh(new THREE.CircleGeometry(spread * 0.55, 14),
+      new THREE.MeshStandardMaterial({ color: 0x2D7246, roughness: 1, transparent: true, opacity: 0.5 }));
+    skirt.rotation.x = -Math.PI / 2; skirt.position.y = 0.03;
+    g.add(skirt);
+  }
+  for(var i = 0; i < 14; i++){
+    var p = wildSpot();
+    var g = new THREE.Group();
+    var kind = i % 5;
+    if(kind === 0){ // toppled column drums in a row
+      for(var dI = 0; dI < 3; dI++){
+        var drum = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1.0, 12), dI % 2 ? aged : MATS.marble);
+        drum.position.set(dI * 0.4, 0.5, dI * 1.05); drum.rotation.set(Math.PI / 2, 0, 0.3 + R() * 0.4);
+        drum.castShadow = true; drum.receiveShadow = true; g.add(drum);
+      }
+      overgrow(g, 5, 3.4);
+    } else if(kind === 1){ // half-buried architrave beam
+      var beam = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.6, 0.9), MATS.marble);
+      beam.position.y = 0.35; beam.rotation.y = R() * 3; beam.rotation.z = 0.06;
+      beam.castShadow = true; beam.receiveShadow = true; g.add(beam);
+      var trig = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), aged);
+      trig.position.set(1.2, 0.85, 0.2); trig.rotation.y = R() * 3; g.add(trig);
+      overgrow(g, 5, 3.6);
+    } else if(kind === 2){ // broken staircase stub
+      for(var st = 0; st < 3; st++){
+        var step = new THREE.Mesh(new THREE.BoxGeometry(2.0 - st * 0.35, 0.35, 1.4 - st * 0.2), aged);
+        step.position.set(0, 0.18 + st * 0.35, -st * 0.3); step.rotation.y = R() * 3;
+        step.castShadow = true; step.receiveShadow = true; g.add(step);
+      }
+      overgrow(g, 4, 2.8);
+    } else if(kind === 3){ // leaning obelisk
+      var ob = new THREE.Mesh(new THREE.BoxGeometry(0.7, 2.6, 0.7), aged);
+      ob.position.y = 1.1; ob.rotation.z = 0.28 + R() * 0.15; ob.rotation.y = R() * 3;
+      ob.castShadow = true; g.add(ob);
+      var obCap = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.5, 4), MATS.brass);
+      obCap.position.set(-0.45, 2.35, 0); obCap.rotation.y = Math.PI / 4; g.add(obCap);
+      overgrow(g, 5, 2.6);
+    } else { // headless statue: pedestal + torso fragment
+      var ped = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.8, 1.1), MATS.marble);
+      ped.position.y = 0.4; ped.castShadow = true; ped.receiveShadow = true; g.add(ped);
+      var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.42, 1.0, 8), aged);
+      torso.position.y = 1.25; torso.rotation.z = 0.15; torso.castShadow = true; g.add(torso);
+      var ahead = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), aged);
+      ahead.position.set(0.8, 0.22, 0.5); ahead.castShadow = true; g.add(ahead); // fallen head
+      overgrow(g, 6, 2.6);
+    }
+    g.position.set(p[0], 0, p[1]);
+    g.rotation.y = R() * 6.28;
+    g.scale.multiplyScalar(CHUNK_RUIN);
+    scene.add(g);
+  }
+}
+
+// ---------- Water & fire: reflecting pools + colonnade braziers (built once) ----------
+function buildWaterAndFire(){
+  if(scene.userData.waterFireBuilt) return;
+  scene.userData.waterFireBuilt = true;
+  scene.userData.water = []; scene.userData.braziers = [];
+  var W = COLS * CELL_SIZE, H = ROWS * CELL_SIZE;
+  // reflecting pools in the strips between grid edge and colonnades
+  var poolMat = new THREE.MeshStandardMaterial({ color: 0x0e4a5a, roughness: 0.08, metalness: 0.65, transparent: true, opacity: 0.6, emissive: 0x00BBF9, emissiveIntensity: 0.18 });
+  var rimMat = MATS.marble;
+  [[-W * 0.22, -H / 2 - 3.4, 7, 3.4], [W * 0.2, H / 2 + 3.4, 8, 3.6], [W / 2 + 5.5, -2, 3.4, 5]].forEach(function(cfg, pi){
+    var px = cfg[0], pz = cfg[1], pw = cfg[2], pd = cfg[3];
+    var rim = new THREE.Mesh(new THREE.BoxGeometry(pw + 0.8, 0.5, pd + 0.8), rimMat);
+    rim.position.set(px, 0.2, pz); rim.castShadow = true; rim.receiveShadow = true; scene.add(rim);
+    var water = new THREE.Mesh(new THREE.PlaneGeometry(pw, pd), poolMat.clone());
+    water.rotation.x = -Math.PI / 2; water.position.set(px, 0.46, pz); scene.add(water);
+    scene.userData.water.push(water);
+    // lily blooms floating on the surface
+    for(var li = 0; li < 5; li++){
+      var lily = new THREE.Mesh(new THREE.SphereGeometry(0.14, 7, 7), li % 2 ? MATS.peony : MATS.leaf);
+      lily.position.set(px + (Math.random() - 0.5) * (pw - 1), 0.52, pz + (Math.random() - 0.5) * (pd - 1));
+      scene.add(lily);
+    }
+  });
+  // braziers: cast-iron bowls on brass stands with amber flames (4 total for perf)
+  [[-18, -H / 2 - 4.5], [6, -H / 2 - 4.5], [-6, H / 2 + 4.5], [18, H / 2 + 4.5]].forEach(function(pos){
+    var g = new THREE.Group();
+    var stand = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 1.4, 8), MATS.iron);
+    stand.position.y = 0.7; stand.castShadow = true; g.add(stand);
+    var bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.3, 0.35, 12), MATS.iron);
+    bowl.position.y = 1.55; g.add(bowl);
+    var flame = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.7, 8), MATS.amberGlow);
+    flame.position.y = 1.95; g.add(flame);
+    addHalo(flame, 0xFF6B35, 1.6, 0.35);
+    var light = new THREE.PointLight(0xFF6B35, 2.2, 11);
+    light.position.y = 2.1; g.add(light);
+    g.position.set(pos[0], 0, pos[1]);
+    scene.add(g);
+    scene.userData.braziers.push({ light: light, flame: flame, base: 2.2 });
+  });
+}
+
+// ---------- Audio Synthesizer ----------
+var AC = null, lastGunSnd = 0;
+function audio(){
+  if(AC) return AC;
+  try {
+    var Ctor = window.AudioContext || window.webkitAudioContext;
+    if(Ctor) AC = new Ctor();
+  } catch(e){}
+  return AC;
+}
+function tone(freq, dur, type, vol, slideTo){
+  var ac = audio(); if(!ac) return;
+  try {
+    var o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || 'square'; o.frequency.setValueAtTime(freq, ac.currentTime);
+    if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(20, slideTo), ac.currentTime + dur);
+    g.gain.setValueAtTime(vol || 0.08, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+    o.connect(g); g.connect(ac.destination);
+    o.start(); o.stop(ac.currentTime + dur + 0.02);
+  } catch(e){}
+}
+function noiseHit(dur, vol, low){
+  var ac = audio(); if(!ac) return;
+  try {
+    var n = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0);
+    for(var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    var src = ac.createBufferSource(); src.buffer = buf;
+    var f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = low || 1200;
+    var g = ac.createGain(); g.gain.value = vol || 0.15;
+    src.connect(f); f.connect(g); g.connect(ac.destination); src.start();
+  } catch(e){}
+}
+function sfx(name){
+  try {
+    if(name === 'click') tone(720, 0.04, 'square', 0.04);
+    else if(name === 'build'){ tone(180, 0.08, 'triangle', 0.12); setTimeout(function(){ tone(320, 0.08, 'triangle', 0.1); }, 70); }
+    else if(name === 'upgrade'){ tone(440, 0.08, 'triangle', 0.1); setTimeout(function(){ tone(660, 0.08, 'triangle', 0.1); }, 80); }
+    else if(name === 'sell') tone(540, 0.12, 'square', 0.07, 180);
+    else if(name === 'error') tone(130, 0.2, 'sawtooth', 0.12, 80);
+    else if(name === 'gun'){ var n = performance.now(); if(n - lastGunSnd > 65){ lastGunSnd = n; tone(160 + Math.random() * 80, 0.035, 'square', 0.04); } }
+    else if(name === 'launch') noiseHit(0.28, 0.09, 2200);
+    else if(name === 'boom'){ noiseHit(0.45, 0.25, 600); tone(80, 0.35, 'sine', 0.18, 30); }
+    else if(name === 'zap') tone(1400 + Math.random() * 500, 0.07, 'sawtooth', 0.035, 350);
+    else if(name === 'slow') tone(260, 0.3, 'sine', 0.08, 100);
+    else if(name === 'wave'){ tone(280, 0.12, 'sawtooth', 0.1); setTimeout(function(){ tone(420, 0.18, 'sawtooth', 0.12); }, 110); }
+  } catch(e){}
+}
+
+// ---------- Three.js 3D Engine Setup ----------
+var scene, camera, renderer, controls;
+var groundMesh, gridHelper, hoverBoxMesh, rangeRingMesh, pathLineMesh;
+var raycaster = new THREE.Raycaster();
+var mouse = new THREE.Vector2(-999, -999);
+var rayPlane;
+var dustParticles;
+
+// GLTF Models Cache
+var GLTF_CACHE = {};
+var gltfLoader = new THREE.GLTFLoader();
+
+function preloadGLTFModels(){
+  var modelsToLoad = [
+    { key: 'gatling',     url: 'blender_pipeline/models/tower_prism_gatling.glb' },
+    { key: 'mortar',      url: 'blender_pipeline/models/tower_bloom_cannon.glb' },
+    { key: 'resonance',   url: 'blender_pipeline/models/tower_resonance_monolith.glb' },
+    { key: 'sanctum',     url: 'blender_pipeline/models/sanctum_core_rotunda.glb' },
+    { key: 'spider',      url: 'blender_pipeline/models/enemy_skitter_scout.glb' },
+    { key: 'tank',        url: 'blender_pipeline/models/enemy_tread_tank.glb' },
+    { key: 'drone',       url: 'blender_pipeline/models/enemy_rotor_drone.glb' },
+    { key: 'walker',      url: 'blender_pipeline/models/enemy_diesel_walker.glb' },
+    { key: 'ship',        url: 'blender_pipeline/models/enemy_zeppelin_sky_hull.glb' },
+    { key: 'boss',        url: 'blender_pipeline/models/enemy_goliath_colossus.glb' },
+    { key: 'cypress',     url: 'blender_pipeline/models/flora_cypress_tree.glb' },
+    { key: 'olive',       url: 'blender_pipeline/models/flora_olive_tree.glb' },
+    { key: 'colonnade',   url: 'blender_pipeline/models/ruin_grand_colonnade.glb' },
+    { key: 'wildflowers', url: 'blender_pipeline/models/flora_wildflower_cluster.glb' },
+    { key: 'statue',      url: 'blender_pipeline/models/statue_automata_athena.glb' },
+    { key: 'masonry',     url: 'blender_pipeline/models/accent_masonry_blocks.glb' },
+    { key: 'column',      url: 'blender_pipeline/models/accent_column_pediment.glb' },
+    { key: 'chest',       url: 'blender_pipeline/models/prop_treasure_chest.glb' },
+    { key: 'urn',         url: 'blender_pipeline/models/prop_relic_urn.glb' },
+    { key: 'lotus',       url: 'blender_pipeline/models/flora_clockwork_lotus.glb' },
+    { key: 'chrysanthemum', url: 'blender_pipeline/models/flora_golden_chrysanthemum.glb' }
+  ];
+
+  modelsToLoad.forEach(function(item){
+    gltfLoader.load(item.url, function(gltf){
+      var root = gltf.scene;
+      root.traverse(function(child){
+        if(child.isMesh){
+          child.castShadow = true;
+          child.receiveShadow = true;
+          if(child.material){
+            child.material.roughness = 0.35;
+            var mName = child.material.name ? child.material.name.toLowerCase() : '';
+            child.material.metalness = (mName.includes('brass') || mName.includes('iron') || mName.includes('armor') || mName.includes('copper')) ? 0.9 : 0.1;
+          }
+        }
+      });
+      GLTF_CACHE[item.key] = root;
+      console.log('Preloaded 3D GLB Model:', item.key);
+      if(item.key === 'sanctum'){
+        mountSanctumRotunda(root);
+      }
+      // Populate perimeter props once landscape assets load
+      if(item.key === 'cypress' || item.key === 'colonnade' || item.key === 'olive' || item.key === 'statue' || item.key === 'chest' || item.key === 'urn' || item.key === 'lotus' || item.key === 'chrysanthemum'){
+        populatePerimeterFloraAndRuins();
+      }
+      // Refresh in-maze ruins visuals if already placed
+      if(item.key === 'masonry' || item.key === 'column' || item.key === 'wildflowers' || item.key === 'chest' || item.key === 'urn' || item.key === 'lotus' || item.key === 'chrysanthemum'){
+        buildRuinVisuals();
+      }
+    }, undefined, function(err){
+      console.log('Using procedural 3D model fallback for:', item.key);
+    });
+  });
+}
+
+function mountSanctumRotunda(root){
+  var grp = scene.getObjectByName('sanctumGroup');
+  if(!grp) return;
+  grp.children.forEach(function(c){
+    if(c.isMesh) c.visible = false;
+  });
+  var clone = root.clone();
+  clone.scale.set(0.9, 0.9, 0.9);
+  clone.name = "sanctumRotundaGLB";
+  grp.add(clone);
+}
+
+function populatePerimeterFloraAndRuins(){
+  if(scene.getObjectByName('perimeterDecorations')) return;
+  if(!GLTF_CACHE.cypress && !GLTF_CACHE.colonnade && !GLTF_CACHE.olive) return;
+
+  var decorGroup = new THREE.Group();
+  decorGroup.name = 'perimeterDecorations';
+
+  var w = COLS * CELL_SIZE;
+  var h = ROWS * CELL_SIZE;
+  var halfW = w / 2;
+  var halfH = h / 2;
+
+  // 1. Grand Colonnades overlooking Northern Ridge
+  if(GLTF_CACHE.colonnade){
+    for(var colX of [-halfW * 0.62, 0, halfW * 0.62]){
+      var colClone = GLTF_CACHE.colonnade.clone();
+      colClone.position.set(colX, 0, -halfH - 3.8);
+      colClone.rotation.y = (colX === 0) ? 0 : (colX < 0 ? 0.18 : -0.18);
+      colClone.scale.set(0.95, 0.95, 0.95);
+      decorGroup.add(colClone);
+    }
+  }
+
+  // 2. Cypress Trees flanking Western Spawn Gate and Southern Border
+  if(GLTF_CACHE.cypress){
+    var cypPositions = [
+      [-halfW - 3.8, 0, -halfH * 0.45],
+      [-halfW - 3.8, 0, halfH * 0.45],
+      [-halfW - 5.5, 0, 0],
+      [halfW + 4.8, 0, -halfH * 0.55],
+      [halfW + 4.8, 0, halfH * 0.55],
+      [-halfW * 0.4, 0, halfH + 3.8],
+      [halfW * 0.4, 0, halfH + 3.8],
+      [0, 0, halfH + 4.2]
+    ];
+    for(var cp of cypPositions){
+      var cTree = GLTF_CACHE.cypress.clone();
+      cTree.position.set(cp[0], 0, cp[2]);
+      var sc = 0.85 + Math.random() * 0.28;
+      cTree.scale.set(sc, sc, sc);
+      cTree.rotation.y = Math.random() * Math.PI * 2;
+      decorGroup.add(cTree);
+    }
+  }
+
+  // 3. Ancient Gnarled Olive Trees at Island Corners
+  if(GLTF_CACHE.olive){
+    var oPositions = [
+      [-halfW - 4.2, 0, -halfH - 2.8],
+      [-halfW - 4.2, 0, halfH + 2.8],
+      [halfW + 4.2, 0, -halfH - 2.8],
+      [halfW + 4.2, 0, halfH + 2.8]
+    ];
+    for(var op of oPositions){
+      var oTree = GLTF_CACHE.olive.clone();
+      oTree.position.set(op[0], 0, op[2]);
+      var osc = 0.82 + Math.random() * 0.25;
+      oTree.scale.set(osc, osc, osc);
+      oTree.rotation.y = Math.random() * Math.PI * 2;
+      decorGroup.add(oTree);
+    }
+  }
+
+  // 4. Statue of Athena Automata guarding Eastern Sanctum Overlook
+  if(GLTF_CACHE.statue){
+    var statue = GLTF_CACHE.statue.clone();
+    statue.position.set(halfW + 5.8, 0, 0);
+    statue.rotation.y = -Math.PI / 2;
+    statue.scale.set(1.15, 1.15, 1.15);
+    decorGroup.add(statue);
+  }
+
+  // 5. Wildflower Meadow Clusters along Grassy Borders
+  if(GLTF_CACHE.wildflowers){
+    for(var wf = 0; wf < 10; wf++){
+      var wfClone = GLTF_CACHE.wildflowers.clone();
+      var side = wf % 4;
+      var wx = (side === 0) ? -halfW - 1.4 : ((side === 1) ? halfW + 1.4 : (Math.random() - 0.5) * (w + 4));
+      var wz = (side === 2) ? -halfH - 1.4 : ((side === 3) ? halfH + 1.4 : (Math.random() - 0.5) * (h + 4));
+      wfClone.position.set(wx, 0.05, wz);
+      var wsc = 0.65 + Math.random() * 0.35;
+      wfClone.scale.set(wsc, wsc, wsc);
+      decorGroup.add(wfClone);
+    }
+  }
+
+  // 6. Ancient Treasure Chest near Western Gate Outpost
+  if(GLTF_CACHE.chest){
+    var chest = GLTF_CACHE.chest.clone();
+    chest.position.set(-halfW - 2.8, 0.05, 3.2);
+    chest.rotation.y = Math.PI * 0.25;
+    chest.scale.set(0.85, 0.85, 0.85);
+    decorGroup.add(chest);
+  }
+
+  // 7. Relic Amphora Urns flanking the Eastern Sanctum
+  if(GLTF_CACHE.urn){
+    for(var uz of [-2.8, 2.8]){
+      var urn = GLTF_CACHE.urn.clone();
+      urn.position.set(halfW + 3.2, 0.05, uz);
+      urn.scale.set(0.78, 0.78, 0.78);
+      decorGroup.add(urn);
+    }
+  }
+
+  // 8. Hero Clockwork Lotus Water Basins flanking Sanctum Portal
+  if(GLTF_CACHE.lotus){
+    for(var lz of [-5.2, 5.2]){
+      var lotus = GLTF_CACHE.lotus.clone();
+      lotus.position.set(halfW + 3.8, 0.05, lz);
+      lotus.scale.set(0.85, 0.85, 0.85);
+      decorGroup.add(lotus);
+    }
+  }
+
+  // 9. Hero Golden Chrysanthemum Planters along Colonnade Walk
+  if(GLTF_CACHE.chrysanthemum){
+    for(var cx of [-halfW * 0.35, halfW * 0.35]){
+      var chry = GLTF_CACHE.chrysanthemum.clone();
+      chry.position.set(cx, 0.05, -halfH - 2.2);
+      chry.scale.set(0.8, 0.8, 0.8);
+      decorGroup.add(chry);
+    }
+  }
+
+  scene.add(decorGroup);
+  console.log('Perimeter Flora, Trees & Ruins successfully mounted to scene!');
+}
+
+// Materials Library — AAA PBR: procedural marble veins / brass patina / iron pitting / foliage SSS
+var MATS = {};
+var TEX = {};
+function canvasTex(size, painter, rx, ry){
+  var cv = document.createElement('canvas'); cv.width = cv.height = size;
+  painter(cv.getContext('2d'), size);
+  var t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  if(rx) t.repeat.set(rx, ry || rx);
+  t.anisotropy = 4;
+  return t;
+}
+function initMaterials(){
+  // --- Carrara marble: ivory #F4EEDD + grey veins + polished top variation ---
+  TEX.marbleMap = canvasTex(512, function(ctx, S2){
+    ctx.fillStyle = '#e9ddc5'; ctx.fillRect(0,0,S2,S2);
+    var r = mulberry(1234);
+    for(var i=0;i<2600;i++){ // grain speckle
+      ctx.fillStyle = 'rgba(120,115,100,'+(0.03+r()*0.05)+')';
+      ctx.fillRect(r()*S2, r()*S2, 1.5, 1.5);
+    }
+    ctx.lineWidth = 1.1;
+    for(var v=0; v<26; v++){ // grey veins
+      ctx.strokeStyle = 'rgba(110,115,125,'+(0.18+r()*0.25)+')';
+      ctx.beginPath();
+      var x=r()*S2, y=r()*S2; ctx.moveTo(x,y);
+      for(var s=0;s<6;s++){ x+=(r()-0.5)*140; y+=(r()-0.5)*140; ctx.lineTo(x,y); }
+      ctx.stroke();
+    }
+    for(var c=0;c<7;c++){ // edge chips / pits
+      ctx.fillStyle = 'rgba(90,82,69,'+(0.25+r()*0.2)+')';
+      ctx.beginPath(); ctx.arc(r()*S2, r()*S2, 2+r()*5, 0, 7); ctx.fill();
+    }
+  });
+  TEX.marbleRough = canvasTex(256, function(ctx, S2){
+    ctx.fillStyle = '#5c5c5c'; ctx.fillRect(0,0,S2,S2); // ~0.36 roughness
+    var r = mulberry(77);
+    for(var i=0;i<900;i++){
+      var g = 60+((r()*50)|0); // polished highlights + edge wear
+      ctx.fillStyle = 'rgb('+g+','+g+','+g+')';
+      ctx.fillRect(r()*S2, r()*S2, 3+r()*8, 2+r()*4);
+    }
+  });
+  // --- Antique brass: base + green-copper patina blotches + scuff streaks ---
+  TEX.brassMap = canvasTex(256, function(ctx, S2){
+    ctx.fillStyle = '#C59B27'; ctx.fillRect(0,0,S2,S2);
+    var r = mulberry(913);
+    for(var i=0;i<60;i++){ // patina verdigris in crevices
+      ctx.fillStyle = 'rgba(94,155,138,'+(0.12+r()*0.3)+')';
+      ctx.beginPath(); ctx.arc(r()*S2, r()*S2, 4+r()*16, 0, 7); ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(255,240,200,0.35)';
+    for(var s2=0;s2<40;s2++){ // edge-scuff highlights
+      ctx.lineWidth = 0.8; ctx.beginPath();
+      var x=r()*S2, y=r()*S2; ctx.moveTo(x,y); ctx.lineTo(x+20+r()*30, y+(r()-0.5)*8); ctx.stroke();
+    }
+  });
+  // --- Cast iron: gunmetal + pitting + anisotropic brush lines + soot ---
+  TEX.ironMap = canvasTex(256, function(ctx, S2){
+    ctx.fillStyle = '#22262B'; ctx.fillRect(0,0,S2,S2);
+    var r = mulberry(551);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    for(var l=0;l<120;l++){ ctx.lineWidth=1; ctx.beginPath(); var y=r()*S2; ctx.moveTo(0,y); ctx.lineTo(S2,y+(r()-0.5)*6); ctx.stroke(); }
+    for(var i=0;i<500;i++){ // hammer/pit marks
+      ctx.fillStyle = 'rgba(0,0,0,'+(0.2+r()*0.35)+')';
+      ctx.fillRect(r()*S2, r()*S2, 1+r()*3, 1+r()*2);
+    }
+    var grd = ctx.createLinearGradient(0,S2*0.6,0,S2); // carbon soot near bottom (muzzles/stacks)
+    grd.addColorStop(0,'rgba(0,0,0,0)'); grd.addColorStop(1,'rgba(5,4,3,0.55)');
+    ctx.fillStyle = grd; ctx.fillRect(0,0,S2,S2);
+  });
+  TEX.groundDetail = null; // built in build3DGrid (needs COLS/ROWS)
+
+  MATS.marble = new THREE.MeshStandardMaterial({ map: TEX.marbleMap, roughnessMap: TEX.marbleRough, color: 0xffffff, roughness: 0.38, metalness: 0.04 });
+  MATS.marbleTop = new THREE.MeshStandardMaterial({ map: TEX.marbleMap, color: 0xf2e8d2, roughness: 0.25, metalness: 0.05 }); // polished pediment tops
+  MATS.brass = new THREE.MeshStandardMaterial({ map: TEX.brassMap, color: 0xffffff, roughness: 0.27, metalness: 0.91 });
+  MATS.iron = new THREE.MeshStandardMaterial({ map: TEX.ironMap, color: 0xffffff, roughness: 0.46, metalness: 0.88 });
+  MATS.stone = new THREE.MeshStandardMaterial({ color: 0x8a8272, roughness: 0.72, metalness: 0.02 });
+  // Foliage: two-sided + emissive-backed fake SSS transmission, glossy coat
+  MATS.peony = new THREE.MeshStandardMaterial({ color: 0xDD858A, roughness: 0.42, metalness: 0.0, side: THREE.DoubleSide, emissive: 0xB85F6A, emissiveIntensity: 0.18 });
+  MATS.goldFlower = new THREE.MeshStandardMaterial({ color: 0xEAB14D, roughness: 0.4, metalness: 0.05, side: THREE.DoubleSide, emissive: 0xC98A32, emissiveIntensity: 0.2 });
+  MATS.leaf = new THREE.MeshStandardMaterial({ color: 0x315F49, roughness: 0.45, metalness: 0.0, side: THREE.DoubleSide, emissive: 0x244735, emissiveIntensity: 0.18 });
+  MATS.wisteria = new THREE.MeshStandardMaterial({ color: 0x9d7bca, roughness: 0.5, metalness: 0.0, side: THREE.DoubleSide, emissive: 0x5a3d8a, emissiveIntensity: 0.3, transparent: true, opacity: 0.92 });
+  MATS.cyanGlow = new THREE.MeshStandardMaterial({
+    color: 0x00f5d4, emissive: 0x00f5d4, emissiveIntensity: 2.8, roughness: 0.1, metalness: 0.1
+  });
+  MATS.amberGlow = new THREE.MeshStandardMaterial({
+    color: 0xFF6B35, emissive: 0xFF6B35, emissiveIntensity: 3.0, roughness: 0.25, metalness: 0.1
+  });
+  MATS.headlight = new THREE.MeshStandardMaterial({
+    color: 0xffaa1e, emissive: 0xffaa1e, emissiveIntensity: 3.5, roughness: 0.2
+  });
+  MATS.rubber = new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.9, metalness: 0.1 });
+  MATS.hostileRed = new THREE.MeshStandardMaterial({
+    color: 0xFF3B30, emissive: 0xFF3B30, emissiveIntensity: 3.2, roughness: 0.3
+  });
+  // Soft atmospheric glow texture — deliberately NO hot white core (avoids cheap glare-disc look)
+  TEX.halo = canvasTex(128, function(ctx, S2){
+    var g = ctx.createRadialGradient(S2/2,S2/2,2,S2/2,S2/2,S2/2);
+    g.addColorStop(0,'rgba(255,255,255,0.32)'); g.addColorStop(0.4,'rgba(255,255,255,0.16)');
+    g.addColorStop(0.7,'rgba(255,255,255,0.05)'); g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,S2,S2);
+  });
+  TEX.shadowBlob = canvasTex(128, function(ctx, S2){
+    var g = ctx.createRadialGradient(S2/2,S2/2,4,S2/2,S2/2,S2/2);
+    g.addColorStop(0,'rgba(0,0,0,0.5)'); g.addColorStop(0.7,'rgba(0,0,0,0.28)'); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,S2,S2);
+  });
+}
+function addHalo(parent, color, size, opacity){
+  var m = new THREE.SpriteMaterial({ map: TEX.halo, color: color, transparent: true, opacity: opacity == null ? 0.55 : opacity, blending: THREE.AdditiveBlending, depthWrite: false });
+  var s = new THREE.Sprite(m); s.scale.set(size, size, 1); parent.add(s); return s;
+}
+function addContactShadow(parent, size, opacity){
+  var g = new THREE.PlaneGeometry(size, size);
+  var m = new THREE.MeshBasicMaterial({ map: TEX.shadowBlob, transparent: true, opacity: opacity || 0.55, depthWrite: false });
+  var mesh = new THREE.Mesh(g, m); mesh.rotation.x = -Math.PI/2; mesh.position.y = 0.04; parent.add(mesh); return mesh;
+}
+
+function initThreeJS(){
+  var container = document.getElementById('game-container');
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x102c38);
+  scene.fog = new THREE.FogExp2(0x183744, 0.003);
+
+  camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 1, 1000);
+  setCameraIsometric();
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.95;
+  container.appendChild(renderer.domElement);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.maxPolarAngle = Math.PI * 0.72; // dive below the rim to admire the underbelly
+  controls.minDistance = 18;
+  controls.maxDistance = 220;
+  controls.target.set(0, 0, 0);
+
+  initMaterials();
+  preloadGLTFModels();
+  build3DLighting();
+  build3DEnvironment();
+  build3DGrid();
+  buildJunglePerimeter();
+  buildWaterAndFire();
+  buildRuinVisuals();
+  buildPathVisualizer();
+  buildSunDust();
+
+  rayPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  window.addEventListener('resize', onWindowResize);
+}
+
+function setCameraIsometric(){
+  camera.position.set(48, 56, 48);
+  camera.lookAt(0, 0, 0);
+  if(controls){
+    controls.target.set(0, 0, 0);
+    controls.update();
+  }
+  S.camView = 'tactical';
+  updateCamPill();
+}// Boots-on-the-map view: low over-the-shoulder camera like Roblox/Minecraft third person
+function setCameraImmersive(){
+  var tx = controls ? controls.target.x : 0, tz = controls ? controls.target.z : 0;
+  if(controls) controls.target.set(tx, 0, tz);
+  camera.position.set(tx + 7, 6.5, tz + 13);
+  camera.lookAt(tx, 1.5, tz);
+  if(controls) controls.update();
+  S.camView = 'immersive';
+  updateCamPill();
+}
+function toggleCameraView(){
+  if(S && S.camView === 'immersive') setCameraIsometric();
+  else setCameraImmersive();
+}
+function updateCamPill(){
+  var pill = document.querySelector('#cam-mode span');
+  if(pill) pill.innerHTML = (S && S.camView === 'immersive')
+    ? 'BOOTS-ON-THE-MAP VIEW <span class="cam-hint">· Right drag / Right-stick to look · T for tactical</span>'
+    : 'TACTICAL VIEW <span class="cam-hint">· Right drag to orbit · Scroll to zoom · T for boots-on-map</span>';
+}
+
+function build3DLighting(){
+  // 1) Key Sun: warm golden #FFF4DC at 3.0 — long soft contact-hardening shadows
+  var sun = new THREE.DirectionalLight(0xFFF0D5, 1.6);
+  sun.position.set(38, 60, 32);
+  sun.castShadow = true;
+  sun.shadow.mapSize.width = 2048;
+  sun.shadow.mapSize.height = 2048;
+  sun.shadow.camera.near = 10;
+  sun.shadow.camera.far = 160;
+  var d = 42;
+  sun.shadow.camera.left = -d;
+  sun.shadow.camera.right = d;
+  sun.shadow.camera.top = d;
+  sun.shadow.camera.bottom = -d;
+  sun.shadow.bias = -0.0004;
+  scene.add(sun);
+
+  // 2) Ambient Fill: deep cerulean teal #0E3844 — cinematic lifted shadows
+  var fill = new THREE.DirectionalLight(0x477984, 0.45);
+  fill.position.set(-35, 25, -35);
+  scene.add(fill);
+
+  var hemi = new THREE.HemisphereLight(0x8da9ad, 0x263a30, 0.48);
+  scene.add(hemi);
+
+  // 3) Rim / Accent: incandescent solar amber — silhouette edges on turrets/mechs/capitals
+  var rim = new THREE.DirectionalLight(0xe9aa68, 0.6);
+  rim.position.set(-30, 14, 42);
+  scene.add(rim);
+  scene.userData.rim = rim;
+  // lightning strike light: idle at 0, spikes with sky flash so the ground feels the bolt
+  var bolt = new THREE.DirectionalLight(0xbfd8ff, 0);
+  bolt.position.set(30, 70, -40);
+  scene.add(bolt);
+  scene.userData.boltLight = bolt;
+
+  // Crepuscular god-ray shafts through colonnade gaps (additive volumetric fakes)
+  var shaftMat = new THREE.MeshBasicMaterial({ color: 0xffe9b0, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
+  scene.userData.shafts = [];
+  for(var sgi=0; sgi<7; sgi++){
+    var sg = new THREE.PlaneGeometry(3.2, 26);
+    var shaft = new THREE.Mesh(sg, shaftMat.clone());
+    shaft.position.set(-18 + sgi * 6.2, 9, -14 + (sgi % 2) * 2);
+    shaft.rotation.set(0.35, 0.5, 0.62);
+    shaft.material.opacity = 0.028 + Math.random() * 0.025;
+    scene.add(shaft);
+    scene.userData.shafts.push(shaft);
+  }
+}
+
+function build3DEnvironment(){
+  // Ominous shader sky: bruised teal-charcoal storm dome, drifting fbm clouds, ember horizon, lightning
+  var skyUniforms = {
+    uTime: { value: 0 },
+    uFlash: { value: 0 }
+  };
+  var skyMat = new THREE.ShaderMaterial({
+    uniforms: skyUniforms,
+    side: THREE.BackSide,
+    depthWrite: false,
+    fog: false,
+    vertexShader: [
+      'varying vec3 vDir;',
+      'void main(){',
+      '  vDir = position;',
+      '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+      '}'
+    ].join('\n'),
+    fragmentShader: [
+      'varying vec3 vDir;',
+      'uniform float uTime;',
+      'uniform float uFlash;',
+      'float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
+      'float vnoise(vec2 p){',
+      '  vec2 i = floor(p); vec2 f = fract(p);',
+      '  vec2 u = f * f * (3.0 - 2.0 * f);',
+      '  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),',
+      '             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);',
+      '}',
+      'float fbm(vec2 p){',
+      '  float v = 0.0; float a = 0.55;',
+      '  for(int i = 0; i < 4; i++){ v += a * vnoise(p); p *= 2.15; a *= 0.5; }',
+      '  return v;',
+      '}',
+      'void main(){',
+      '  vec3 d = normalize(vDir);',
+      '  float h = d.y;',
+      '  vec3 zen = vec3(0.030, 0.065, 0.080);',
+      '  vec3 mid = vec3(0.055, 0.155, 0.185);',
+      '  vec3 hor = vec3(0.135, 0.230, 0.235);',
+      '  vec3 col = mix(hor, mid, smoothstep(0.0, 0.28, h));',
+      '  col = mix(col, zen, smoothstep(0.25, 0.85, h));',
+      '  col = mix(vec3(0.05, 0.09, 0.10), col, smoothstep(-0.25, 0.01, h));',
+      '  float ember = exp(-abs(h - 0.015) * 22.0);',
+      '  col += vec3(0.85, 0.36, 0.10) * ember * 0.55;',
+      '  float teal = exp(-abs(h - 0.10) * 9.0);',
+      '  col += vec3(0.0, 0.35, 0.33) * teal * 0.25;',
+      '  if(h > -0.02){',
+      '    vec2 cuv = d.xz / max(h + 0.30, 0.08);',
+      '    float t = uTime * 0.008;',
+      '    float cl = fbm(cuv * 1.4 + vec2(t, t * 0.4) + fbm(cuv * 2.2 - t) * 0.8);',
+      '    float cover = smoothstep(0.32, 0.78, cl);',
+      '    float shade = smoothstep(0.3, 1.0, fbm(cuv * 3.1 - vec2(t * 1.7, 0.0)));',
+      '    vec3 cloudDark = vec3(0.055, 0.075, 0.085);',
+      '    vec3 cloudLit = vec3(0.16, 0.28, 0.29);',
+      '    vec3 cloud = mix(cloudDark, cloudLit, shade * 0.7);',
+      '    cloud += vec3(0.9, 0.38, 0.12) * ember * 0.6;',
+      '    cloud += vec3(0.65, 0.85, 0.95) * uFlash * (0.35 + 0.65 * shade);',
+      '    col = mix(col, cloud, cover * smoothstep(-0.02, 0.12, h) * 0.92);',
+      '  }',
+      '  col += vec3(0.65, 0.85, 0.95) * uFlash * 0.12;',
+      '  col += (hash(d.xy * 541.0) - 0.5) * 0.012;',
+      '  gl_FragColor = vec4(col, 1.0);',
+      '}'
+    ].join('\n')
+  });
+  var sky = new THREE.Mesh(new THREE.SphereGeometry(480, 24, 16), skyMat);
+  scene.add(sky);
+  scene.userData.skyMat = skyMat;
+  scene.userData.nextBolt = 6 + Math.random() * 8;
+  // near + far alpine ranges: dark layered silhouettes for Unreal-style depth
+  var peakMat = new THREE.MeshBasicMaterial({ color: 0x2b3d45, fog: false });
+  var peakMatFar = new THREE.MeshBasicMaterial({ color: 0x3d545e, fog: false, transparent: true, opacity: 0.9 });
+  var snowMat = new THREE.MeshBasicMaterial({ color: 0xcfd8d6, fog: false, transparent: true, opacity: 0.85 });
+  for(var ring = 0; ring < 2; ring++){
+    var rr = ring === 0 ? 150 : 240, n = ring === 0 ? 11 : 9;
+    for(var pk = 0; pk < n; pk++){
+      var ang = (pk + ring * 0.5) / n * Math.PI * 2;
+      var px = Math.cos(ang) * rr, pz = Math.sin(ang) * rr;
+      var ph = (ring === 0 ? 22 : 34) + ((pk * 13) % (ring === 0 ? 18 : 26));
+      var pw = (ring === 0 ? 30 : 42);
+      var peak = new THREE.Mesh(new THREE.ConeGeometry(pw, ph, 4), ring === 0 ? peakMat : peakMatFar);
+      peak.position.set(px, ph / 2 - 8, pz); peak.rotation.y = ang;
+      scene.add(peak);
+      if(ring === 1){
+        var snow = new THREE.Mesh(new THREE.ConeGeometry(11, ph * 0.3, 4), snowMat);
+        snow.position.set(px, ph - 8 - ph * 0.15, pz); snow.rotation.y = ang;
+        scene.add(snow);
+      }
+    }
+  }
+  // low storm banks circling the island + camera-facing mist walls
+  for(var cl = 0; cl < 10; cl++){
+    var a2 = cl / 10 * Math.PI * 2;
+    var cm = new THREE.Mesh(new THREE.SphereGeometry(16 + Math.random() * 14, 8, 6),
+      new THREE.MeshBasicMaterial({ color: 0x141e24, fog: false, transparent: true, opacity: 0.7 }));
+    cm.position.set(Math.cos(a2) * (120 + Math.random() * 50), 18 + Math.random() * 26, Math.sin(a2) * (120 + Math.random() * 50));
+    cm.scale.y = 0.4;
+    scene.add(cm);
+  }
+  for(var mw = 0; mw < 6; mw++){
+    var ma = mw / 6 * Math.PI * 2 + 0.3;
+    var mist = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.halo, color: 0x24444e, transparent: true, opacity: 0.22, depthWrite: false, fog: false }));
+    mist.scale.set(130, 34, 1);
+    mist.position.set(Math.cos(ma) * 135, 9, Math.sin(ma) * 135);
+    scene.add(mist);
+  }
+  // distant floating spires on the horizon
+  for(var sp = 0; sp < 5; sp++){
+    var sa = 0.6 + sp * 1.15;
+    var sr = 150 + (sp % 2) * 40;
+    var sh = 34 + sp * 6;
+    var spire = new THREE.Mesh(new THREE.ConeGeometry(9, sh, 6),
+      new THREE.MeshStandardMaterial({ color: 0x3a4148, roughness: 1, flatShading: true }));
+    spire.rotation.x = Math.PI;
+    spire.position.set(Math.cos(sa) * sr, -sh * 0.28, Math.sin(sa) * sr);
+    scene.add(spire);
+    var scap = new THREE.Mesh(new THREE.CylinderGeometry(8.4, 8.4, 2.4, 8),
+      new THREE.MeshStandardMaterial({ color: 0x2D7246, roughness: 1 }));
+    scap.position.set(Math.cos(sa) * sr, 2.5, Math.sin(sa) * sr);
+    scene.add(scap);
+  }
+  // Classical Corinthian Colonnades
+  var colGeom = new THREE.CylinderGeometry(0.7, 0.85, 9, 24);
+  var capGeom = new THREE.BoxGeometry(2.1, 0.65, 2.1);
+  var flowerGeom = new THREE.SphereGeometry(0.2, 8, 8);
+  var leafGeom = new THREE.ConeGeometry(0.16, 0.5, 6);
+  var bushGeom = new THREE.IcosahedronGeometry(0.55, 1);
+
+  for(var side of [-1, 1]){
+    var z = side * (ROWS * CELL_SIZE * 0.5 + 4.5);
+    for(var i = -5; i <= 5; i++){
+      var x = i * 6.2;
+      var pillar = new THREE.Mesh(colGeom, MATS.marble);
+      pillar.position.set(x, 4.5, z);
+      pillar.scale.set(1.15, 1.1, 1.15);
+      pillar.castShadow = true;
+      pillar.receiveShadow = true;
+      scene.add(pillar);
+
+      var cap = new THREE.Mesh(capGeom, MATS.marbleTop);
+      cap.position.set(x, 9.3, z);
+      cap.scale.set(1.15, 1.1, 1.15);
+      cap.castShadow = true;
+      scene.add(cap);
+      addContactShadow(pillar, 3.4, 0.5);
+
+      // Dense floral embankment: chrysanthemum bushes + peony blooms + ivy at each base
+      for(var f = 0; f < 14; f++){
+        var fx = x + (Math.random() - 0.5) * 3.4;
+        var fz = z + (Math.random() - 0.5) * 3.0;
+        var pick = Math.random();
+        var fm = pick < 0.4 ? MATS.goldFlower : (pick < 0.75 ? MATS.peony : MATS.leaf);
+        var fg = pick < 0.25 ? bushGeom : flowerGeom;
+        var fl = new THREE.Mesh(fg, fm);
+        fl.position.set(fx, 0.22 + Math.random()*0.35, fz);
+        var fs = 0.7 + Math.random()*1.1; fl.scale.set(fs, fs*0.8, fs);
+        scene.add(fl);
+      }
+      // Weeping wisteria vines draping from architrave
+      for(var wv=0; wv<3; wv++){
+        var vine = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 2.6 + Math.random()*1.6), MATS.wisteria);
+        vine.position.set(x - 0.9 + wv*0.9, 7.6, z + (side > 0 ? -0.9 : 0.9));
+        vine.rotation.y = Math.random()*Math.PI;
+        scene.add(vine);
+        if(!scene.userData.vines) scene.userData.vines = [];
+        scene.userData.vines.push({ mesh: vine, phase: Math.random()*10 });
+      }
+    }
+  }
+  // Tumbling peony blooms overflowing ruined plinths flanking mid-field
+  for(var pb=0; pb<10; pb++){
+    var px2 = -20 + pb*4.6, pz2 = (pb%2===0? -1:1) * (ROWS*CELL_SIZE*0.5 - 2.5);
+    var plinth = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.9, 1.4), MATS.marble);
+    plinth.position.set(px2, 0.45, pz2); plinth.castShadow = true; plinth.receiveShadow = true;
+    scene.add(plinth);
+    for(var pf=0; pf<6; pf++){
+      var blo = new THREE.Mesh(flowerGeom, pf%2? MATS.peony : MATS.goldFlower);
+      blo.position.set(px2+(Math.random()-0.5)*1.8, 0.9+Math.random()*0.5, pz2+(Math.random()-0.5)*1.8);
+      scene.add(blo);
+    }
+  }
+
+  // Western Portal (Spawn Gate)
+  var spawnPos = gridToWorld3D(SPAWN.x, SPAWN.y, 0);
+  var arch = new THREE.Group();
+  arch.position.set(spawnPos.x - 1.4, 0, spawnPos.z);
+  var pLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 4, 16), MATS.marble);
+  pLeft.position.set(0, 2, -1.2);
+  arch.add(pLeft);
+  var pRight = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 4, 16), MATS.marble);
+  pRight.position.set(0, 2, 1.2);
+  arch.add(pRight);
+  var lintel = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 3.2), MATS.marble);
+  lintel.position.set(0, 4.2, 0);
+  arch.add(lintel);
+  var ring = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.15, 12, 24), MATS.brass);
+  ring.position.set(0, 2.2, 0);
+  ring.rotation.y = Math.PI / 2;
+  arch.add(ring);
+  scene.add(arch);
+
+  // Eastern Sanctum Core (Sunken Dais + Floating Crystalline Monolith / Rotunda)
+  var sanctumPos = gridToWorld3D(SANCTUM.x, SANCTUM.y, 0);
+  var sanctumGrp = new THREE.Group();
+  sanctumGrp.name = "sanctumGroup";
+  sanctumGrp.position.set(sanctumPos.x + 1.2, 0, sanctumPos.z);
+
+  var dais = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.7, 0.6, 32), MATS.marble);
+  dais.position.set(0, 0.3, 0);
+  dais.receiveShadow = true;
+  sanctumGrp.add(dais);
+
+  var coreGeom = new THREE.OctahedronGeometry(1.6, 0);
+  var core = new THREE.Mesh(coreGeom, MATS.cyanGlow);
+  core.position.set(0, 3.5, 0);
+  core.name = "sanctumCore";
+  sanctumGrp.add(core);
+
+  // Sanctum Point Light
+  var sanctumLight = new THREE.PointLight(0x00f5d4, 4.0, 18);
+  sanctumLight.position.set(0, 3.5, 0);
+  sanctumGrp.add(sanctumLight);
+  scene.userData.sanctumLight = sanctumLight;
+  scene.add(sanctumGrp);
+}
+
+function build3DGrid(){
+  var w = COLS * CELL_SIZE;
+  var h = ROWS * CELL_SIZE;
+
+  // Marble Flagstones: cracked uneven pavers + moss seams + brass labyrinthine mosaic
+  var cv = document.createElement('canvas');
+  cv.width = 1152; cv.height = 640;
+  var ctx = cv.getContext('2d');
+  var R = mulberry(20240);
+  ctx.fillStyle = '#bba98a'; ctx.fillRect(0, 0, 1152, 640);
+  var tw = 1152 / COLS, th = 640 / ROWS;
+  for(var gy=0; gy<ROWS; gy++){
+    for(var gx=0; gx<COLS; gx++){
+      var tone = 170 + ((R()*19)|0);
+      ctx.fillStyle = 'rgb('+(tone+21)+','+(tone+5)+','+(tone-23)+')';
+      ctx.fillRect(gx*tw+1, gy*th+1, tw-2, th-2);
+      // per-paver cracks
+      if(R() < 0.4){
+        ctx.strokeStyle = 'rgba(60,52,42,0.55)'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        var cx = gx*tw + R()*tw, cy = gy*th + R()*th;
+        ctx.moveTo(cx, cy);
+        for(var cs=0; cs<3; cs++){ cx += (R()-0.5)*tw*0.7; cy += (R()-0.5)*th*0.7; ctx.lineTo(cx, cy); }
+        ctx.stroke();
+      }
+      // moss clustering in seams
+      if(R() < 0.35){
+        ctx.fillStyle = 'rgba(45,114,70,'+(0.25+R()*0.4)+')';
+        ctx.beginPath(); ctx.arc(gx*tw + R()*tw, gy*th + (R()<0.5?1:th-1), 2+R()*5, 0, 7); ctx.fill();
+      }
+    }
+  }
+  // seam grid
+  ctx.strokeStyle = '#8f806c'; ctx.lineWidth = 1.3;
+  for(var lx=0; lx<=COLS; lx++){ ctx.beginPath(); ctx.moveTo(lx*tw,0); ctx.lineTo(lx*tw,640); ctx.stroke(); }
+  for(var ly=0; ly<=ROWS; ly++){ ctx.beginPath(); ctx.moveTo(0,ly*th); ctx.lineTo(1152,ly*th); ctx.stroke(); }
+  // inlaid geometric brass/gold labyrinthine mosaic runes along arterial mid row
+  ctx.strokeStyle = 'rgba(201,162,39,0.85)'; ctx.lineWidth = 2;
+  var midRow = Math.floor(ROWS / 2);
+  for(var mx=0; mx<COLS; mx++){
+    var px = mx*tw + tw/2, py = midRow*th + th/2;
+    ctx.save(); ctx.translate(px, py); ctx.rotate(Math.PI/4);
+    ctx.strokeRect(-6,-6,12,12); ctx.restore();
+    ctx.beginPath(); ctx.arc(px, py, 3, 0, 7); ctx.stroke();
+  }
+  var tex = new THREE.CanvasTexture(cv);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 8;
+
+  var groundMat = new THREE.MeshStandardMaterial({
+    map: tex, color: 0xffffff, roughness: 0.68, metalness: 0.02
+  });
+
+  // Marble courtyard slab (thin inlay — the playable field)
+  var geom = new THREE.BoxGeometry(w, 0.5, h);
+  groundMesh = new THREE.Mesh(geom, groundMat);
+  groundMesh.position.set(0, -0.25, 0);
+  groundMesh.receiveShadow = true;
+  scene.add(groundMesh);
+
+  buildFloatingIsland(w, h);
+
+  // Subtle grid line helper
+  gridHelper = new THREE.GridHelper(w, COLS, 0x6b5e49, 0x8a7b65);
+  gridHelper.position.y = 0.02;
+  gridHelper.material.transparent = true; gridHelper.material.opacity = 0.16;
+  scene.add(gridHelper);
+
+  // Holographic placement hover box
+  var boxGeom = new THREE.BoxGeometry(CELL_SIZE * 0.96, 0.3, CELL_SIZE * 0.96);
+  var boxMat = new THREE.MeshBasicMaterial({ color: 0x00f5d4, transparent: true, opacity: 0.45 });
+  hoverBoxMesh = new THREE.Mesh(boxGeom, boxMat);
+  hoverBoxMesh.visible = false;
+  scene.add(hoverBoxMesh);
+
+  // Range Circle Ring
+  var ringGeom = new THREE.RingGeometry(0.1, 1.0, 48);
+  var ringMat = new THREE.MeshBasicMaterial({ color: 0xf0a81e, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
+  rangeRingMesh = new THREE.Mesh(ringGeom, ringMat);
+  rangeRingMesh.rotation.x = -Math.PI / 2;
+  rangeRingMesh.position.y = 0.06;
+  rangeRingMesh.visible = false;
+  scene.add(rangeRingMesh);
+
+  scene.userData.decals = [];
+}
+
+// ---------- Floating island: grass crown, dirt strata, rocky underbelly (WoW style) ----------
+function buildFloatingIsland(w, h){
+  var R = mulberry(777);
+  var islR = Math.max(w, h) * 0.72; // island radius — grass ring extends past courtyard
+
+  // Grass / dirt / rock canvas textures
+  var grassTex = canvasTex(256, function(ctx, S2){
+    ctx.fillStyle = '#315d45'; ctx.fillRect(0, 0, S2, S2);
+    for(var i = 0; i < 2600; i++){
+      var g = 80 + ((R() * 48) | 0);
+      ctx.fillStyle = 'rgba(' + (g * 0.55 | 0) + ',' + g + ',' + (g * 0.62 | 0) + ',0.8)';
+      ctx.fillRect(R() * S2, R() * S2, 1.5, 2 + R() * 3); // grass blades
+    }
+    var dots = ['#DD858A', '#EAB14D', '#F2E8D2', '#DD858A', '#EAB14D'];
+    for(var d = 0; d < 60; d++){
+      ctx.fillStyle = dots[(R() * dots.length) | 0];
+      ctx.beginPath(); ctx.arc(R() * S2, R() * S2, 1 + R() * 2, 0, 7); ctx.fill();
+    }
+  });
+  grassTex.repeat.set(6, 6);
+  var dirtTex = canvasTex(256, function(ctx, S2){
+    var bands = ['#5a4632', '#4A3B32', '#6b5640', '#3d3227', '#54432f'];
+    for(var b = 0; b < 8; b++){
+      ctx.fillStyle = bands[b % bands.length];
+      ctx.fillRect(0, b * S2 / 8, S2, S2 / 8 + 1);
+    }
+    for(var i = 0; i < 500; i++){
+      ctx.fillStyle = 'rgba(0,0,0,' + (0.1 + R() * 0.25) + ')';
+      ctx.fillRect(R() * S2, R() * S2, 2 + R() * 4, 1 + R() * 2);
+    }
+    ctx.strokeStyle = 'rgba(20,14,10,0.6)';
+    for(var c = 0; c < 12; c++){
+      ctx.lineWidth = 1 + R(); ctx.beginPath();
+      var x = R() * S2, y = R() * S2; ctx.moveTo(x, y);
+      ctx.lineTo(x + (R() - 0.5) * 40, y + R() * 30); ctx.stroke();
+    }
+  });
+  dirtTex.repeat.set(8, 1);
+  var rockTex = canvasTex(256, function(ctx, S2){
+    ctx.fillStyle = '#4c4a48'; ctx.fillRect(0, 0, S2, S2);
+    for(var i = 0; i < 800; i++){
+      var t = 50 + ((R() * 60) | 0);
+      ctx.fillStyle = 'rgb(' + t + ',' + (t - 4) + ',' + (t - 8) + ')';
+      ctx.fillRect(R() * S2, R() * S2, 3 + R() * 7, 2 + R() * 5);
+    }
+    for(var m = 0; m < 40; m++){ // moss streaks running down
+      ctx.fillStyle = 'rgba(45,114,70,' + (0.2 + R() * 0.4) + ')';
+      ctx.fillRect(R() * S2, R() * S2 * 0.4, 2 + R() * 4, 20 + R() * 60);
+    }
+  });
+
+  // Island body: grass cap on top, dirt strata on the side
+  var grassMat = new THREE.MeshStandardMaterial({ map: grassTex, roughness: 0.95, metalness: 0 });
+  var dirtMat = new THREE.MeshStandardMaterial({ map: dirtTex, roughness: 0.95, metalness: 0 });
+  var bodyG = new THREE.CylinderGeometry(islR, islR * 0.82, 3.2, 28);
+  var body = new THREE.Mesh(bodyG, [dirtMat, grassMat, dirtMat]);
+  body.position.y = -2.1;
+  body.receiveShadow = true;
+  scene.add(body);
+
+  // Jagged rocky underbelly: jittered inverted cone tapering to a root tip
+  var underG = new THREE.ConeGeometry(islR * 0.82, 16, 24, 7, true);
+  var pos = underG.attributes.position;
+  for(var vi = 0; vi < pos.count; vi++){
+    var vx = pos.getX(vi), vy = pos.getY(vi), vz = pos.getZ(vi);
+    var jag = 1 + (Math.sin(vx * 0.8) * Math.cos(vz * 0.7) * 0.16) + (R() - 0.5) * 0.22;
+    pos.setX(vi, vx * jag); pos.setZ(vi, vz * jag);
+  }
+  underG.computeVertexNormals();
+  var under = new THREE.Mesh(underG, new THREE.MeshStandardMaterial({ map: rockTex, roughness: 0.95, metalness: 0.02, side: THREE.DoubleSide }));
+  under.rotation.x = Math.PI; // apex down
+  under.position.y = -11.7;
+  scene.add(under);
+  // glowing root-tip crystal cluster at the very bottom
+  var tip = new THREE.Mesh(new THREE.OctahedronGeometry(1.4, 0), MATS.cyanGlow);
+  tip.position.y = -20.2; scene.add(tip);
+  addHalo(tip, 0x00F5D4, 5, 0.3);
+  scene.userData.islandTip = tip;
+
+  // Hanging roots + vines dripping from the rim and underbelly
+  for(var ri = 0; ri < 16; ri++){
+    var ang = R() * Math.PI * 2;
+    var rr = islR * (0.55 + R() * 0.4);
+    var len = 2 + R() * 4;
+    var root = new THREE.Mesh(new THREE.ConeGeometry(0.14 + R() * 0.12, len, 5),
+      new THREE.MeshStandardMaterial({ color: 0x4A3B32, roughness: 1 }));
+    root.position.set(Math.cos(ang) * rr, -3.4 - len * 0.3, Math.sin(ang) * rr);
+    root.rotation.x = Math.PI + (R() - 0.5) * 0.3;
+    scene.add(root);
+    if(R() < 0.6){
+      var hv = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 1.6 + R() * 2), MATS.wisteria);
+      hv.position.set(Math.cos(ang) * (rr + 0.4), -3.6 - R() * 2, Math.sin(ang) * (rr + 0.4));
+      hv.rotation.y = R() * 3;
+      scene.add(hv);
+      if(!scene.userData.vines) scene.userData.vines = [];
+      scene.userData.vines.push({ mesh: hv, phase: R() * 10 });
+    }
+  }
+  // mana crystals embedded in the dirt strata, glowing through cracks
+  for(var ci = 0; ci < 8; ci++){
+    var ang2 = ci / 8 * Math.PI * 2 + R() * 0.5;
+    var crys = new THREE.Mesh(new THREE.OctahedronGeometry(0.35 + R() * 0.3, 0), ci % 2 ? MATS.cyanGlow : MATS.amberGlow);
+    crys.position.set(Math.cos(ang2) * islR * 0.94, -2.2 - R() * 1.2, Math.sin(ang2) * islR * 0.94);
+    scene.add(crys);
+    addHalo(crys, ci % 2 ? 0x00F5D4 : 0xFF6B35, 1.2, 0.3);
+  }
+  var strataLight = new THREE.PointLight(0x00F5D4, 1.6, 22);
+  strataLight.position.set(0, -6, 0); scene.add(strataLight);
+
+  // Orbiting floating shards — island fragments that broke off
+  scene.userData.shards = [];
+  for(var si = 0; si < 11; si++){
+    var ss = 0.5 + R() * 1.2;
+    var shard = new THREE.Group();
+    var srock = new THREE.Mesh(new THREE.IcosahedronGeometry(ss, 0), new THREE.MeshStandardMaterial({ map: rockTex, roughness: 1, flatShading: true }));
+    srock.scale.y = 1.4; srock.castShadow = true; shard.add(srock);
+    var scap = new THREE.Mesh(new THREE.CylinderGeometry(ss * 0.75, ss * 0.75, ss * 0.3, 8), grassMat);
+    scap.position.y = ss * 0.75; shard.add(scap);
+    if(R() < 0.5){
+      var stree = new THREE.Mesh(new THREE.IcosahedronGeometry(ss * 0.5, 0), MATS.leaf);
+      stree.position.y = ss * 1.4; shard.add(stree);
+    }
+    var sang = R() * Math.PI * 2, srad = islR * (0.7 + R() * 0.7);
+    shard.position.set(Math.cos(sang) * srad, -6 - R() * 9, Math.sin(sang) * srad);
+    shard.rotation.set(R() * 3, R() * 3, R() * 3);
+    scene.add(shard);
+    scene.userData.shards.push({ mesh: shard, baseY: shard.position.y, phase: R() * 10, spin: (R() - 0.5) * 0.5, ang: sang, rad: srad, speed: 0.02 + R() * 0.03 });
+  }
+
+  // Distant sister islands drifting in the void (pure vibe, ultra cheap)
+  [[-150, -20, -120, 22], [170, -32, -90, 28], [40, -14, -210, 18]].forEach(function(cfg){
+    var dg = new THREE.Group();
+    var dTop = new THREE.Mesh(new THREE.CylinderGeometry(cfg[3], cfg[3] * 0.8, 4, 10), grassMat);
+    dg.add(dTop);
+    var dBot = new THREE.Mesh(new THREE.ConeGeometry(cfg[3] * 0.8, cfg[3] * 0.9, 8), new THREE.MeshStandardMaterial({ color: 0x4c4a48, roughness: 1 }));
+    dBot.rotation.x = Math.PI; dBot.position.y = -cfg[3] * 0.65; dg.add(dBot);
+    for(var dt2 = 0; dt2 < 3; dt2++){
+      var dtree = new THREE.Mesh(new THREE.IcosahedronGeometry(2 + R() * 2, 0), MATS.leaf);
+      dtree.position.set((R() - 0.5) * cfg[3], 3 + R() * 2, (R() - 0.5) * cfg[3]);
+      dg.add(dtree);
+    }
+    dg.position.set(cfg[0], cfg[1], cfg[2]);
+    scene.add(dg);
+  });
+
+  // Cloud sea below the island
+  for(var cl2 = 0; cl2 < 8; cl2++){
+    var puff = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.halo, color: 0xdfeef2, transparent: true, opacity: 0.28, depthWrite: false }));
+    var psc = 30 + R() * 40;
+    puff.scale.set(psc, psc * 0.4, 1);
+    puff.position.set((R() - 0.5) * 300, -30 - R() * 14, (R() - 0.5) * 300);
+    scene.add(puff);
+  }
+  // waterfall spilling off the island rim, dissolving into mist
+  var fallMat = new THREE.MeshBasicMaterial({ color: 0x7fd8e8, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+  var fall = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 14), fallMat);
+  fall.position.set(islR * 0.55, -9, islR * 0.62);
+  fall.rotation.y = 0.7;
+  scene.add(fall);
+  scene.userData.waterfall = fall;
+}
+
+function buildSunDust(){
+  var count = 460; // 400+ golden pollen motes on wind vector fields
+  var geom = new THREE.BufferGeometry();
+  var positions = new Float32Array(count * 3);
+  var seeds = new Float32Array(count * 2);
+  for(var i = 0; i < count; i++){
+    positions[i * 3 + 0] = (Math.random() - 0.5) * (COLS * CELL_SIZE + 10);
+    positions[i * 3 + 1] = Math.random() * 12 + 0.5;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * (ROWS * CELL_SIZE + 10);
+    seeds[i*2] = Math.random() * 100; seeds[i*2+1] = 0.5 + Math.random();
+  }
+  geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geom.userData.seeds = seeds;
+  var mat = new THREE.PointsMaterial({ color: 0xffdf78, size: 0.22, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending, depthWrite: false });
+  dustParticles = new THREE.Points(geom, mat);
+  scene.add(dustParticles);
+}
+
+function buildPathVisualizer(){
+  var lineMat = new THREE.LineDashedMaterial({ color: 0x00f5d4, dashSize: 0.8, gapSize: 0.4, linewidth: 3 });
+  var geom = new THREE.BufferGeometry();
+  pathLineMesh = new THREE.Line(geom, lineMat);
+  scene.add(pathLineMesh);
+}
+
+function updatePathVisualizer(){
+  var p = findPath(SPAWN.x, SPAWN.y, S.blocked);
+  if(!p || p.length < 2){ pathLineMesh.visible = false; return; }
+  var points = [];
+  for(var pt of p){
+    points.push(gridToWorld3D(pt.x, pt.y, 0.12));
+  }
+  pathLineMesh.geometry.setFromPoints(points);
+  pathLineMesh.computeLineDistances();
+  pathLineMesh.visible = true;
+}
+
+// ---------- Dynamic Ground Decals: scorch / craters / oil / moss (pooled, fading) ----------
+function spawnDecal(kind, gx, gy, size){
+  if(!scene || !scene.userData.decals) return;
+  if(scene.userData.decals.length > 90){
+    var old = scene.userData.decals.shift();
+    scene.remove(old.mesh);
+  }
+  var cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  var ctx = cv.getContext('2d');
+  var R = Math.random;
+  if(kind === 'scorch'){
+    var g = ctx.createRadialGradient(32,32,2,32,32,30);
+    g.addColorStop(0,'rgba(8,5,4,0.9)'); g.addColorStop(0.55,'rgba(20,10,6,0.55)'); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,64,64);
+  } else if(kind === 'crater'){
+    ctx.fillStyle = 'rgba(40,32,24,0.85)';
+    ctx.beginPath(); ctx.arc(32,32,22,0,7); ctx.fill();
+    ctx.strokeStyle = 'rgba(150,130,100,0.7)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(32,32,22,0,7); ctx.stroke();
+    ctx.fillStyle = 'rgba(10,8,6,0.8)';
+    ctx.beginPath(); ctx.arc(32,32,12,0,7); ctx.fill();
+  } else if(kind === 'oil'){
+    ctx.fillStyle = 'rgba(8,10,16,0.75)';
+    ctx.beginPath(); ctx.ellipse(32,32,24,15,R()*3,0,7); ctx.fill();
+    ctx.fillStyle = 'rgba(90,60,140,0.25)';
+    ctx.beginPath(); ctx.ellipse(28,30,12,6,0,0,7); ctx.fill();
+  } else { // moss
+    ctx.fillStyle = 'rgba(45,114,70,0.6)';
+    for(var i=0;i<10;i++){ ctx.beginPath(); ctx.arc(12+R()*40, 12+R()*40, 3+R()*6, 0, 7); ctx.fill(); }
+  }
+  var tex = new THREE.CanvasTexture(cv);
+  var m = new THREE.Mesh(new THREE.PlaneGeometry(size || 2.2, size || 2.2),
+    new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI/2;
+  var wp = gridToWorld3D(gx, gy, 0.03 + Math.random()*0.02);
+  m.position.copy(wp); m.rotation.z = Math.random()*Math.PI;
+  scene.add(m);
+  scene.userData.decals.push({ mesh: m, life: kind === 'scorch' || kind === 'crater' ? 60 : 45 });
+}
+
+// ---------- 3D Mesh Factory (GLTF Model Clone or Procedural Fallback) ----------
+function create3DTowerMesh(type){
+  var root = new THREE.Group();
+
+  // Try using preloaded GLTF model
+  if(type === 'gun' && GLTF_CACHE.gatling){
+    var clone = GLTF_CACHE.gatling.clone();
+    clone.scale.set(0.65, 0.65, 0.65);
+    root.add(clone);
+    root.userData = { isGltf: true, model: clone };
+    return root;
+  }
+  if(type === 'rocket' && GLTF_CACHE.mortar){
+    var clone = GLTF_CACHE.mortar.clone();
+    clone.scale.set(0.7, 0.7, 0.7);
+    root.add(clone);
+    root.userData = { isGltf: true, model: clone };
+    return root;
+  }
+  if(type === 'slow' && GLTF_CACHE.resonance){
+    var clone = GLTF_CACHE.resonance.clone();
+    clone.scale.set(0.65, 0.65, 0.65);
+    root.add(clone);
+    root.userData = { isGltf: true, model: clone };
+    return root;
+  }
+
+  // Enhanced Procedural 3D Mesh Fallback
+  if(type === 'gun'){
+    var plinth = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 1.5, 24), MATS.marble);
+    plinth.position.y = 0.75; plinth.castShadow = true; root.add(plinth);
+
+    var cap = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.22, 1.5), MATS.marble);
+    cap.position.y = 1.55; root.add(cap);
+
+    var turn = new THREE.Group();
+    turn.position.y = 1.7;
+    var turnMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.22, 24), MATS.brass);
+    turn.add(turnMesh);
+
+    var cradle = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.95), MATS.brass);
+    cradle.position.set(0, 0.38, 0.1);
+    turn.add(cradle);
+
+    var barrels = new THREE.Group();
+    barrels.position.set(0, 0.38, 0.65);
+    for(var b = 0; b < 6; b++){
+      var ba = b * (Math.PI / 3);
+      var bm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 1.2, 8), MATS.iron);
+      bm.rotation.x = Math.PI / 2;
+      bm.position.set(Math.cos(ba) * 0.16, Math.sin(ba) * 0.16, 0.5);
+      barrels.add(bm);
+    }
+    turn.add(barrels);
+    root.add(turn);
+    root.userData = { turn: turn, barrels: barrels };
+  }
+  else if(type === 'rocket'){
+    var dais = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.0, 0.38, 24), MATS.stone);
+    dais.position.y = 0.19; root.add(dais);
+
+    var petals = new THREE.Group();
+    petals.position.y = 0.42;
+    for(var p = 0; p < 8; p++){
+      var pa = p * (Math.PI / 4);
+      var pm = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.14, 0.95), MATS.brass);
+      pm.position.set(Math.cos(pa) * 0.6, 0.28, Math.sin(pa) * 0.6);
+      pm.rotation.y = -pa + Math.PI / 2;
+      pm.rotation.x = 0.38;
+      petals.add(pm);
+    }
+    root.add(petals);
+
+    var turn = new THREE.Group();
+    turn.position.y = 0.55;
+    var barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 1.6, 16), MATS.iron);
+    barrel.position.set(0, 0.65, 0.2);
+    barrel.rotation.x = Math.PI / 4;
+    turn.add(barrel);
+    root.add(turn);
+    root.userData = { turn: turn };
+  }
+  else if(type === 'beam'){
+    var col = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 2.1, 24), MATS.marble);
+    col.position.y = 1.05; col.castShadow = true; root.add(col);
+
+    var crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.48, 0), MATS.cyanGlow);
+    crystal.position.y = 2.75; root.add(crystal);
+    addHalo(crystal, 0x00F5D4, 1.6, 0.35);
+    addContactShadow(root, 2.6, 0.5);
+    root.userData = { crystal: crystal };
+  }
+  else {
+    var ob = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.3, 0.85), MATS.stone);
+    ob.position.y = 1.15; root.add(ob);
+
+    var rRing = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.09, 8, 24), MATS.brass);
+    rRing.position.y = 1.7; rRing.rotation.x = Math.PI / 2;
+    root.add(rRing);
+    root.userData = { pulseRing: rRing };
+  }
+
+  return root;
+}
+
+function create3DCreepMesh(type){
+  var root = new THREE.Group();
+
+  // Try using preloaded GLTF models
+  if(type === 'spider' && GLTF_CACHE.spider){
+    var clone = GLTF_CACHE.spider.clone();
+    var sc = 0.55;
+    clone.scale.set(sc, sc, sc);
+    root.add(clone);
+    root.userData = { isGltf: true, model: clone, scale: sc };
+    scene.add(root);
+    return root;
+  }
+  if(type === 'tank' && GLTF_CACHE.tank){
+    var clone = GLTF_CACHE.tank.clone();
+    var sc = 0.65;
+    clone.scale.set(sc, sc, sc);
+    root.add(clone);
+    root.userData = { isGltf: true, model: clone, scale: sc };
+    scene.add(root);
+    return root;
+  }
+  if(type === 'drone' && GLTF_CACHE.drone){
+    var clone = GLTF_CACHE.drone.clone();
+    var sc = 0.55;
+    clone.scale.set(sc, sc, sc);
+    root.add(clone);
+    root.userData = { isGltf: true, model: clone, scale: sc, isAir: true };
+    scene.add(root);
+    return root;
+  }
+  if(type === 'boss' && GLTF_CACHE.boss){
+    var clone = GLTF_CACHE.boss.clone();
+    var sc = 1.15; // Colossal dreadnought boss scale
+    clone.scale.set(sc, sc, sc);
+    root.add(clone);
+    root.userData = { isGltf: true, model: clone, scale: sc };
+    scene.add(root);
+    return root;
+  }
+  if(type === 'ship' && GLTF_CACHE.ship){
+    var clone = GLTF_CACHE.ship.clone();
+    var sc = 0.70;
+    clone.scale.set(sc, sc, sc);
+    root.add(clone);
+    root.userData = { isGltf: true, model: clone, scale: sc, isAir: true };
+    scene.add(root);
+    return root;
+  }
+  if(type === 'walker' && GLTF_CACHE.walker){
+    var clone = GLTF_CACHE.walker.clone();
+    var sc = 0.70;
+    clone.scale.set(sc, sc, sc);
+    root.add(clone);
+    root.userData = { isGltf: true, model: clone, scale: sc };
+    scene.add(root);
+    return root;
+  }
+
+  // Procedural Creep
+  if(type === 'walker' || type === 'boss'){
+    var scale = (type === 'boss') ? 1.6 : 1.0;
+    var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.55 * scale, 0.55 * scale, 0.8 * scale, 16), MATS.iron);
+    torso.position.y = 1.4 * scale; torso.rotation.z = Math.PI / 2;
+    root.add(torso);
+
+    var chest = new THREE.Mesh(new THREE.BoxGeometry(0.6 * scale, 0.5 * scale, 0.2 * scale), MATS.brass);
+    chest.position.set(0, 1.4 * scale, 0.45 * scale);
+    root.add(chest);
+
+    for(var eyeX of [-0.18, 0.18]){
+      var eye = new THREE.Mesh(new THREE.CylinderGeometry(0.08 * scale, 0.08 * scale, 0.15 * scale, 12), MATS.headlight);
+      eye.position.set(eyeX * scale, 1.45 * scale, 0.55 * scale);
+      eye.rotation.x = Math.PI / 2;
+      root.add(eye);
+    }
+
+    var leftLeg = new THREE.Group();
+    var rightLeg = new THREE.Group();
+    for(var pair of [[leftLeg, -0.45 * scale], [rightLeg, 0.45 * scale]]){
+      var legRoot = pair[0];
+      legRoot.position.set(pair[1], 1.1 * scale, 0);
+      var legMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1 * scale, 0.08 * scale, 1.1 * scale, 8), MATS.iron);
+      legMesh.position.y = -0.55 * scale;
+      legRoot.add(legMesh);
+      var foot = new THREE.Mesh(new THREE.BoxGeometry(0.25 * scale, 0.15 * scale, 0.45 * scale), MATS.brass);
+      foot.position.set(0, -1.05 * scale, 0.1 * scale);
+      legRoot.add(foot);
+      root.add(legRoot);
+    }
+    root.userData = { leftLeg: leftLeg, rightLeg: rightLeg, scale: scale };
+  }
+  else if(type === 'drone'){
+    var body = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.25, 0.42), MATS.iron);
+    body.position.y = 2.2; body.castShadow = true; root.add(body);
+    var eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), MATS.hostileRed);
+    eye.position.set(0, 2.2, 0.24); root.add(eye);
+    var rotor = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.72, 0.02, 16), MATS.brass);
+    rotor.position.y = 2.4; root.add(rotor);
+    var blur = new THREE.Mesh(new THREE.CircleGeometry(0.72, 20),
+      new THREE.MeshBasicMaterial({ color: 0xcfc4a8, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false }));
+    blur.rotation.x = -Math.PI / 2; blur.position.y = 2.42; root.add(blur);
+    addContactShadow(root, 1.6, 0.3);
+    root.userData = { rotor: rotor, blur: blur };
+  }
+  else if(type === 'ship'){
+    // armored sky-hull: balloon envelope + fins + gondola + props
+    var env = new THREE.Mesh(new THREE.SphereGeometry(0.85, 14, 10), MATS.iron);
+    env.scale.set(1, 0.72, 1.7); env.position.y = 3.1; env.castShadow = true; root.add(env);
+    var stripe = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.06, 8, 20), MATS.brass);
+    stripe.position.y = 3.1; stripe.rotation.x = 0.2; root.add(stripe);
+    for(var fx2 of [-1, 1]){
+      var fin = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.6, 0.5), MATS.brass);
+      fin.position.set(fx2 * 0.25, 3.15, -1.35); fin.rotation.z = fx2 * 0.5; root.add(fin);
+    }
+    var gond = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.3, 1.1), MATS.iron);
+    gond.position.y = 2.35; root.add(gond);
+    var seye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), MATS.hostileRed);
+    seye.position.set(0, 2.35, 0.6); root.add(seye);
+    var propL = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.08, 0.12), MATS.brass);
+    propL.position.set(-0.5, 2.6, -0.9); root.add(propL);
+    var propR = propL.clone(); propR.position.x = 0.5; root.add(propR);
+    root.userData = { propL: propL, propR: propR, isAir: true };
+  }
+  else {
+    // tread tank: hull + side treads with wheels + turret + barrel + headlight
+    var hull = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.4, 1.15), MATS.iron);
+    hull.position.y = 0.45; hull.castShadow = true; root.add(hull);
+    for(var sx of [-0.55, 0.55]){
+      var tread = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.4, 1.35), MATS.rubber || MATS.iron);
+      tread.position.set(sx, 0.3, 0); tread.castShadow = true; root.add(tread);
+      for(var wx2 = -1; wx2 <= 1; wx2++){
+        var wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.3, 10), MATS.brass);
+        wheel.rotation.z = Math.PI / 2; wheel.position.set(sx, 0.22, wx2 * 0.42); root.add(wheel);
+      }
+    }
+    var turret = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.3, 12), MATS.brass);
+    turret.position.set(0, 0.78, -0.1); turret.castShadow = true; root.add(turret);
+    var barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.8, 8), MATS.iron);
+    barrel.rotation.x = Math.PI / 2; barrel.position.set(0, 0.8, 0.55); root.add(barrel);
+    var thead = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), MATS.headlight);
+    thead.position.set(0, 0.5, 0.6); root.add(thead);
+    addContactShadow(root, 2.0, 0.45);
+    root.userData = { turret: turret };
+  }
+
+  scene.add(root);
+  return root;
+}
+
+// ---------- Dota-2 Combat Juice & Particle Telemetry ----------
+var FX = { flashes: [], shells: [], mortars: [], rings: [], debris: [], sparks: [], beams: [], lights: [] };
+var DMG_COLORS = { Kinetic: '#FFD60A', Blast: '#FF6B35', Energy: '#00F5D4', Sonic: '#C77DFF' };
+function fxLight(color, intensity, dist){
+  var L = new THREE.PointLight(color, intensity, dist || 12);
+  scene.add(L); FX.lights.push({ light: L, life: 0.12, max: 0.12, base: intensity });
+  if(FX.lights.length > 14){ var o = FX.lights.shift(); scene.remove(o.light); }
+  return L;
+}
+function spawnMuzzleFlash(worldPos, color){
+  var grp = new THREE.Group(); grp.position.copy(worldPos);
+  var core = new THREE.Mesh(new THREE.OctahedronGeometry(0.32, 0), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1 }));
+  grp.add(core);
+  addHalo(grp, color || 0xFFD60A, 2.0, 0.6);
+  // starburst spikes
+  for(var i=0;i<4;i++){
+    var spike = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.22), new THREE.MeshBasicMaterial({ color: color || 0xFFD60A, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    spike.rotation.z = i * Math.PI/4; grp.add(spike);
+  }
+  scene.add(grp);
+  FX.flashes.push({ mesh: grp, life: 0.09 });
+  var L = fxLight(color || 0xffc861, 5, 10); L.position.copy(worldPos);
+}
+function spawnTracer(from, to, color){
+  var g = new THREE.BufferGeometry().setFromPoints([from, to]);
+  var line = new THREE.Line(g, new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending }));
+  scene.add(line);
+  FX.beams.push({ mesh: line, life: 0.07, max: 0.07 });
+}
+function spawnShellCasing(worldPos){
+  var m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.16, 6), MATS.brass);
+  m.position.copy(worldPos);
+  scene.add(m);
+  FX.shells.push({ mesh: m, vx: (Math.random()-0.5)*4 + 2.2, vy: 3+Math.random()*2, vz: (Math.random()-0.5)*4, rx: Math.random()*8, life: 2.2 });
+}
+function spawnMortarShell(from, to, dmg, splash){
+  var m = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), MATS.amberGlow);
+  m.position.copy(from); addHalo(m, 0xFF6B35, 1.2, 0.45);
+  scene.add(m);
+  var dist = from.distanceTo(to);
+  FX.mortars.push({ mesh: m, from: from.clone(), to: to.clone(), t: 0, dur: 0.5 + dist*0.03, dmg: dmg, splash: splash, trail: 0 });
+}
+function spawnExplosion(worldPos, splash){
+  fxLight(0xffffff, 9, 16).position.copy(worldPos);
+  fxLight(0xFF6B35, 7, 18).position.copy(worldPos);
+  var grp = new THREE.Group(); grp.position.copy(worldPos); grp.position.y = 0.4;
+  addHalo(grp, 0xffffff, 4, 0.7); addHalo(grp, 0xFF6B35, 6, 0.5);
+  scene.add(grp);
+  FX.flashes.push({ mesh: grp, life: 0.16 });
+  // expanding ground dust shockwave ring
+  var ring = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.9, 40),
+    new THREE.MeshBasicMaterial({ color: 0xd8c9a8, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false }));
+  ring.rotation.x = -Math.PI/2; ring.position.copy(worldPos); ring.position.y = 0.15;
+  scene.add(ring);
+  FX.rings.push({ mesh: ring, life: 0.55, max: 0.55, grow: (splash*CELL_SIZE*2.2) });
+  // glowing shrapnel embers
+  for(var i=0;i<12;i++){
+    var e = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), MATS.amberGlow);
+    e.position.copy(worldPos); e.position.y = 0.5;
+    scene.add(e);
+    var a = Math.random()*Math.PI*2;
+    FX.sparks.push({ mesh: e, vx: Math.cos(a)*(3+Math.random()*5), vy: 3+Math.random()*5, vz: Math.sin(a)*(3+Math.random()*5), life: 0.7+Math.random()*0.5, grav: 12 });
+  }
+  // lingering scorch + crater decals
+  var g = worldToGrid3D(worldPos);
+  spawnDecal('scorch', g.gx, g.gy, 2.6);
+  if(Math.random() < 0.4) spawnDecal('crater', g.gx, g.gy, 2.0);
+  addTrauma(Math.min(0.45, 0.12 + splash * 0.08));
+  sfx('boom');
+}
+// Dota-style announcements: wave banner + boss HP bar + sanctum damage flash
+function waveBanner(title, sub, danger){
+  var wb = document.getElementById('wavebanner');
+  if(!wb) return;
+  wb.querySelector('.wb-title').textContent = title;
+  wb.querySelector('.wb-sub').textContent = sub || '';
+  wb.className = danger ? 'danger show' : 'show';
+  clearTimeout(wb._h);
+  wb._h = setTimeout(function(){ wb.className = danger ? 'danger' : ''; }, 2600);
+}
+function sanctumFlash(){
+  var df = document.getElementById('dmgflash');
+  if(!df) return;
+  df.style.opacity = 1;
+  clearTimeout(df._h);
+  df._h = setTimeout(function(){ df.style.opacity = 0; }, 220);
+}
+function updateBossBar(){
+  var bb = document.getElementById('bosshp');
+  if(!bb || !S) return;
+  var boss = null;
+  for(var f of S.foes){ if(f.type === 'boss' && f.hp > 0 && !f.dead){ boss = f; break; } }
+  if(boss){
+    bb.style.display = 'block';
+    bb.querySelector('.boss-fill').style.width = Math.max(0, boss.hp / boss.maxhp * 100) + '%';
+  } else bb.style.display = 'none';
+}
+function spawnPrismBeam(from, to){
+  var dir = to.clone().sub(from); var len = dir.length();
+  var coreG = new THREE.CylinderGeometry(0.09, 0.09, len, 8, 1, true);
+  var core = new THREE.Mesh(coreG, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));
+  var sheathG = new THREE.CylinderGeometry(0.22, 0.22, len, 8, 1, true);
+  var sheath = new THREE.Mesh(sheathG, new THREE.MeshBasicMaterial({ color: 0x00F5D4, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  var grp = new THREE.Group();
+  grp.add(core); grp.add(sheath);
+  grp.position.copy(from.clone().add(to).multiplyScalar(0.5));
+  grp.lookAt(to); grp.rotateX(Math.PI/2);
+  addHalo(grp, 0x00F5D4, 2.2, 0.35);
+  scene.add(grp);
+  FX.beams.push({ mesh: grp, life: 0.06, max: 0.06 });
+  // sparking contact
+  for(var i=0;i<3;i++){
+    var s = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), MATS.cyanGlow);
+    s.position.copy(to);
+    scene.add(s);
+    FX.sparks.push({ mesh: s, vx: (Math.random()-0.5)*6, vy: 2+Math.random()*4, vz: (Math.random()-0.5)*6, life: 0.35, grav: 10 });
+  }
+}
+function spawnResonanceRing(worldPos, range, violet){
+  for(var k=0;k<2;k++){
+    var ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.85, 48),
+      new THREE.MeshBasicMaterial({ color: violet ? 0x7209B7 : 0xC77DFF, transparent: true, opacity: 0.8, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+    ring.rotation.x = -Math.PI/2; ring.position.copy(worldPos); ring.position.y = 0.12 + k*0.1;
+    scene.add(ring);
+    FX.rings.push({ mesh: ring, life: 0.8 - k*0.15, max: 0.8, grow: range*CELL_SIZE });
+  }
+  // ground-hugging mist: flat halo sprite
+  var mist = new THREE.Mesh(new THREE.PlaneGeometry(range*CELL_SIZE*1.2, range*CELL_SIZE*1.2),
+    new THREE.MeshBasicMaterial({ map: TEX.shadowBlob, color: 0x9d7bca, transparent: true, opacity: 0.4, depthWrite: false }));
+  mist.rotation.x = -Math.PI/2; mist.position.copy(worldPos); mist.position.y = 0.1;
+  scene.add(mist);
+  FX.flashes.push({ mesh: mist, life: 0.7 });
+}
+function damageNumber(worldPos, amount, dtype){
+  var elx = document.createElement('div');
+  elx.textContent = Math.round(amount);
+  elx.style.cssText = 'position:fixed;z-index:11;pointer-events:none;font-family:var(--font-stats);font-weight:900;font-size:15px;color:'+(DMG_COLORS[dtype]||'#fff')+';text-shadow:0 0 6px rgba(0,0,0,0.9),0 2px 2px #000;transition:none;';
+  document.body.appendChild(elx);
+  var v = worldPos.clone(); v.y += 1.2; v.project(camera);
+  var sx = (v.x*0.5+0.5)*window.innerWidth, sy = (-v.y*0.5+0.5)*window.innerHeight;
+  elx.style.left = sx+'px'; elx.style.top = sy+'px';
+  var vy = -46 - Math.random()*20, vx = (Math.random()-0.5)*30, life = 0.8;
+  (function tick(){
+    life -= 0.03;
+    if(life <= 0){ elx.remove(); return; }
+    sy += vy*0.03; sx += vx*0.03; vy *= 0.96;
+    elx.style.top = sy+'px'; elx.style.left = sx+'px'; elx.style.opacity = Math.min(1, life*2);
+    requestAnimationFrame(tick);
+  })();
+}
+function hitFlashCreep(f){
+  f.flashT = 0.06;
+  if(f.mesh && f.mesh.traverse){
+    f.mesh.traverse(function(ch){ if(ch.isMesh && ch.material && ch.material.emissive){ ch.userData._e = ch.material.emissive.getHex(); ch.material.emissive.setHex(0xffffff); } });
+    setTimeout(function(){
+      f.mesh.traverse(function(ch){ if(ch.isMesh && ch.userData._e !== undefined && ch.material.emissive) ch.material.emissive.setHex(ch.userData._e); });
+    }, 16);
+  }
+}
+function deathDisassembly(f){
+  var wp = gridToWorld3D(f.x, f.y, f.air ? 2.5 : 0.6);
+  // 4–8 physics debris chunks: sheared plates, cogs, tread links
+  var n = 4 + ((Math.random()*5)|0);
+  for(var i=0;i<n;i++){
+    var geo = i%3===0 ? new THREE.BoxGeometry(0.3,0.1,0.4) : (i%3===1 ? new THREE.CylinderGeometry(0.16,0.16,0.08,8) : new THREE.BoxGeometry(0.18,0.18,0.18));
+    var m = new THREE.Mesh(geo, Math.random()<0.5?MATS.iron:MATS.brass);
+    m.position.copy(wp); m.castShadow = true;
+    scene.add(m);
+    var a = Math.random()*Math.PI*2;
+    FX.debris.push({ mesh: m, vx: Math.cos(a)*(2+Math.random()*4), vy: 4+Math.random()*4, vz: Math.sin(a)*(2+Math.random()*4), rx: (Math.random()-0.5)*12, rz: (Math.random()-0.5)*12, life: 1.6+Math.random()*0.6 });
+  }
+  for(var s2=0;s2<10;s2++){ // spark shower
+    var sp = new THREE.Mesh(new THREE.SphereGeometry(0.06,6,6), Math.random()<0.5?MATS.amberGlow:MATS.cyanGlow);
+    sp.position.copy(wp); scene.add(sp);
+    var a2 = Math.random()*Math.PI*2;
+    FX.sparks.push({ mesh: sp, vx: Math.cos(a2)*6, vy: 3+Math.random()*5, vz: Math.sin(a2)*6, life: 0.6, grav: 12 });
+  }
+  // scrap gold gear icon pop
+  damageNumber(wp, f.reward + '⚙', 'Kinetic');
+  var g = worldToGrid3D(wp);
+  if(Math.random() < 0.5) spawnDecal('oil', g.gx, g.gy, 1.8);
+}
+function updateFX(dt){
+  var i, o;
+  for(i=FX.flashes.length-1;i>=0;i--){ o=FX.flashes[i]; o.life-=dt; o.mesh.scale.multiplyScalar(1+dt*6); if(o.life<=0){ scene.remove(o.mesh); FX.flashes.splice(i,1); } }
+  for(i=FX.beams.length-1;i>=0;i--){ o=FX.beams[i]; o.life-=dt; if(o.life<=0){ scene.remove(o.mesh); FX.beams.splice(i,1); } }
+  for(i=FX.lights.length-1;i>=0;i--){ o=FX.lights[i]; o.life-=dt; o.light.intensity = o.base * Math.max(0, o.life/o.max); if(o.life<=0){ scene.remove(o.light); FX.lights.splice(i,1); } }
+  for(i=FX.shells.length-1;i>=0;i--){ o=FX.shells[i]; o.life-=dt; o.vy-=12*dt;
+    o.mesh.position.x+=o.vx*dt; o.mesh.position.y+=o.vy*dt; o.mesh.position.z+=o.vz*dt;
+    o.mesh.rotation.x+=o.rx*dt;
+    if(o.mesh.position.y<0.08){ o.mesh.position.y=0.08; o.vy*=-0.45; o.vx*=0.7; o.vz*=0.7; }
+    if(o.life<=0){ scene.remove(o.mesh); FX.shells.splice(i,1); } }
+  for(i=FX.mortars.length-1;i>=0;i--){ o=FX.mortars[i]; o.t+=dt; var k=Math.min(1,o.t/o.dur);
+    o.mesh.position.lerpVectors(o.from, o.to, k); o.mesh.position.y += Math.sin(k*Math.PI)*(4+o.from.distanceTo(o.to)*0.15);
+    o.trail-=dt; if(o.trail<=0){ o.trail=0.05;
+      var puff = new THREE.Mesh(new THREE.SphereGeometry(0.16,6,6), new THREE.MeshBasicMaterial({ color: 0xbbbbbb, transparent: true, opacity: 0.5 }));
+      puff.position.copy(o.mesh.position); scene.add(puff); FX.flashes.push({ mesh: puff, life: 0.4 }); }
+    if(k>=1){ scene.remove(o.mesh); FX.mortars.splice(i,1);
+      applyBlastDamage(o.to, o.dmg, o.splash); spawnExplosion(o.to, o.splash); } }
+  for(i=FX.rings.length-1;i>=0;i--){ o=FX.rings[i]; o.life-=dt; var p=1-o.life/o.max;
+    var r=o.grow*p+0.5; o.mesh.scale.set(r,r,1); o.mesh.material.opacity=0.85*(1-p);
+    if(o.life<=0){ scene.remove(o.mesh); FX.rings.splice(i,1); } }
+  for(i=FX.debris.length-1;i>=0;i--){ o=FX.debris[i]; o.life-=dt; o.vy-=14*dt;
+    o.mesh.position.x+=o.vx*dt; o.mesh.position.y+=o.vy*dt; o.mesh.position.z+=o.vz*dt;
+    o.mesh.rotation.x+=o.rx*dt; o.mesh.rotation.z+=o.rz*dt;
+    if(o.mesh.position.y<0.1){ o.mesh.position.y=0.1; o.vy*=-0.4; o.vx*=0.6; o.vz*=0.6; }
+    if(o.life<=0){ scene.remove(o.mesh); FX.debris.splice(i,1); } }
+  for(i=FX.sparks.length-1;i>=0;i--){ o=FX.sparks[i]; o.life-=dt; o.vy-=(o.grav||12)*dt;
+    o.mesh.position.x+=o.vx*dt; o.mesh.position.y+=o.vy*dt; o.mesh.position.z+=o.vz*dt;
+    if(o.life<=0){ scene.remove(o.mesh); FX.sparks.splice(i,1); } }
+  // decals fade
+  if(scene.userData.decals) for(i=scene.userData.decals.length-1;i>=0;i--){ var dc=scene.userData.decals[i]; dc.life-=dt; if(dc.life<8) dc.mesh.material.opacity = Math.max(0, dc.life/8); }
+  // god-ray shimmer + vine sway
+  if(scene.userData.shafts) for(i=0;i<scene.userData.shafts.length;i++){ var sh=scene.userData.shafts[i]; sh.material.opacity = 0.026 + 0.014*Math.sin(S.time*0.7+i*1.7); }
+  if(scene.userData.vines) for(i=0;i<scene.userData.vines.length;i++){ var vn=scene.userData.vines[i]; vn.mesh.rotation.x = Math.sin(S.time*1.2+vn.phase)*0.12; }
+}
+function applyBlastDamage(worldPos, dmg, splash){
+  var g = worldToGrid3D(worldPos);
+  var cx = g.gx + 0.5, cy = g.gy + 0.5;
+  for(var f of S.foes){
+    if(f.hp <= 0) continue;
+    var d = Math.hypot(f.x - cx, f.y - cy);
+    if(d <= splash + f.r){
+      var actualDmg = applyDamage(f, dmg, 'Blast', true);
+      hitFlashCreep(f);
+      damageNumber(gridToWorld3D(f.x, f.y, f.air?2.5:0), actualDmg, 'Blast');
+      if(f.hp <= 0) killFoe(f);
+    }
+  }
+}
+function killFoe(f){
+  if(f.dead) return; f.dead = true;
+  deathDisassembly(f);
+  S.cash += f.reward; S.score += f.reward * 10; S.kills++;
+}
+
+// ---------- Placement & Mazing Rules ----------
+function canPlace(gx, gy){
+  if(!S || !inB(gx, gy)) return { ok: false, why: '' };
+  var i = idx(gx, gy);
+  if((gx === SPAWN.x && gy === SPAWN.y) || (gx === SANCTUM.x && gy === SANCTUM.y))
+    return { ok: false, why: 'Spawn gate and sanctum portal must stay clear!' };
+  if(S.blocked[i]) return { ok: false, why: 'Tile already occupied.' };
+  var test = S.blocked.slice(); test[i] = 1;
+  if(!mazeValid(test)) return { ok: false, why: 'Path Blocked! Maze must leave an open lane to the Sanctum.' };
+  return { ok: true };
+}
+
+function placeAt(gx, gy, key){
+  var chk = canPlace(gx, gy);
+  if(!chk.ok) return chk;
+  var cost = TOWERS[key].cost;
+  if(S.cash < cost) return { ok: false, why: 'Need $' + cost + ' Scrap (have $' + S.cash + ').' };
+  S.cash -= cost;
+  S.blocked[idx(gx, gy)] = 1;
+
+  var mesh = create3DTowerMesh(key);
+  var wPos = gridToWorld3D(gx, gy, 0);
+  mesh.position.copy(wPos);
+  mesh.scale.multiplyScalar(CHUNK_TOWER); // chunky oversized toy-block presence
+  addContactShadow(mesh, 2.4 * CHUNK_TOWER, 0.5);
+  scene.add(mesh);
+
+  S.towers.push({
+    gx: gx, gy: gy, type: key, branch: 0, cd: 0,
+    invested: cost, beamTgt: null, beamTime: 0, pulse: 0,
+    mesh: mesh, kills: 0, totalDmg: 0
+  });
+
+  rerouteFoes();
+  updatePathVisualizer();
+  refreshHud();
+  sfx('build');
+  return { ok: true };
+}
+
+function towerRange(t){
+  var b = t.branch ? BRANCH[t.type][t.branch] : null;
+  return (b && b.range) || TOWERS[t.type].range;
+}
+
+function upgradeTo(t, branch){
+  if(!t || t.branch) return { ok: false, why: 'Already upgraded.' };
+  var spec = BRANCH[t.type][branch];
+  if(!spec) return { ok: false, why: 'No such upgrade.' };
+  if(S.cash < spec.cost) return { ok: false, why: 'Need $' + spec.cost + ' Scrap.' };
+  S.cash -= spec.cost; t.invested += spec.cost; t.branch = branch;
+  // visible elite trim: brass root ring + branch-colored pip + power pop
+  var ringColor = branch === 'A' ? 0xFFB703 : 0x00F5D4;
+  var trim = new THREE.Mesh(new THREE.TorusGeometry(1.05, 0.09, 8, 28),
+    new THREE.MeshStandardMaterial({ color: 0xc9a227, roughness: 0.25, metalness: 0.9, emissive: ringColor, emissiveIntensity: 0.55 }));
+  trim.rotation.x = Math.PI / 2; trim.position.y = 0.12;
+  t.mesh.add(trim);
+  var pip = new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 0),
+    new THREE.MeshStandardMaterial({ color: ringColor, emissive: ringColor, emissiveIntensity: 2.4, roughness: 0.2 }));
+  pip.position.set(0.85, 2.5, 0);
+  t.mesh.add(pip);
+  t.mesh.userData.tierPip = pip;
+  t.mesh.scale.multiplyScalar(1.07);
+  var up = gridToWorld3D(t.gx + 0.5, t.gy + 0.5, 0);
+  spawnResonanceRing(up, 1.2, branch !== 'A');
+  refreshHud(); if(S.selTower === t) showInspect(); sfx('upgrade');
+  return { ok: true };
+}
+
+function sellTower(t){
+  var i = S.towers.indexOf(t); if(i < 0) return;
+  scene.remove(t.mesh);
+  S.towers.splice(i, 1);
+  S.blocked[idx(t.gx, t.gy)] = 0;
+  S.cash += Math.round(t.invested * SELL_RATE);
+  if(S.selTower === t){ S.selTower = null; hideInspect(); }
+  rerouteFoes();
+  updatePathVisualizer();
+  refreshHud();
+  sfx('sell');
+}
+
+// ---------- Creep Waves & Spawning ----------
+function hpScale(w){ return 1 + 0.16 * (w - 1) + 0.009 * (w - 1) * (w - 1); }
+function waveComp(w){
+  var c = [{ type: 'spider', count: 4 + Math.floor(w * 1.5), gap: 0.45 }];
+  if(w >= 2) c.push({ type: 'tank', count: 1 + Math.floor(w * 0.8), gap: 0.95 });
+  if(w >= 3) c.push({ type: 'drone', count: 2 + Math.floor(w * 0.7), gap: 0.75 });
+  if(w >= 5) c.push({ type: 'walker', count: Math.floor((w - 1) * 0.55), gap: 1.25 });
+  if(w >= 8) c.push({ type: 'ship', count: Math.floor((w - 4) * 0.3), gap: 2.1 });
+  if(w % 10 === 0) c.push({ type: 'boss', count: Math.floor(w / 10), gap: 4.0 });
+  return c;
+}
+
+function previewText(w){
+  if(w > WAVE_MAX) return 'Grid secured. All waves vanquished.';
+  return 'Wave ' + w + ': ' + waveComp(w).map(function(g){
+    return g.count + 'x ' + FOES[g.type].name + (g.count > 1 ? 's' : '');
+  }).join(', ');
+}
+
+function startWave(){
+  if(!S || S.phase !== 'build' || S.wave >= WAVE_MAX) return false;
+  S.wave++;
+  S.spawnQueue = [];
+  var t = 0.5;
+  waveComp(S.wave).forEach(function(g){
+    for(var k = 0; k < g.count; k++){
+      S.spawnQueue.push({ type: g.type, at: t });
+      t += g.gap;
+    }
+  });
+  S.spawnT = 0; S.phase = 'combat'; S.selTower = null;
+  hideInspect(); refreshHud(); sfx('wave');
+  var comp = waveComp(S.wave).map(function(g){ return g.count + 'x ' + FOES[g.type].name; }).join(' · ');
+  var isBoss = S.wave % 10 === 0;
+  waveBanner(isBoss ? '☠ COLOSSUS APPROACHES' : 'WAVE ' + S.wave, comp, isBoss);
+  // spawn gate discharge: the portal vomits the wave
+  var gate = gridToWorld3D(SPAWN.x, SPAWN.y, 0);
+  fxLight(0x00F5D4, 5, 12).position.copy(gate);
+  spawnResonanceRing(gate, 1.6, false);
+  return true;
+}
+
+function spawnEnemy(type){
+  var base = FOES[type], sc = hpScale(Math.max(1, S.wave));
+  var hp = Math.round(base.hp * sc);
+  var air = base.kind === 'air';
+  var mesh = create3DCreepMesh(type);
+  mesh.scale.multiplyScalar(CHUNK_CREEP); // chunky oversized toy-block presence
+  var f = {
+    type: type, air: air, armored: !!base.armored,
+    hp: hp, maxhp: hp,
+    x: SPAWN.x + 0.5, y: SPAWN.y + 0.5 + (air ? (Math.random() - 0.5) * 1.2 : 0),
+    speed: base.speed * (1 + Math.min(0.25, 0.01 * S.wave)),
+    reward: base.reward, leak: base.leak, r: base.r,
+    path: [], wp: 1, slowT: 0, slowF: 1, rooted: 0, id: Math.random(),
+    mesh: mesh
+  };
+  if(!air){
+    var path = findPath(SPAWN.x, SPAWN.y, S.blocked);
+    f.path = path || [];
+    if(!path) f.direct = true;
+  }
+  attachHpBar(f, type === 'boss');
+  if(type === 'boss'){ // colossus entrance: shockwave + ground thump
+    var bp = gridToWorld3D(f.x, f.y, 0);
+    spawnResonanceRing(bp, 3.2, true);
+    fxLight(0xFF3B30, 6, 14).position.copy(bp);
+    addTrauma(0.5);
+  }
+  S.foes.push(f);
+}
+
+// ---------- Overhead HP bars: Dota-style damage readability ----------
+// Two sprites parented to the creep root (auto-removed with it, always face camera)
+function attachHpBar(f, big){
+  var wdt = big ? 2.2 : 1.15, y = f.air ? 1.35 : (big ? 3.6 : 2.1);
+  var bg = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x0a0d0c, transparent: true, opacity: 0.82, depthWrite: false, depthTest: false }));
+  bg.scale.set(wdt, big ? 0.24 : 0.15, 1);
+  bg.position.y = y;
+  bg.renderOrder = 50;
+  var fg = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x7fe08a, transparent: true, opacity: 0.95, depthWrite: false, depthTest: false }));
+  fg.scale.set(wdt * 0.94, big ? 0.15 : 0.085, 1);
+  fg.position.y = y;
+  fg.renderOrder = 51;
+  f.mesh.add(bg); f.mesh.add(fg);
+  f.hpBar = { bg: bg, fg: fg, w: wdt * 0.94 };
+}
+function updateHpBar(f){
+  if(!f.hpBar) return;
+  var frac = Math.max(0, f.hp / f.maxhp);
+  f.hpBar.fg.scale.x = Math.max(0.001, f.hpBar.w * frac);
+  f.hpBar.fg.material.color.setHex(frac > 0.55 ? 0x7fe08a : (frac > 0.28 ? 0xffd15c : 0xFF3B30));
+}
+
+function rerouteFoes(){
+  for(var f of S.foes){
+    if(f.air) continue;
+    var p = findPath(clamp(Math.floor(f.x), 0, COLS - 1), clamp(Math.floor(f.y), 0, ROWS - 1), S.blocked);
+    if(p && p.length > 1){ f.path = p; f.wp = 1; f.direct = false; }
+    else f.direct = true;
+  }
+}
+
+// ---------- Simulation Update Loop ----------
+function update(dt){
+  S.time += dt;
+  if(S.phase === 'combat' && S.spawnQueue.length){
+    S.spawnT += dt;
+    while(S.spawnQueue.length && S.spawnQueue[0].at <= S.spawnT)
+      spawnEnemy(S.spawnQueue.shift().type);
+  }
+
+  // 1. Update 3D Creeps
+  for(var i = S.foes.length - 1; i >= 0; i--){
+    var f = S.foes[i];
+    if(f.hp <= 0 || f.dead){
+      if(!f.deadCounted){ f.deadCounted = true; if(!f.dead) killFoe(f); }
+      scene.remove(f.mesh);
+      S.foes.splice(i, 1);
+      continue;
+    }
+
+    var factor = 1;
+    if(f.rooted > 0){ factor = 0; f.rooted -= dt; }
+    if(f.slowT > 0){ factor = f.slowF; f.slowT -= dt; if(f.slowT <= 0) f.slowF = 1; }
+    var sp = f.speed * factor, fx, fy;
+    if(f.air || f.direct || !f.path || f.wp >= f.path.length){ fx = SANCTUM.x + 0.5; fy = SANCTUM.y + 0.5; }
+    else { fx = f.path[f.wp].x + 0.5; fy = f.path[f.wp].y + 0.5; }
+
+    var ddx = fx - f.x, ddy = fy - f.y, dist = Math.hypot(ddx, ddy), st = sp * dt;
+    if(dist <= st + 0.04){
+      f.x = fx; f.y = fy;
+      if(!f.air && !f.direct) f.wp++;
+      if(Math.abs(f.x - (SANCTUM.x + 0.5)) < 0.08 && Math.abs(f.y - (SANCTUM.y + 0.5)) < 0.08){
+        scene.remove(f.mesh);
+        S.foes.splice(i, 1);
+        S.lives -= f.leak; S.leaked++;
+        sfx('alarm');
+        sanctumFlash();
+        addTrauma(0.35);
+        padRumble(1.0, 0.6, 220);
+        if(S.lives <= 0){ S.lives = 0; gameOver(false); return; }
+        continue;
+      }
+    } else if(dist > 0.0001){
+      f.x += ddx / dist * st; f.y += ddy / dist * st;
+    }
+
+    var wPos = gridToWorld3D(f.x, f.y, f.air ? 2.5 : 0);
+    f.mesh.position.copy(wPos);
+    if(dist > 0.01){
+      f.mesh.rotation.y = Math.atan2(ddx, ddy) + Math.PI;
+    }
+
+    // Locomotion animation per chassis
+    if(f.mesh.userData.leftLeg){
+      var legSwing = Math.sin(S.time * 12 + f.id * 8) * 0.45;
+      f.mesh.userData.leftLeg.rotation.x = legSwing;
+      f.mesh.userData.rightLeg.rotation.x = -legSwing;
+    }
+    if(f.mesh.userData.rotor){
+      f.mesh.userData.rotor.rotation.y += dt * 30;
+      f.mesh.userData.blur.material.opacity = 0.16 + Math.sin(S.time * 40 + f.id * 9) * 0.06;
+      f.mesh.position.y += Math.sin(S.time * 3 + f.id * 7) * dt * 0.5; // hover bob
+    }
+    if(f.mesh.userData.propL){
+      f.mesh.userData.propL.rotation.z += dt * 22;
+      f.mesh.userData.propR.rotation.z -= dt * 22;
+    }
+    if(f.mesh.userData.turret && dist > 0.01){
+      f.mesh.userData.turret.rotation.y = Math.atan2(ddx, ddy) - f.mesh.rotation.y;
+    }
+    updateHpBar(f);
+  }
+  updateBossBar();
+
+  // 2. Update 3D Towers & Combat — Dota-2 juice: tracers, shells, arcs, beams, rings
+  for(var t of S.towers){
+    t.cd -= dt;
+    // idle breathing: crystal bob, gear glow pulse, petal sway + fire-animation decay
+    if(t.mesh.userData.crystal){
+      t.mesh.userData.crystal.rotation.y += dt * 2.2;
+      t.mesh.userData.crystal.position.y = 2.75 + Math.sin(S.time*2.0 + t.gx)*0.12;
+      var flare = (t.beamTgt && t.beamTgt.hp > 0) ? 1.35 : 1; // white-hot swell while melting armor
+      var cs = t.mesh.userData.crystal.scale;
+      cs.set(cs.x + ((flare) - cs.x) * Math.min(1, dt * 8), cs.y + ((flare) - cs.y) * Math.min(1, dt * 8), cs.z + ((flare) - cs.z) * Math.min(1, dt * 8));
+    }
+    if(t.mesh.userData.pulseRing){
+      t.mesh.userData.pulseRing.rotation.z += dt*0.8;
+      if(t.ringBurst > 0){ // obelisk thump: ring punches outward then settles
+        t.ringBurst -= dt;
+        var rb = 1 + Math.max(0, t.ringBurst) * 3.2;
+        t.mesh.userData.pulseRing.scale.set(rb, rb, 1);
+      }
+    }
+    if(t.recoil > 0 && t.mesh.userData.barrels){ // gatling kick-back along the barrel axis
+      t.recoil -= dt;
+      t.mesh.userData.barrels.position.z = 0.65 - Math.max(0, t.recoil) * 1.4;
+    }
+    if(t.mesh.userData.tierPip){ // elite pip orbits the upgraded tower
+      t.mesh.userData.tierPip.rotation.y += dt * 2.5;
+      t.mesh.userData.tierPip.position.y = 2.5 + Math.sin(S.time * 3 + t.gx) * 0.15;
+    }
+    var range = towerRange(t);
+    var best = null, bp = -1e9;
+    var tPos = { x: t.gx + 0.5, y: t.gy + 0.5 };
+
+    for(var f of S.foes){
+      if(f.hp <= 0 || f.dead) continue;
+      if(f.air && t.type === 'gun' && t.branch && BRANCH.gun[t.branch].aa === false) continue;
+      var d = Math.hypot(f.x - tPos.x, f.y - tPos.y);
+      if(d <= range + f.r){
+        var prog = (f.wp || 0) - d;
+        if(prog > bp){ bp = prog; best = f; }
+      }
+    }
+
+    if(best){
+      var dx = best.x - tPos.x;
+      var dy = best.y - tPos.y;
+      var aimAngle = Math.atan2(dx, dy);
+
+      if(t.mesh.userData.turn){
+        t.mesh.userData.turn.rotation.y = aimAngle;
+      }
+      var tWorld = gridToWorld3D(t.gx + 0.5, t.gy + 0.5, 1.9);
+      var bWorld = gridToWorld3D(best.x, best.y, best.air ? 2.5 : 0.7);
+      var spec = t.branch ? BRANCH[t.type][t.branch] : null;
+
+      if(t.type === 'gun' && t.cd <= 0){
+        var iv = (spec && spec.iv) || 0.12;
+        var dmg = (spec && spec.dmg) || 6;
+        t.cd = iv;
+        applyDamage(best, dmg, 'Kinetic', true);
+        best.lastHitType = 'Kinetic';
+        hitFlashCreep(best);
+        damageNumber(bWorld, dmg, 'Kinetic');
+        // directional stagger
+        best.x += dx * 0.008; best.y += dy * 0.008;
+        spawnTracer(tWorld, bWorld, 0xFFD60A);
+        spawnMuzzleFlash(tWorld, 0xFFD60A);
+        spawnShellCasing(tWorld);
+        t.kills = t.kills || 0; t.totalDmg = (t.totalDmg || 0) + dmg;
+        if(best.hp <= 0){ t.kills++; }
+        sfx('gun');
+        if(t.mesh.userData.barrels){
+          t.mesh.userData.barrels.rotation.z += 1.2;
+          t.recoil = 0.11; // hydraulic kick
+        }
+      }
+      else if(t.type === 'rocket' && t.cd <= 0){
+        var riv = (spec && spec.iv) || 1.8;
+        var rdmg = (spec && spec.dmg) || 32;
+        var splash = (spec && spec.splash) || 1.4;
+        t.cd = riv;
+        spawnMortarShell(tWorld, bWorld.clone(), rdmg, splash);
+        t.totalDmg = (t.totalDmg || 0) + rdmg;
+        sfx('launch');
+      }
+      else if(t.type === 'beam'){
+        var dps = (spec && spec.dps) || 40;
+        var ramp = (spec && spec.ramp) || 1.0;
+        t.beamTime = (t.beamTgt === best) ? (t.beamTime || 0) + dt : 0;
+        t.beamTgt = best;
+        var rampK = Math.min(1, t.beamTime / 3.0);
+        var cur = dps * (1 + rampK * ramp);
+        applyDamage(best, cur * dt, 'Energy', true);
+        best.lastHitType = 'Energy';
+        best.heatT = 0.4; // armor heats red-hot
+        if(Math.random() < 0.25) damageNumber(bWorld, cur*0.25, 'Energy');
+        spawnPrismBeam(tWorld, bWorld);
+        t.totalDmg = (t.totalDmg || 0) + cur * dt;
+        if(best.hp <= 0){ t.kills = (t.kills||0)+1; }
+        if(t.mesh.userData.crystal){
+          t.mesh.userData.crystal.rotation.y += dt * 3;
+        }
+        if(Math.random() < 0.3) sfx('zap');
+      }
+      else if(t.type === 'slow' && t.cd <= 0){
+        t.cd = 1.5;
+        var slowF = (spec && spec.slowF) || 0.55;
+        var chill = (spec && spec.chill) || 1.8;
+        var sdps = (spec && spec.dps) || 0;
+        var shatter = spec && spec.shatter;
+        for(var nearby of S.foes){
+          if(nearby.hp <= 0 || nearby.dead) continue;
+          if(Math.hypot(nearby.x - tPos.x, nearby.y - tPos.y) <= range + nearby.r){
+            nearby.slowF = slowF; nearby.slowT = chill;
+            if(sdps){ applyDamage(nearby, sdps, 'Sonic', true); nearby.lastHitType = 'Sonic'; hitFlashCreep(nearby); }
+            if(shatter) nearby.shattered = 3.0; // +35% damage taken
+            if(spec && spec.stun && Math.random() < 0.25){ nearby.slowF = 0; nearby.slowT = 0.75; } // chrono-stutter freeze
+          }
+        }
+        var tGround = gridToWorld3D(t.gx + 0.5, t.gy + 0.5, 0);
+        spawnResonanceRing(tGround, range, !!shatter);
+        t.ringBurst = 0.35;
+        damageNumber(bWorld, sdps || 'SLOW', 'Sonic');
+        sfx('slow');
+      }
+    } else { t.beamTgt = null; t.beamTime = 0; }
+  }
+
+  // 3. Wave completion
+  if(S.phase === 'combat' && !S.spawnQueue.length && !S.foes.length){
+    var bonus = 20 + S.wave * 3;
+    S.cash += bonus; S.score += S.wave * 25;
+    if(S.wave >= WAVE_MAX){ gameOver(true); return; }
+    S.phase = 'build'; S.waveT = 15;
+  }
+  if(S.phase === 'build' && S.wave > 0 && S.wave < WAVE_MAX){
+    S.waveT -= dt;
+    if(S.waveT <= 0) startWave();
+  }
+
+  // Rooted creep visual: green tint pulse
+  for(var rf of S.foes){
+    if(rf.rooted > 0 && rf.mesh && rf.mesh.traverse){
+      rf.mesh.traverse(function(ch){
+        if(ch.isMesh && ch.material && ch.material.emissive){
+          ch.material.emissive.setHex(0x2D7246);
+          ch.material.emissiveIntensity = 0.3 + Math.sin(S.time * 4) * 0.15;
+        }
+      });
+    }
+  }
+  // Wind-vector pollen drift + FX pools + armor heat glow
+  if(dustParticles){
+    var posAttr = dustParticles.geometry.attributes.position;
+    var seeds = dustParticles.geometry.userData.seeds;
+    for(var k = 0; k < posAttr.count; k++){
+      var sd = seeds[k*2], spd = seeds[k*2+1];
+      var x = posAttr.getX(k), y = posAttr.getY(k), z = posAttr.getZ(k);
+      x += (Math.sin(S.time*0.6 + sd) * 0.9 + 1.1) * dt * spd;
+      z += Math.cos(S.time*0.45 + sd*1.3) * 0.8 * dt * spd;
+      y += Math.sin(S.time*0.9 + sd*2.0) * 0.25 * dt - dt*0.12;
+      if(y < 0.2) y = 12.0;
+      if(x > COLS*CELL_SIZE/2+6) x = -COLS*CELL_SIZE/2-6;
+      posAttr.setX(k, x); posAttr.setY(k, y); posAttr.setZ(k, z);
+    }
+    posAttr.needsUpdate = true;
+  }
+  // Mana recharge
+  if(S.mana !== undefined){
+    S.mana = Math.min(100, S.mana + 4 * dt);
+  }
+  // armor heat: prism victims glow red-hot briefly; shattered take +35%
+  for(var hf of S.foes){
+    if(hf.heatT > 0){ hf.heatT -= dt; }
+    if(hf.shattered > 0){ hf.shattered -= dt; }
+  }
+  // Sanctum ability cooldowns
+  if(S.sanctum){
+    if(S.sanctum.abilityCD > 0) S.sanctum.abilityCD -= dt;
+    if(S.sanctum.rootCD > 0) S.sanctum.rootCD -= dt;
+  }
+  updateFX(dt);
+
+  drawMinimap();
+  refreshHud();
+}
+
+function gameOver(win){
+  S.phase = win ? 'win' : 'over';
+  document.getElementById('bannerTitle').textContent = win ? 'SANCTUM SECURED' : 'SANCTUM BREACHED';
+  document.getElementById('bannerSub').textContent =
+    (win ? 'All ' + WAVE_MAX + ' waves repelled! ' : 'Overrun on wave ' + S.wave + '. ') +
+    'Final Score: ' + S.score + '. Automata scrapped: ' + S.kills + '.';
+  document.getElementById('banner').style.display = 'flex';
+}
+
+// ---------- Tactical Minimap Radar: creep dots, tower silhouettes, A* line, frustum ----------
+function drawMinimap(){
+  var mc = document.getElementById('minimap');
+  if(!mc) return;
+  var mctx = mc.getContext('2d');
+  var mw = mc.width, mh = mc.height;
+  mctx.fillStyle = '#06100e'; mctx.fillRect(0, 0, mw, mh);
+
+  // Border & Grid Area
+  mctx.strokeStyle = '#c9a227'; mctx.lineWidth = 1.5; mctx.strokeRect(2, 2, mw - 4, mh - 4);
+  mctx.strokeStyle = '#2d3f37'; mctx.lineWidth = 0.5;
+  for(var gx=0; gx<=COLS; gx+=2){ mctx.beginPath(); mctx.moveTo(6+gx/COLS*(mw-12), 4); mctx.lineTo(6+gx/COLS*(mw-12), mh-4); mctx.stroke(); }
+
+  // Green glowing A* trajectory line
+  var p = findPath(SPAWN.x, SPAWN.y, S.blocked);
+  if(p && p.length > 1){
+    mctx.save();
+    mctx.shadowColor = '#8ed7c4'; mctx.shadowBlur = 5;
+    mctx.strokeStyle = 'rgba(142, 215, 196, 0.85)';
+    mctx.lineWidth = 1.5;
+    mctx.beginPath();
+    for(var j = 0; j < p.length; j++){
+      var mx = (p[j].x / COLS) * (mw - 12) + 6;
+      var my = (p[j].y / ROWS) * (mh - 12) + 6;
+      if(j === 0) mctx.moveTo(mx, my);
+      else mctx.lineTo(mx, my);
+    }
+    mctx.stroke();
+    mctx.restore();
+  }
+
+  // Tower silhouettes (brass blocks)
+  mctx.fillStyle = '#c59b27';
+  for(var t of S.towers){
+    var tx = (t.gx / COLS) * (mw - 12) + 6;
+    var ty = (t.gy / ROWS) * (mh - 12) + 6;
+    mctx.fillRect(tx - 2, ty - 2, 4, 4);
+    mctx.strokeStyle = 'rgba(255,223,120,0.5)'; mctx.strokeRect(tx-2.5, ty-2.5, 5, 5);
+  }
+
+  // Creep dots: red ground, gold air, pulsing crimson boss
+  for(var f of S.foes){
+    var fx = (f.x / COLS) * (mw - 12) + 6;
+    var fy = (f.y / ROWS) * (mh - 12) + 6;
+    if(f.type === 'boss'){ mctx.fillStyle = '#FF3B30'; mctx.save(); mctx.shadowColor = '#FF3B30'; mctx.shadowBlur = 8; }
+    else mctx.fillStyle = f.air ? '#FFB703' : '#ff7676';
+    var sz = (f.type === 'boss') ? 3.5 + Math.sin(S.time*6)*1 : 2;
+    mctx.fillRect(fx - sz, fy - sz, sz * 2, sz * 2);
+    if(f.type === 'boss') mctx.restore();
+  }
+
+  // Camera frustum cone (approximate from camera position/target)
+  try {
+    var cx0 = (0.5 + camera.position.x / (COLS*CELL_SIZE*2.4)) * mw;
+    mctx.strokeStyle = 'rgba(240,168,30,0.55)'; mctx.lineWidth = 1;
+    mctx.beginPath(); mctx.moveTo(cx0 - 14, 4); mctx.lineTo(cx0 - 8, mh - 4); mctx.moveTo(cx0 + 14, 4); mctx.lineTo(cx0 + 8, mh - 4); mctx.stroke();
+  } catch(e){}
+}
+
+// ---------- UI & HUD Controllers ----------
+var el = {};
+function toast(msg){
+  if(!el.toast) return;
+  el.toast.textContent = msg; el.toast.style.display = 'block';
+  clearTimeout(el.toast._h);
+  el.toast._h = setTimeout(function(){ el.toast.style.display = 'none'; }, 2400);
+}
+
+function towerDPS(t){
+  if(t.type === 'gun'){ var b = t.branch ? BRANCH.gun[t.branch] : null; return ((b && b.dmg) || 6) / ((b && b.iv) || 0.12); }
+  if(t.type === 'rocket'){ var r = t.branch ? BRANCH.rocket[t.branch] : null; return ((r && r.dmg) || 32) / ((r && r.iv) || 1.8); }
+  if(t.type === 'beam'){ var m = t.branch ? BRANCH.beam[t.branch] : null; return ((m && m.dps) || 40) * (1 + ((m && m.ramp) || 1) * 0.5); }
+  var s = t.branch ? BRANCH.slow[t.branch] : null; return (s && s.dps) || 0;
+}
+function towerDmgType(t){ return t.type === 'gun' ? 'Kinetic' : (t.type === 'rocket' ? 'Blast' : (t.type === 'beam' ? 'Energy' : 'Sonic')); }
+
+function buildDrawer(){
+  if(!el.buildGrid) return;
+  var tips = {
+    gun: '<b>Petal Gatling [Q]</b> — Rapid <span class="dmg-Kinetic">Kinetic</span> fire.<br>DPS <b>~50</b> → Vulcan <b>~75</b> spin-up / Rail-Needler pierce 3.',
+    rocket: '<b>Bloom Mortar [W]</b> — Arcing <span class="dmg-Blast">Blast</span> shells.<br>Splash <b>1.4</b> → Cataclysm fissures + slow / Skyburst <b>2.5x vs air</b>.',
+    beam: '<b>Prism Pillar [E]</b> — Ramping <span class="dmg-Energy">Energy</span> beam.<br><b>40→240 DPS</b> → Sol Invictus scorch line / Refraction 3-way split.',
+    slow: '<b>Resonance Obelisk [R]</b> — <span class="dmg-Sonic">Sonic</span> slow aura.<br><b>35–50%</b> slow → Chrono-Stutter stun / Shatter <b>+35%</b> dmg taken.'
+  };
+  Object.keys(TOWERS).forEach(function(key){
+    var c = TOWERS[key];
+    var shortDesc = { gun: 'Rapid kinetic fire', rocket: 'Explosive area damage', beam: 'Focused energy beam', slow: 'Slow and weaken enemies' };
+    var category = { gun: 'KINETIC', rocket: 'BLAST', beam: 'ENERGY', slow: 'CONTROL' };
+    var d = document.createElement('button');
+    d.type = 'button';
+    d.className = 'card'; d.id = 'card_' + key;
+    d.title = c.desc;
+    d.innerHTML =
+      '<div class="tip">' + (tips[key] || '') + '</div>' +
+      '<img class="card-thumb" src="' + c.img + '" alt="' + c.name + '" onerror="this.style.display=\'none\'">' +
+      '<div class="card-body">' +
+        '<span class="card-category">' + category[key] + ' / TOWER 0' + (Object.keys(TOWERS).indexOf(key) + 1) + '</span>' +
+        '<span class="nm">' + c.name + '</span>' +
+        '<span class="ds">' + shortDesc[key] + '</span>' +
+        '<span class="card-foot"><span class="cost">¤ ' + c.cost + ' <small>SCRAP</small></span><span class="key">' + c.key + '</span></span>' +
+      '</div>';
+    d.addEventListener('click', function(){ audio(); selectBuild(key); sfx('click'); });
+    el.buildGrid.appendChild(d);
+  });
+}
+
+function selectBuild(key){
+  S.selected = (S.selected === key) ? null : key;
+  S.selTower = null; hideInspect();
+  paintCards();
+}
+
+function paintCards(){
+  Object.keys(TOWERS).forEach(function(k){
+    var c = document.getElementById('card_' + k);
+    if(c) c.className = 'card' + (S.selected === k ? ' sel' : '') + (S.cash < TOWERS[k].cost ? ' cant' : '');
+  });
+}
+
+function showInspect(){
+  var box = el.inspect; if(!box || !S.selTower) return;
+  var t = S.selTower, c = TOWERS[t.type];
+  var dps = towerDPS(t).toFixed(1), dtype = towerDmgType(t);
+  var dmgCls = 'dmg-' + dtype;
+  var html =
+    '<div class="inspect-header">' +
+      '<img class="inspect-thumb" src="' + c.img + '" alt="' + c.name + '" onerror="this.style.display=\'none\'">' +
+      '<div><h4>' + c.name + (t.branch ? ' — ' + BRANCH[t.type][t.branch].name : ' T1') + '</h4><div class="sub">3D Solarpunk Defense Engine · <span class="' + dmgCls + '" style="font-weight:bold">' + dtype + '</span></div></div>' +
+    '</div>' +
+    '<div class="row" style="font-family:var(--font-stats)">RNG <b>' + towerRange(t).toFixed(1) + '</b> · DPS <b>' + dps + '</b> · Kills <b>' + (t.kills || 0) + '</b><br>Total dmg <b>' + Math.round(t.totalDmg || 0) + '</b></div>' +
+    '<div class="row"><div style="height:6px;background:#0a1512;border:1px solid #3d4f45;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + Math.min(100, (t.totalDmg||0)/20) + '%;background:linear-gradient(90deg,#00F5D4,#FFB703)"></div></div><div style="font-size:10px;color:#9bb0a4">LIVE DPS METER</div></div>';
+  if(!t.branch){
+    var A = BRANCH[t.type].A, B = BRANCH[t.type].B;
+    html += '<button class="btn up" id="btnUpA">▲ ' + A.name + ' ($' + A.cost + ')</button>';
+    html += '<button class="btn up" id="btnUpB">▲ ' + B.name + ' ($' + B.cost + ')</button>';
+  } else {
+    html += '<div class="row" style="color:var(--gold-glow)">★ Elite: ' + BRANCH[t.type][t.branch].name + '</div>';
+  }
+  html += '<div class="row" style="font-size:11px">Priority: <b>First</b> · Last · Strongest <span style="color:#5a6a60">(click tower to cycle soon)</span></div>';
+  html += '<button class="btn up btn-sell" id="btnSellTower">Sell Tower (+$' + Math.round(t.invested * SELL_RATE) + ')</button>';
+  box.innerHTML = html;
+  var a = document.getElementById('btnUpA'), b = document.getElementById('btnUpB');
+  if(a) a.addEventListener('click', function(){ var r = upgradeTo(t, 'A'); if(!r.ok){ toast(r.why); sfx('error'); } else showInspect(); });
+  if(b) b.addEventListener('click', function(){ var r = upgradeTo(t, 'B'); if(!r.ok){ toast(r.why); sfx('error'); } else showInspect(); });
+  document.getElementById('btnSellTower').addEventListener('click', function(){ sellTower(t); });
+  box.style.display = 'block';
+}
+function hideInspect(){ if(el.inspect) el.inspect.style.display = 'none'; }
+
+function refreshHud(){
+  if(!el.lives) return;
+  el.lives.textContent = S.lives;
+  el.cash.textContent = S.cash;
+  if(el.mana) el.mana.textContent = Math.round(S.mana);
+  el.score.textContent = S.score;
+  el.wave.textContent = Math.min(S.wave, WAVE_MAX) + ' / ' + WAVE_MAX;
+  var maxLives = S.maxLives || START_LIVES;
+  document.getElementById('maxLivesLabel').textContent = ' / ' + maxLives + ' HP';
+  document.getElementById('healthFill').style.width = Math.max(0, Math.min(100, S.lives / maxLives * 100)) + '%';
+  document.getElementById('manaFill').style.width = Math.max(0, Math.min(100, S.mana)) + '%';
+  document.getElementById('phaseLabel').textContent = S.phase === 'combat' ? 'ENGAGEMENT ACTIVE' : (S.phase === 'build' ? 'PREPARE DEFENSES' : 'BATTLE COMPLETE');
+  document.getElementById('topbar').classList.toggle('is-combat', S.phase === 'combat');
+  el.preview.textContent = (S.phase === 'combat')
+    ? previewText(S.wave) + ' — in combat'
+    : (S.wave >= WAVE_MAX ? 'Sanctum secured. Victory!'
+    : previewText(S.wave + 1) + (S.wave > 0 ? ' — wave in ' + Math.ceil(S.waveT) + 's' : ' — press Start'));
+  paintCards();
+  if(el.btnWave){
+    if(S.phase === 'combat') el.btnWave.textContent = 'Combat Raging…';
+    else if(S.phase === 'over' || S.phase === 'win') el.btnWave.textContent = 'Done';
+    else el.btnWave.textContent = (S.wave === 0 ? 'Start Wave (Space)' : 'Call Wave ' + (S.wave + 1) + ' (Space)');
+    el.btnWave.disabled = S.phase !== 'build';
+  }
+  el.btnPause.textContent = S.paused ? '▶' : 'Ⅱ';
+  el.btnPause.setAttribute('aria-label', S.paused ? 'Resume game' : 'Pause game');
+  if(el.btnRoot) el.btnRoot.disabled = !S.sanctum || S.sanctum.rootCD > 0 || S.mana < 35;
+  if(el.btnFlare) el.btnFlare.disabled = !S.sanctum || S.sanctum.abilityCD > 0 || S.mana < 75;
+  if(el.btnSpeed) el.btnSpeed.title = 'Cycle Game Speed (V)';
+}
+
+// ---------- 3D Interaction & Input Handling ----------
+function onMouseMove(ev){
+  mouse.x = (ev.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(ev.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  var hitPoint = new THREE.Vector3();
+  if(raycaster.ray.intersectPlane(rayPlane, hitPoint)){
+    var g = worldToGrid3D(hitPoint);
+    if(inB(g.gx, g.gy) && S.selected){
+      var chk = canPlace(g.gx, g.gy);
+      var wPos = gridToWorld3D(g.gx, g.gy, 0.15);
+      hoverBoxMesh.position.copy(wPos);
+      hoverBoxMesh.material.color.setHex(chk.ok ? 0x00f5d4 : 0xff5d5d);
+      hoverBoxMesh.visible = true;
+
+      rangeRingMesh.position.set(wPos.x, 0.06, wPos.z);
+      var rng = TOWERS[S.selected].range * CELL_SIZE;
+      rangeRingMesh.scale.set(rng, rng, 1);
+      rangeRingMesh.visible = true;
+    } else {
+      hoverBoxMesh.visible = false;
+      rangeRingMesh.visible = false;
+    }
+  }
+}
+
+function onClick(ev){
+  audio();
+  if(ev.target.closest('#topbar, #drawer, #inspect, .preview-wrap, #cam-mode, #glyphShop, #banner')) return;
+  raycaster.setFromCamera(mouse, camera);
+  var hitPoint = new THREE.Vector3();
+  if(raycaster.ray.intersectPlane(rayPlane, hitPoint)){
+    var g = worldToGrid3D(hitPoint);
+    if(!inB(g.gx, g.gy)) return;
+
+    if(S.selected){
+      var res = placeAt(g.gx, g.gy, S.selected);
+      if(!res.ok){ toast(res.why); sfx('error'); }
+      else if(S.cash < TOWERS[S.selected].cost){ S.selected = null; paintCards(); }
+    } else {
+      var found = null;
+      for(var t of S.towers){
+        if(t.gx === g.gx && t.gy === g.gy) found = t;
+      }
+      S.selTower = found;
+      if(found){ showInspect(); sfx('click'); }
+      else hideInspect();
+    }
+  }
+}
+
+function bindInput(){
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('click', onClick);
+  window.addEventListener('contextmenu', function(ev){
+    ev.preventDefault();
+    S.selected = null; S.selTower = null; hideInspect(); paintCards();
+    hoverBoxMesh.visible = false; rangeRingMesh.visible = false;
+  });
+
+  document.addEventListener('keydown', function(ev){
+    audio();
+    var k = (ev.key || '').toLowerCase();
+    if(k === 'q' || k === '1') selectBuild('gun');
+    else if(k === 'w' || k === '2') selectBuild('rocket');
+    else if(k === 'e' || k === '3') selectBuild('beam');
+    else if(k === 'r' || k === '4') selectBuild('slow');
+    else if(k === 'c') setCameraIsometric();
+    else if(k === 't') toggleCameraView(); // tactical <-> boots-on-the-map
+    else if(k === ' '){
+      ev.preventDefault();
+      if(!startWave()){ toast('Wave already raging!'); sfx('error'); }
+    }
+    else if(k === 'escape'){
+      S.selected = null; S.selTower = null; hideInspect(); paintCards();
+      hoverBoxMesh.visible = false; rangeRingMesh.visible = false;
+    }
+    else if(k === 'p') togglePause();
+    else if(k === 'd') useSanctumAbility('root');
+    else if(k === 'f') useSanctumAbility('flare');
+    else if(k === 'v') cycleSpeed();
+    else if(k === 'g') toggleGlyphShop();
+  });
+
+  el.btnWave.addEventListener('click', function(){ audio(); startWave(); });
+  el.btnCam.addEventListener('click', setCameraIsometric);
+  el.btnPause.addEventListener('click', togglePause);
+  el.btnSpeed.addEventListener('click', cycleSpeed);
+  // Tactical radar click-to-jump: click minimap to move camera target
+  var mmc = document.getElementById('minimap');
+  if(mmc) mmc.parentElement.addEventListener('click', function(ev){
+    var r = mmc.getBoundingClientRect();
+    var nx = (ev.clientX - r.left) / r.width, ny = (ev.clientY - r.top) / r.height;
+    var wx = (nx - 0.5) * COLS * CELL_SIZE, wz = (ny - 0.5) * ROWS * CELL_SIZE;
+    if(controls){ controls.target.set(wx, 0, wz); controls.update(); }
+    sfx('click');
+  });
+  el.btnGlyph = document.getElementById('btnGlyph');
+  if(el.btnGlyph) el.btnGlyph.addEventListener('click', toggleGlyphShop);
+  document.getElementById('btnAgain').addEventListener('click', resetGame);
+}
+
+function onWindowResize(){
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ---------- Gamepad controller support (Standard mapping: Xbox/PS/Switch) ----------
+// Left stick: march across the map · Right stick: look around · LT/RT: zoom
+// A: place/select · B: cancel · X: send wave · Y: camera view · LB/RB: cycle tower · Start: pause
+var PAD = { active: false, prev: [], name: '' };
+var PAD_TOWERS = ['gun', 'rocket', 'beam', 'slow'];
+function padRumble(strong, weak, dur){
+  try {
+    var pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    for(var p of pads){
+      if(p && p.connected && p.vibrationActuator && p.vibrationActuator.playEffect){
+        p.vibrationActuator.playEffect('dual-rumble', { strongMagnitude: strong || 0.5, weakMagnitude: weak || 0.3, duration: dur || 120 });
+        break;
+      }
+    }
+  } catch(e){}
+}
+function centerTile(){
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  var hit = new THREE.Vector3();
+  if(raycaster.ray.intersectPlane(rayPlane, hit)){
+    var g = worldToGrid3D(hit);
+    if(inB(g.gx, g.gy)) return g;
+  }
+  return null;
+}
+function padCycleTower(dir){
+  var i = PAD_TOWERS.indexOf(S.selected);
+  i = (i + dir + PAD_TOWERS.length) % PAD_TOWERS.length;
+  selectBuild(PAD_TOWERS[i]);
+  sfx('click');
+}
+function padPress(btn){
+  audio();
+  if(btn === 0){ // A: place selected tower at crosshair, or inspect unit there
+    var g = centerTile();
+    if(!g) return;
+    if(S.selected){
+      var res = placeAt(g.gx, g.gy, S.selected);
+      if(!res.ok){ toast(res.why); sfx('error'); padRumble(0.9, 0.2, 80); }
+      else { padRumble(0.3, 0.7, 90); if(S.cash < TOWERS[S.selected].cost){ S.selected = null; paintCards(); } }
+    } else {
+      var found = null;
+      for(var t of S.towers){ if(t.gx === g.gx && t.gy === g.gy) found = t; }
+      S.selTower = found;
+      if(found){ showInspect(); sfx('click'); }
+      else hideInspect();
+    }
+  }
+  else if(btn === 1){ S.selected = null; S.selTower = null; hideInspect(); paintCards(); } // B: cancel
+  else if(btn === 2){ if(!startWave()){ toast('Wave already raging!'); sfx('error'); } } // X: wave
+  else if(btn === 3){ toggleCameraView(); } // Y: camera view
+  else if(btn === 4){ padCycleTower(-1); } // LB
+  else if(btn === 5){ padCycleTower(1); } // RB
+  else if(btn === 8){ cycleSpeed(); } // back: speed
+  else if(btn === 9){ togglePause(); } // start: pause
+  else if(btn === 12){ padCycleTower(-1); } // dpad L
+  else if(btn === 13){ S.selected = null; S.selTower = null; hideInspect(); paintCards(); } // dpad D: cancel
+  else if(btn === 14){ padCycleTower(1); } // dpad R
+  else if(btn === 15){ if(!startWave()){ toast('Wave already raging!'); sfx('error'); } } // dpad U: wave
+}
+function pollGamepad(dt){
+  var pads = [];
+  try { pads = navigator.getGamepads ? navigator.getGamepads() : []; } catch(e){}
+  var gp = null;
+  for(var p of pads){ if(p && p.connected){ gp = p; break; } }
+  var status = document.getElementById('gamepad-status');
+  var cross = document.getElementById('crosshair');
+  if(!gp){
+    if(PAD.active){ PAD.active = false; PAD.prev = []; if(status) status.style.display = 'none'; if(cross) cross.style.display = 'none'; }
+    return;
+  }
+  if(!PAD.active){
+    PAD.active = true; PAD.name = gp.id || 'Gamepad';
+    var nm = document.getElementById('gamepad-name');
+    if(nm) nm.textContent = PAD.name.slice(0, 28);
+    if(status) status.style.display = 'block';
+    if(cross) cross.style.display = 'block';
+    toast('Gamepad linked — ' + PAD.name.slice(0, 32));
+  }
+  function dz(v){ return Math.abs(v) < 0.16 ? 0 : v; }
+  var lx = dz(gp.axes[0] || 0), ly = dz(gp.axes[1] || 0);
+  var rx = dz(gp.axes[2] || 0), ry = dz(gp.axes[3] || 0);
+  // march: left stick pans the camera target across the island
+  if((lx || ly) && controls){
+    var fwd = new THREE.Vector3().subVectors(controls.target, camera.position);
+    fwd.y = 0; fwd.normalize();
+    var right = new THREE.Vector3(fwd.z, 0, -fwd.x);
+    var spd = 16 * dt * (S && S.camView === 'immersive' ? 0.6 : 1);
+    controls.target.addScaledVector(right, lx * spd);
+    controls.target.addScaledVector(fwd, -ly * spd);
+    var lim = Math.max(COLS, ROWS) * CELL_SIZE * 0.75;
+    controls.target.x = Math.max(-lim, Math.min(lim, controls.target.x));
+    controls.target.z = Math.max(-lim, Math.min(lim, controls.target.z));
+    controls.target.y = 0;
+  }
+  // look: right stick orbits + pitches the camera
+  if((rx || ry) && controls){
+    var off = new THREE.Vector3().subVectors(camera.position, controls.target);
+    var ang = -rx * dt * 2.4;
+    var cos = Math.cos(ang), sin = Math.sin(ang);
+    var nx = off.x * cos - off.z * sin, nz = off.x * sin + off.z * cos;
+    off.x = nx; off.z = nz;
+    off.y = Math.max(2.5, Math.min(95, off.y + ry * dt * 30));
+    camera.position.copy(controls.target).add(off);
+  }
+  // zoom: triggers dolly
+  var lt = (gp.buttons[6] && gp.buttons[6].value) || 0, rt = (gp.buttons[7] && gp.buttons[7].value) || 0;
+  if((lt > 0.1 || rt > 0.1) && controls){
+    var off2 = new THREE.Vector3().subVectors(camera.position, controls.target);
+    var len = Math.max(8, Math.min(200, off2.length() * (1 + (lt - rt) * dt * 1.6)));
+    off2.setLength(len);
+    camera.position.copy(controls.target).add(off2);
+  }
+  // buttons (edge triggered)
+  for(var b = 0; b < Math.min(gp.buttons.length, 16); b++){
+    var down = gp.buttons[b] && gp.buttons[b].pressed;
+    if(down && !PAD.prev[b]) padPress(b);
+    PAD.prev[b] = down;
+  }
+  // crosshair tile highlight mirrors the mouse ghost
+  if(cross){
+    var g = centerTile();
+    if(g && S.selected){
+      var chk = canPlace(g.gx, g.gy);
+      var wPos = gridToWorld3D(g.gx, g.gy, 0.15);
+      hoverBoxMesh.position.copy(wPos);
+      hoverBoxMesh.material.color.setHex(chk.ok ? 0x00f5d4 : 0xff5d5d);
+      hoverBoxMesh.visible = true;
+      cross.className = chk.ok ? '' : 'bad';
+      rangeRingMesh.position.set(wPos.x, 0.06, wPos.z);
+      var rng = TOWERS[S.selected].range * CELL_SIZE;
+      rangeRingMesh.scale.set(rng, rng, 1);
+      rangeRingMesh.visible = true;
+    } else {
+      cross.className = '';
+      if(!S.selected){ hoverBoxMesh.visible = false; rangeRingMesh.visible = false; }
+    }
+  }
+}
+
+function togglePause(){ S.paused = !S.paused; refreshHud(); }
+function cycleSpeed(){ S.speed = S.speed === 1 ? 2 : (S.speed === 2 ? 4 : 1); el.btnSpeed.textContent = S.speed + 'x'; }
+
+// ---------- Meta-Progression: Verdant Glyphs ----------
+var GLYPH_DEFS = {
+  foundry: { name: 'Foundry Engineering', desc: '+2% tower damage per level', maxLvl: 15, cost: 50, icon: '⚙' },
+  vault: { name: 'Ancient Vault', desc: '+50 starting Scrap per level', maxLvl: 3, cost: 80, icon: '💰' },
+  flora: { name: 'Flora Symbiosis', desc: '+15% Sanctum HP per level', maxLvl: 5, cost: 60, icon: '🌿' },
+  mazing: { name: 'Mazing Mastery', desc: 'Unlock decorative blocker walls', maxLvl: 1, cost: 100, icon: '🧱' }
+};
+
+function loadGlyphs(){
+  try { return JSON.parse(localStorage.getItem('aegis_glyphs') || '{}'); }
+  catch(e){ return {}; }
+}
+function saveGlyphs(){
+  try { localStorage.setItem('aegis_glyphs', JSON.stringify(S.glyphs)); }
+  catch(e){}
+}
+function getGlyphLevel(gid){ return S.glyphs[gid] || 0; }
+function canAffordGlyph(gid){ var def = GLYPH_DEFS[gid]; var lvl = getGlyphLevel(gid); return lvl < def.maxLvl && S.cash >= def.cost * (lvl + 1); }
+function purchaseGlyph(gid){
+  var def = GLYPH_DEFS[gid]; var lvl = getGlyphLevel(gid);
+  if(lvl >= def.maxLvl) return false;
+  var cost = def.cost * (lvl + 1);
+  if(S.cash < cost) return false;
+  S.cash -= cost;
+  S.glyphs[gid] = lvl + 1;
+  saveGlyphs();
+  return true;
+}
+function getGlyphBonus(){
+  var fLvl = getGlyphLevel('foundry');
+  var vLvl = getGlyphLevel('vault');
+  var flLvl = getGlyphLevel('flora');
+  return {
+    dmgMult: 1 + fLvl * 0.02,
+    startCash: START_CASH + vLvl * 50,
+    maxLives: START_LIVES + flLvl * Math.round(START_LIVES * 0.15),
+    hasMazingWall: getGlyphLevel('mazing') >= 1
+  };
+}
+
+var GLYPH_SHOP_OPEN = false;
+function toggleGlyphShop(){
+  GLYPH_SHOP_OPEN = !GLYPH_SHOP_OPEN;
+  if(GLYPH_SHOP_OPEN) showGlyphShop(); else hideGlyphShop();
+}
+function showGlyphShop(){
+  var existing = document.getElementById('glyphShop');
+  if(existing){ existing.style.display = 'block'; return; }
+  var shop = document.createElement('div');
+  shop.id = 'glyphShop';
+  var html = '<h3>✧ Verdant Glyphs</h3>';
+  html += '<p>Permanent upgrades between runs. Spend Scrap to unlock.</p>';
+  var keys = Object.keys(GLYPH_DEFS);
+  for(var i=0;i<keys.length;i++){
+    var gid = keys[i]; var def = GLYPH_DEFS[gid]; var lvl = getGlyphLevel(gid); var max = def.maxLvl;
+    var cost = def.cost * (lvl + 1); var canBuy = canAffordGlyph(gid);
+    var pct = (lvl / max) * 100;
+    html += '<div class="glyph-row"><span class="glyph-icon" aria-hidden="true">' + def.icon + '</span>';
+    html += '<div class="glyph-detail"><b>' + def.name + '</b><span>' + def.desc + '</span>';
+    html += '<div class="glyph-track"><i style="width:' + pct + '%"></i></div></div>';
+    html += '<div class="glyph-action"><small>LV ' + lvl + ' / ' + max + '</small>';
+    if(lvl >= max){
+      html += '<span class="glyph-maxed">MAXED</span>';
+    } else {
+      html += '<button class="btn' + (canBuy ? ' primary' : '') + ' glyph-buy" data-gid="' + gid + '"' + (canBuy ? '' : ' disabled') + '>' + cost + ' Scrap</button>';
+    }
+    html += '</div></div>';
+  }
+  html += '<button class="btn" id="btnCloseGlyphs">Close (G)</button>';
+  shop.innerHTML = html;
+  document.body.appendChild(shop);
+  shop.addEventListener('click', function(e){
+    if(e.target.classList.contains('glyph-buy')){
+      var g = e.target.getAttribute('data-gid');
+      if(purchaseGlyph(g)){
+        toast(GLYPH_DEFS[g].name + ' upgraded to Lv ' + getGlyphLevel(g));
+        sfx('upgrade');
+        shop.remove();
+        showGlyphShop();
+      } else {
+        toast('Not enough Scrap!'); sfx('error');
+      }
+    }
+    if(e.target.id === 'btnCloseGlyphs'){ hideGlyphShop(); }
+  });
+}
+function hideGlyphShop(){
+  var shop = document.getElementById('glyphShop');
+  if(shop) shop.style.display = 'none';
+  GLYPH_SHOP_OPEN = false;
+}
+
+// ---------- Sanctum Abilities ----------
+function useSanctumAbility(type){
+  if(!S || S.phase !== 'combat') return;
+  var ability = type === 'root' ? { cost: 35, cooldown: 25, key: 'D', name: 'Verdant Overgrowth' }
+    : { cost: 75, cooldown: 60, key: 'F', name: 'Solar Flare' };
+  if(S.mana < ability.cost){ toast('Not enough Mana (' + ability.cost + ' needed)'); sfx('error'); return; }
+  if(type === 'root' && S.sanctum.rootCD > 0){ toast('Overgrowth cooling: ' + Math.ceil(S.sanctum.rootCD) + 's'); sfx('error'); return; }
+  if(type === 'flare' && S.sanctum.abilityCD > 0){ toast('Solar Flare cooling: ' + Math.ceil(S.sanctum.abilityCD) + 's'); sfx('error'); return; }
+
+  S.mana -= ability.cost;
+
+  if(type === 'root'){
+    S.sanctum.rootCD = ability.cooldown;
+    // Root all creeps in 4x4 area around Sanctum
+    var sx = SANCTUM.x + 0.5, sy = SANCTUM.y + 0.5;
+    var rootCount = 0;
+    for(var f of S.foes){
+      if(f.hp <= 0 || f.dead) continue;
+      var d = Math.hypot(f.x - sx, f.y - sy);
+      if(d <= 4.5){
+        f.rooted = 3.5; f.slowF = 0; f.slowT = 3.5;
+        applyDamage(f, 60, 'Sonic', false);
+        rootCount++;
+      }
+    }
+    // Visual: green shockwave ring from Sanctum
+    var sPos = gridToWorld3D(SANCTUM.x, SANCTUM.y, 0);
+    spawnResonanceRing(sPos, 4, true);
+    // Add green mist
+    var mist = new THREE.Mesh(new THREE.PlaneGeometry(10, 10),
+      new THREE.MeshBasicMaterial({ color: 0x2D7246, transparent: true, opacity: 0.3, depthWrite: false }));
+    mist.rotation.x = -Math.PI/2; mist.position.set(sPos.x, 0.15, sPos.z);
+    scene.add(mist);
+    FX.flashes.push({ mesh: mist, life: 3.5 });
+    sfx('slow');
+    toast('Verdant Overgrowth — ' + rootCount + ' creeps rooted!');
+  }
+  else if(type === 'flare'){
+    S.sanctum.abilityCD = ability.cooldown;
+    // Target the current hover position on the grid
+    var targetPos = raycaster.ray.intersectPlane(rayPlane, new THREE.Vector3());
+    var gx = targetPos ? worldToGrid3D(targetPos).gx : SANCTUM.x;
+    var gy = targetPos ? worldToGrid3D(targetPos).gy : SANCTUM.y;
+    gx = clamp(gx, 0, COLS - 1); gy = clamp(gy, 0, ROWS - 1);
+    var wPos = gridToWorld3D(gx, gy, 0);
+
+    // Visual: golden beam from sky
+    var beamHeight = 30;
+    var beamTop = new THREE.Vector3(wPos.x, beamHeight, wPos.z);
+    var beamBottom = new THREE.Vector3(wPos.x, 0.5, wPos.z);
+    var flareBeamG = new THREE.BufferGeometry().setFromPoints([beamTop, beamBottom]);
+    var flareBeam = new THREE.Line(flareBeamG, new THREE.LineBasicMaterial({ color: 0xFFD700, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, linewidth: 3 }));
+    scene.add(flareBeam);
+    FX.beams.push({ mesh: flareBeam, life: 0.4, max: 0.4 });
+    // Impact explosion
+    spawnExplosion(wPos, 3.0);
+    // Apply 800 Energy damage in 3-tile radius
+    var dmgCount = 0;
+    for(var f of S.foes){
+      if(f.hp <= 0 || f.dead) continue;
+      var d = Math.hypot(f.x - (gx + 0.5), f.y - (gy + 0.5));
+      if(d <= 3.5){
+        applyDamage(f, 800, 'Energy', false);
+        hitFlashCreep(f);
+        damageNumber(gridToWorld3D(f.x, f.y, f.air?2.5:0), 800, 'Energy');
+        if(f.hp <= 0) killFoe(f);
+        dmgCount++;
+      }
+    }
+    // Scorch decal that lingers
+    spawnDecal('scorch', gx, gy, 4.0);
+    if(Math.random() < 0.7) spawnDecal('crater', gx, gy, 3.0);
+    sfx('boom');
+    addTrauma(0.6);
+    toast('Solar Flare — ' + dmgCount + ' creeps scorched!');
+  }
+  refreshHud();
+}
+function resetGame(){
+  for(var t of S.towers) scene.remove(t.mesh);
+  for(var f of S.foes) scene.remove(f.mesh);
+  clearRuinVisuals();
+  var bonus = getGlyphBonus();
+  S = newState((Math.random() * 1e9) | 0);
+  S.cash = bonus.startCash;
+  S.lives = bonus.maxLives;
+  S.maxLives = bonus.maxLives;
+  seedRuins();
+  document.getElementById('banner').style.display = 'none';
+  S.phase = 'build'; S.waveT = 0;
+  S.sanctum = { abilityCD: 0, rootCD: 0, rootTargets: [] };
+  S.mana = 100;
+  paintCards(); hideInspect(); updatePathVisualizer(); refreshHud();
+}
+
+// ---------- Main Render Loop (with trauma screen shake) ----------
+var clock = new THREE.Clock();
+function addTrauma(amount){
+  if(!S) return;
+  S.trauma = Math.min(1, (S.trauma || 0) + amount);
+}
+function animate(){
+  requestAnimationFrame(animate);
+  var dt = Math.min(0.05, clock.getDelta());
+  if(!S.paused && (S.phase === 'build' || S.phase === 'combat')){
+    var sdt = dt * S.speed;
+    update(sdt);
+  }
+
+  var core = scene.getObjectByName('sanctumCore');
+  if(core && core.visible){
+    core.rotation.y += dt * 0.9;
+    core.rotation.x = Math.sin(S.time * 2) * 0.25;
+  }
+  var rotunda = scene.getObjectByName('sanctumRotundaGLB');
+  if(rotunda){
+    rotunda.rotation.y += dt * 0.22;
+  }
+  // water shimmer + brazier flicker (cheap ambient life)
+  if(scene.userData.water) for(var wi = 0; wi < scene.userData.water.length; wi++){
+    var w = scene.userData.water[wi];
+    w.material.opacity = 0.55 + Math.sin(S.time * 2.1 + wi * 2.4) * 0.1;
+    w.position.y = 0.06 + Math.sin(S.time * 1.4 + wi) * 0.015;
+  }
+  if(scene.userData.braziers) for(var bi2 = 0; bi2 < scene.userData.braziers.length; bi2++){
+    var bz = scene.userData.braziers[bi2];
+    bz.light.intensity = bz.base * (0.85 + Math.random() * 0.3);
+    bz.flame.scale.set(1 + Math.random() * 0.25, 1 + Math.random() * 0.4, 1);
+  }
+  // floating-island life: orbiting shards, pulsing root-tip, waterfall shimmer
+  if(scene.userData.shards) for(var shi = 0; shi < scene.userData.shards.length; shi++){
+    var sh2 = scene.userData.shards[shi];
+    sh2.ang += sh2.speed * dt;
+    sh2.mesh.position.x = Math.cos(sh2.ang) * sh2.rad;
+    sh2.mesh.position.z = Math.sin(sh2.ang) * sh2.rad;
+    sh2.mesh.position.y = sh2.baseY + Math.sin(S.time * 0.7 + sh2.phase) * 0.8;
+    sh2.mesh.rotation.y += sh2.spin * dt;
+  }
+  if(scene.userData.islandTip){
+    scene.userData.islandTip.rotation.y += dt * 0.8;
+    scene.userData.islandTip.position.y = -20.2 + Math.sin(S.time * 0.9) * 0.3;
+  }
+  if(scene.userData.waterfall){
+    scene.userData.waterfall.material.opacity = 0.4 + Math.sin(S.time * 3.2) * 0.12;
+  }
+  // ominous sky: drift clouds + rare lightning strike with low thunder
+  if(scene.userData.skyMat){
+    scene.userData.skyMat.uniforms.uTime.value = S.time;
+    var uni = scene.userData.skyMat.uniforms;
+    if(S.time > (scene.userData.nextBolt || 10)){
+      scene.userData.nextBolt = S.time + 9 + Math.random() * 14;
+      uni.uFlash.value = 0.9 + Math.random() * 0.5;
+      try { noiseHit(1.4, 0.05, 220); setTimeout(function(){ noiseHit(1.0, 0.035, 160); }, 350); } catch(e){}
+    }
+    uni.uFlash.value = Math.max(0, uni.uFlash.value - dt * 2.2);
+    if(scene.userData.boltLight) scene.userData.boltLight.intensity = uni.uFlash.value * 3.2;
+  }
+  // sanctum core breathes: mana light swells and fades
+  if(scene.userData.sanctumLight){
+    scene.userData.sanctumLight.intensity = 3.6 + Math.sin(S.time * 2.4) * 0.9;
+  }
+
+  controls.update();
+  pollGamepad(dt);
+  // trauma decay → camera kick (mortars, flares, leaks)
+  if(S && S.trauma > 0){
+    S.trauma = Math.max(0, S.trauma - dt * 1.6);
+    var sh = S.trauma * S.trauma * 1.4;
+    camera.position.x += (Math.random() - 0.5) * sh;
+    camera.position.y += (Math.random() - 0.5) * sh * 0.6;
+    camera.position.z += (Math.random() - 0.5) * sh;
+  }
+  renderer.render(scene, camera);
+}
+
+// ---------- Boot ----------
+function boot(){
+  S = newState((Date.now() % 1e9) | 0);
+  seedRuins();
+  ['lives', 'cash', 'mana', 'wave', 'score'].forEach(function(id){ el[id] = document.getElementById(id); });
+  el.preview = document.getElementById('preview');
+  el.drawer = document.getElementById('drawer');
+  el.buildGrid = document.getElementById('build-grid');
+  el.inspect = document.getElementById('inspect');
+  el.toast = document.getElementById('toast');
+  el.btnWave = document.getElementById('btnWave');
+  el.btnPause = document.getElementById('btnPause');
+  el.btnSpeed = document.getElementById('btnSpeed');
+  el.btnCam = document.getElementById('btnCam');
+  el.btnRoot = document.getElementById('btnRoot');
+  el.btnFlare = document.getElementById('btnFlare');
+
+  initThreeJS();
+  buildDrawer();
+  bindInput();
+  updatePathVisualizer();
+  refreshHud();
+  animate();
+}
+
+// ---------- Public Automated Testing & API ----------
+var API = {
+  cfg: { COLS: COLS, ROWS: ROWS, SPAWN: SPAWN, SANCTUM: SANCTUM, TOWERS: TOWERS, BRANCH: BRANCH, FOES: FOES, WAVE_MAX: WAVE_MAX },
+  get state(){ return S; },
+  newGame: function(seed){
+    for(var t of S.towers) scene.remove(t.mesh);
+    for(var f of S.foes) scene.remove(f.mesh);
+    clearRuinVisuals();
+    S = newState(seed || 1); seedRuins();
+    updatePathVisualizer();
+    return S;
+  },
+  findPath: findPath, canPlace: canPlace, placeAt: placeAt,
+  upgradeTo: upgradeTo, sellTower: sellTower,
+  startWave: startWave, spawnEnemy: spawnEnemy, update: update,
+  waveComp: waveComp, previewText: previewText, mazeValid: mazeValid,
+  towerRange: towerRange
+};
+window.RoboFlora = API;
+window.AegisFlora = API;
+
+if(document.readyState !== 'loading') boot();
+else document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
