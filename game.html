@@ -812,24 +812,24 @@ var TOWERS = {
 
 var BRANCH = {
   gun: {
-    A: { name: 'Vulcan Pedestal', cost: 15, dmg: 4, iv: 0.08, aa: true },
-    B: { name: 'Rail-Needler', cost: 20, dmg: 24, iv: 0.75, aa: true, ap: true }
+    A: { name: 'Vulcan Pedestal', cost: 15, dmg: 4, iv: 0.08, aa: true, desc: 'Ultra high-RPM rotary kinetic fire. Shreds unarmored swarms.' },
+    B: { name: 'Rail-Needler', cost: 20, dmg: 24, iv: 0.75, aa: true, ap: true, pierce: 3, desc: 'Hyper-velocity rail penetrator punches through up to 3 targets in a line.' }
   },
   rocket: {
-    A: { name: 'Cataclysm Bloom', cost: 30, dmg: 95, iv: 2.4, splash: 1.8 },
-    B: { name: 'Skyburst Flak', cost: 25, dmg: 26, iv: 0.85, splash: 0.9, aaOnly: true, range: 6.2 }
+    A: { name: 'Cataclysm Bloom', cost: 30, dmg: 95, iv: 2.4, splash: 1.8, desc: 'Heavy devastating spore mortar with massive explosive blast radius.' },
+    B: { name: 'Skyburst Flak', cost: 25, dmg: 26, iv: 0.85, splash: 0.9, aaOnly: true, range: 6.2, desc: 'Dedicated anti-air flak battery with rapid intercept rounds.' }
   },
   beam: {
-    A: { name: 'Sol Invictus', cost: 25, dps: 60, range: 4.6, ramp: 2.5 },
-    B: { name: 'Refraction Lens', cost: 30, dps: 38, range: 4.0, split: 3 }
+    A: { name: 'Sol Invictus', cost: 25, dps: 60, range: 4.6, ramp: 2.5, scorch: true, desc: 'Solar ray that carves lingering fiery scorch lines on the ground.' },
+    B: { name: 'Refraction Lens', cost: 30, dps: 38, range: 4.0, split: 3, desc: 'Prism splitter that refracts beams into up to 3 simultaneous targets.' }
   },
   slow: {
-    A: { name: 'Chrono-Stutter', cost: 25, range: 3.6, slowF: 0.5, chill: 2.5, dps: 8, stun: true },
-    B: { name: 'Resonance Shatter', cost: 30, range: 3.2, dps: 46, hold: 0.25, shatter: true }
+    A: { name: 'Chrono-Stutter', cost: 25, range: 3.6, slowF: 0.5, chill: 2.5, dps: 8, stun: true, desc: 'Radial temporal distortion: every 4th pulse stuns enemies for 1.2s.' },
+    B: { name: 'Resonance Shatter', cost: 30, range: 3.2, dps: 46, hold: 0.25, shatter: true, desc: 'Shreds 3 armor and detonates +50% shatter damage on weakened foes.' }
   },
   blocker: {
-    A: { name: 'Reinforced Masonry', cost: 4, range: 0, desc: 'Adds decorative ivy' },
-    B: { name: 'Thorned Bramble', cost: 4, range: 0, desc: 'Adds thorny vines' }
+    A: { name: 'Reinforced Masonry', cost: 4, range: 0, desc: 'Adds decorative ivy and reinforcement.' },
+    B: { name: 'Thorned Bramble', cost: 4, range: 0, desc: 'Adds thorny bramble vines.' }
   }
 };
 
@@ -853,18 +853,27 @@ function applyDamage(f, dmg, dtype, shatteredBonus, isTowerDmg){
   var mod = (f.dmgMod && f.dmgMod[dtype]) || 1.0;
   var mult = mod;
   if(isTowerDmg !== false && S && S.dmgMult) mult *= S.dmgMult;
+  var effArmor = (f.armor || 0) - (f.armorShred || 0);
   // Energy ignores 50% armor
-  if(dtype === 'Energy') mult *= (1 - 0.5 * armorMultiplier(f.armor || 0));
+  if(dtype === 'Energy') mult *= (1 - 0.5 * armorMultiplier(effArmor));
   // Sonic is pure damage (ignores armor)
   if(dtype === 'Sonic') mult *= 1;
   // Kinetic/Blast use armor multiplier
-  if(dtype === 'Kinetic' || dtype === 'Blast') mult *= armorMultiplier(f.armor || 0);
+  if(dtype === 'Kinetic' || dtype === 'Blast') mult *= armorMultiplier(effArmor);
   // Shattered bonus (+35% damage taken)
   if(shatteredBonus && f.shattered > 0) mult *= 1.35;
   var actual = Math.max(0, dmg * mult);
   f.hp -= actual;
   if(S) S.totalDamageDealt = (S.totalDamageDealt || 0) + actual;
   return Math.round(actual);
+}
+
+function distToSegment(px, py, x1, y1, x2, y2){
+  var dx = x2 - x1, dy = y2 - y1;
+  var l2 = dx * dx + dy * dy;
+  if(l2 === 0) return Math.hypot(px - x1, py - y1);
+  var t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / l2));
+  return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
 }
 
 function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
@@ -4273,6 +4282,12 @@ function clearActiveEffects(){
     for(var decal of scene.userData.decals) disposeDecal(decal);
     scene.userData.decals.length = 0;
   }
+  if(S && S.zones){
+    for(var z of S.zones){
+      if(z.mesh) disposeSceneObject(z.mesh);
+    }
+    S.zones.length = 0;
+  }
   DMG_NUMS.length = 0;
   if(combatCtx) combatCtx.clearRect(0, 0, combatCanvas.width, combatCanvas.height);
 }
@@ -4540,7 +4555,8 @@ function update(dt){
 
     var factor = 1;
     if(f.rooted > 0){ factor = 0; f.rooted -= dt; }
-    if(f.slowT > 0){ factor = f.slowF; f.slowT -= dt; if(f.slowT <= 0) f.slowF = 1; }
+    if(f.stunned > 0){ factor = 0; }
+    if(f.slowT > 0){ factor = Math.min(factor, f.slowF); f.slowT -= dt; if(f.slowT <= 0) f.slowF = 1; }
     var sp = f.speed * factor, fx, fy;
     if(f.air || f.direct || !f.path || f.wp >= f.path.length){ fx = SANCTUM.x + 0.5; fy = SANCTUM.y + 0.5; }
     else { fx = f.path[f.wp].x + 0.5; fy = f.path[f.wp].y + 0.5; }
@@ -4707,21 +4723,65 @@ function update(dt){
         var iv = (spec && spec.iv) || 0.12;
         var dmg = (spec && spec.dmg) || 6;
         t.cd = iv;
-        applyDamage(best, dmg, 'Kinetic', true);
-        best.lastHitType = 'Kinetic';
-        hitFlashCreep(best);
-        damageNumber(bWorld, dmg, 'Kinetic');
-        // directional stagger
-        best.x += dx * 0.008; best.y += dy * 0.008;
-        spawnTracer(muzzlePos, bWorld, 0xFFD60A);
-        spawnMuzzleFlash(muzzlePos, 0xFFD60A);
-        spawnShellCasing(tWorld);
-        t.kills = t.kills || 0; t.totalDmg = (t.totalDmg || 0) + dmg;
-        if(best.hp <= 0){ t.kills++; }
-        sfx('gun');
-        if(t.mesh.userData.barrels){
+
+        if(spec && spec.ap){
+          // Rail-Needler: high-velocity piercing round that punches through up to 3 foes along firing line
+          var maxPierce = spec.pierce || 3;
+          var ndx = best.x - tPos.x, ndy = best.y - tPos.y;
+          var nlen = Math.hypot(ndx, ndy) || 1;
+          var dirX = ndx / nlen, dirY = ndy / nlen;
+
+          var candidates = [];
+          for(var fPierce of S.foes){
+            if(fPierce.hp <= 0 || fPierce.dead) continue;
+            var proj = (fPierce.x - tPos.x) * dirX + (fPierce.y - tPos.y) * dirY;
+            if(proj < 0.2 || proj > range + 0.6) continue;
+            var perp = Math.abs((fPierce.x - tPos.x) * (-dirY) + (fPierce.y - tPos.y) * dirX);
+            if(perp <= (fPierce.r + 0.45)){
+              candidates.push({ foe: fPierce, proj: proj });
+            }
+          }
+          candidates.sort(function(a, b){ return a.proj - b.proj; });
+          var hitFoes = candidates.slice(0, maxPierce).map(function(c){ return c.foe; });
+          if(hitFoes.indexOf(best) === -1){
+            hitFoes.unshift(best);
+            if(hitFoes.length > maxPierce) hitFoes.pop();
+          }
+          t.lastHitTargets = hitFoes;
+
+          var furthestHit = bWorld;
+          for(var hf of hitFoes){
+            applyDamage(hf, dmg, 'Kinetic', true);
+            hf.lastHitType = 'Kinetic';
+            hitFlashCreep(hf);
+            var hfWorld = gridToWorld3D(hf.x, hf.y, hf.air ? 2.5 : 0.7);
+            damageNumber(hfWorld, dmg, 'Kinetic');
+            hf.x += dirX * 0.012; hf.y += dirY * 0.012;
+            furthestHit = hfWorld;
+            t.totalDmg = (t.totalDmg || 0) + dmg;
+            if(hf.hp <= 0){ t.kills = (t.kills || 0) + 1; }
+          }
+          spawnTracer(muzzlePos, furthestHit, 0x00F5D4);
+          spawnMuzzleFlash(muzzlePos, 0x00F5D4);
+          spawnShellCasing(tWorld);
+          sfx('gun');
+        } else {
+          t.lastHitTargets = [best];
+          applyDamage(best, dmg, 'Kinetic', true);
+          best.lastHitType = 'Kinetic';
+          hitFlashCreep(best);
+          damageNumber(bWorld, dmg, 'Kinetic');
+          best.x += dx * 0.008; best.y += dy * 0.008;
+          spawnTracer(muzzlePos, bWorld, 0xFFD60A);
+          spawnMuzzleFlash(muzzlePos, 0xFFD60A);
+          spawnShellCasing(tWorld);
+          t.kills = t.kills || 0; t.totalDmg = (t.totalDmg || 0) + dmg;
+          if(best.hp <= 0){ t.kills++; }
+          sfx('gun');
+        }
+        if(t.mesh && t.mesh.userData && t.mesh.userData.barrels){
           t.mesh.userData.barrels.rotation.z += 1.2;
-          t.recoil = 0.11; // hydraulic kick
+          t.recoil = 0.11;
         }
       }
       else if(t.type === 'rocket' && t.cd <= 0){
@@ -4756,31 +4816,153 @@ function update(dt){
         spawnPrismBeam(beamMuzzle, bWorld);
         t.totalDmg = (t.totalDmg || 0) + cur * dt;
         if(best.hp <= 0){ t.kills = (t.kills||0)+1; }
-        if(t.mesh.userData.crystal){
+        if(t.mesh && t.mesh.userData && t.mesh.userData.crystal){
           t.mesh.userData.crystal.rotation.y += dt * 3;
         }
+
+        // Refraction Lens: split beam strikes up to 2 additional secondary targets in range
+        if(spec && spec.split){
+          var maxSplit = spec.split - 1; // 2 secondary targets
+          var secCandidates = [];
+          for(var secFoe of S.foes){
+            if(secFoe === best || secFoe.hp <= 0 || secFoe.dead) continue;
+            var secDist = Math.hypot(secFoe.x - tPos.x, secFoe.y - tPos.y);
+            if(secDist <= range + secFoe.r){
+              secCandidates.push({ foe: secFoe, dist: Math.hypot(secFoe.x - best.x, secFoe.y - best.y) });
+            }
+          }
+          secCandidates.sort(function(a, b){ return a.dist - b.dist; });
+          var splitFoes = secCandidates.slice(0, maxSplit).map(function(c){ return c.foe; });
+          t.splitTargets = splitFoes;
+          for(var sf of splitFoes){
+            var sfDmg = cur * 0.75 * dt; // 75% power refracted beam
+            applyDamage(sf, sfDmg, 'Energy', true);
+            sf.lastHitType = 'Energy';
+            sf.heatT = 0.4;
+            var sfWorld = gridToWorld3D(sf.x, sf.y, sf.air ? 2.5 : 0.7);
+            spawnPrismBeam(bWorld, sfWorld); // Refracts from primary focal point to secondary
+            t.totalDmg = (t.totalDmg || 0) + sfDmg;
+            if(sf.hp <= 0){ t.kills = (t.kills || 0) + 1; }
+          }
+        } else {
+          t.splitTargets = null;
+        }
+
+        // Sol Invictus: Concentrated solar ray superheats the ground, leaving persistent scorching thermal zones
+        if(spec && spec.scorch){
+          t.scorchTimer = (t.scorchTimer || 0) - dt;
+          if(t.scorchTimer <= 0){
+            t.scorchTimer = 0.25;
+            if(!S.zones) S.zones = [];
+            if(S.zones.length > 25){
+              var oldZ = S.zones.shift();
+              if(oldZ && oldZ.mesh) disposeSceneObject(oldZ.mesh);
+            }
+            var szDps = Math.round(cur * 0.4); // 40% lingering thermal burn
+            var scorchLine = {
+              type: 'scorch',
+              x1: tPos.x + (best.x - tPos.x) * 0.35,
+              y1: tPos.y + (best.y - tPos.y) * 0.35,
+              x2: best.x,
+              y2: best.y,
+              dps: szDps,
+              life: 2.5,
+              maxLife: 2.5,
+              radius: 0.7
+            };
+            if(typeof spawnDecal === 'function'){
+              spawnDecal('scorch', best.x, best.y, 2.0);
+            }
+            if(typeof scene !== 'undefined' && scene && typeof THREE !== 'undefined'){
+              var sw1 = gridToWorld3D(scorchLine.x1, scorchLine.y1, 0.05);
+              var sw2 = gridToWorld3D(scorchLine.x2, scorchLine.y2, 0.05);
+              var sMid = sw1.clone().add(sw2).multiplyScalar(0.5);
+              var sLen = sw1.distanceTo(sw2);
+              var sGeo = new THREE.PlaneGeometry(0.7, Math.max(0.6, sLen));
+              var sMat = new THREE.MeshBasicMaterial({
+                color: 0xFF6B35,
+                transparent: true,
+                opacity: 0.6,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+              });
+              var sMesh = new THREE.Mesh(sGeo, sMat);
+              sMesh.rotation.x = -Math.PI / 2;
+              sMesh.position.copy(sMid);
+              sMesh.lookAt(sw2);
+              sMesh.rotateX(Math.PI / 2);
+              scene.add(sMesh);
+              scorchLine.mesh = sMesh;
+            }
+            S.zones.push(scorchLine);
+          }
+        }
+
         if(Math.random() < 0.3) sfx('zap');
       }
       else if(t.type === 'slow' && t.cd <= 0){
         t.cd = 1.5;
+        t.pulseCount = (t.pulseCount || 0) + 1;
         var slowF = (spec && spec.slowF) || 0.55;
         var chill = (spec && spec.chill) || 1.8;
         var sdps = (spec && spec.dps) || 0;
         var shatter = spec && spec.shatter;
+        var isChronoStun = !!(spec && spec.stun && (t.pulseCount % 4 === 0));
+
         for(var nearby of S.foes){
           if(nearby.hp <= 0 || nearby.dead) continue;
           if(Math.hypot(nearby.x - tPos.x, nearby.y - tPos.y) <= range + nearby.r){
-            nearby.slowF = slowF; nearby.slowT = chill;
-            if(sdps){ applyDamage(nearby, sdps, 'Sonic', true); nearby.lastHitType = 'Sonic'; hitFlashCreep(nearby); }
-            if(shatter) nearby.shattered = 3.0; // +35% damage taken
-            if(spec && spec.stun && Math.random() < 0.25){ nearby.slowF = 0; nearby.slowT = 0.75; } // chrono-stutter freeze
+            var nbWorld = gridToWorld3D(nearby.x, nearby.y, nearby.air ? 2.5 : 0.7);
+
+            if(isChronoStun){
+              // Chrono-Stutter 4th pulse: complete temporal freeze
+              nearby.slowF = 0;
+              nearby.slowT = 1.2;
+              nearby.stunned = 1.2;
+              damageNumber(nbWorld, 'STUNNED', 'Energy');
+            } else {
+              nearby.slowF = slowF;
+              nearby.slowT = chill;
+            }
+
+            // Base slow obelisk strips 1 armor; Resonance Shatter strips 3 armor and detonates shatter
+            if(shatter){
+              var hadArmorShred = ((nearby.armorShred || 0) > 0 || (nearby.shattered || 0) > 0);
+              nearby.armorShred = (nearby.armorShred || 0) + 3;
+              nearby.armorShredT = 5.0;
+              nearby.shattered = 4.0; // +35% damage taken from all sources
+
+              var dealtDmg = sdps;
+              if(hadArmorShred){
+                // Resonance Shatter synergy: detonates +50% bonus acoustic shatter damage
+                var bonusShatter = Math.round(sdps * 0.5);
+                dealtDmg += bonusShatter;
+                damageNumber(nbWorld, 'SHATTER! +' + bonusShatter, 'Sonic');
+              } else {
+                damageNumber(nbWorld, dealtDmg, 'Sonic');
+              }
+              applyDamage(nearby, dealtDmg, 'Sonic', true);
+              nearby.lastHitType = 'Sonic';
+              hitFlashCreep(nearby);
+            } else {
+              // Base slow obelisk strips 1 armor
+              nearby.armorShred = Math.min((nearby.armor || 0) + 4, (nearby.armorShred || 0) + 1);
+              nearby.armorShredT = 4.0;
+              if(sdps){
+                applyDamage(nearby, sdps, 'Sonic', true);
+                nearby.lastHitType = 'Sonic';
+                hitFlashCreep(nearby);
+                damageNumber(nbWorld, sdps, 'Sonic');
+              } else {
+                damageNumber(nbWorld, 'SLOW -1 ARMOR', 'Sonic');
+              }
+            }
           }
         }
         var tGround = gridToWorld3D(t.gx + 0.5, t.gy + 0.5, 0);
         spawnResonanceRing(tGround, range, !!shatter);
         t.ringBurst = 0.35;
-        damageNumber(bWorld, sdps || 'SLOW', 'Sonic');
-        sfx('slow');
+        sfx(isChronoStun ? 'zap' : 'slow');
       }
     } else { t.beamTgt = null; t.beamTime = 0; }
   }
@@ -4828,10 +5010,44 @@ function update(dt){
   if(S.mana !== undefined){
     S.mana = Math.min(100, S.mana + 4 * dt);
   }
-  // armor heat: prism victims glow red-hot briefly; shattered take +35%
+  // Update ground zones (Sol Invictus scorch lines, magma trails)
+  if(S && S.zones && S.zones.length){
+    for(var zi = S.zones.length - 1; zi >= 0; zi--){
+      var zone = S.zones[zi];
+      zone.life -= dt;
+      if(zone.mesh && zone.mesh.material){
+        zone.mesh.material.opacity = Math.max(0, (zone.life / zone.maxLife) * 0.65);
+      }
+      if(zone.life <= 0){
+        if(zone.mesh) disposeSceneObject(zone.mesh);
+        S.zones.splice(zi, 1);
+        continue;
+      }
+      // Apply thermal burn damage to passing ground creeps
+      for(var zf of S.foes){
+        if(zf.hp <= 0 || zf.dead || zf.air) continue;
+        var distToLine = distToSegment(zf.x, zf.y, zone.x1, zone.y1, zone.x2, zone.y2);
+        if(distToLine <= zone.radius + zf.r){
+          var zDmg = zone.dps * dt;
+          applyDamage(zf, zDmg, 'Energy', true);
+          zf.lastHitType = 'Energy';
+          zf.heatT = 0.4;
+          zf.scorch = Math.max(zf.scorch || 0, 1.0);
+        }
+      }
+    }
+  }
+
+  // Creep status effect decay: armor heat, shattered, armorShred, stunned, scorch
   for(var hf of S.foes){
     if(hf.heatT > 0){ hf.heatT -= dt; }
     if(hf.shattered > 0){ hf.shattered -= dt; }
+    if(hf.armorShredT > 0){
+      hf.armorShredT -= dt;
+      if(hf.armorShredT <= 0){ hf.armorShred = 0; }
+    }
+    if(hf.stunned > 0){ hf.stunned -= dt; }
+    if(hf.scorch > 0){ hf.scorch -= dt; }
   }
   // Sanctum ability cooldowns
   if(S.sanctum){
@@ -5162,10 +5378,11 @@ function showInspect(){
     '<div class="row"><div style="height:6px;background:#0a1512;border:1px solid #3d4f45;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + Math.min(100, (t.totalDmg||0)/20) + '%;background:linear-gradient(90deg,#00F5D4,#FFB703)"></div></div><div style="font-size:10px;color:#9bb0a4">LIVE DPS METER</div></div>';
   if(!t.branch){
     var A = BRANCH[t.type].A, B = BRANCH[t.type].B;
-    html += '<button class="btn up" id="btnUpA">▲ ' + A.name + ' ($' + A.cost + ')</button>';
-    html += '<button class="btn up" id="btnUpB">▲ ' + B.name + ' ($' + B.cost + ')</button>';
+    html += '<button class="btn up" id="btnUpA" title="' + (A.desc || '') + '">▲ ' + A.name + ' ($' + A.cost + ')' + (A.desc ? '<br><small style="font-size:9.5px;color:#a0b8aa;font-weight:normal;display:block;margin-top:2px;">' + A.desc + '</small>' : '') + '</button>';
+    html += '<button class="btn up" id="btnUpB" title="' + (B.desc || '') + '">▲ ' + B.name + ' ($' + B.cost + ')' + (B.desc ? '<br><small style="font-size:9.5px;color:#a0b8aa;font-weight:normal;display:block;margin-top:2px;">' + B.desc + '</small>' : '') + '</button>';
   } else {
-    html += '<div class="row" style="color:var(--gold-glow)">★ Elite: ' + BRANCH[t.type][t.branch].name + '</div>';
+    var branchSpec = BRANCH[t.type][t.branch];
+    html += '<div class="row" style="color:var(--gold-glow)">★ Elite: ' + branchSpec.name + (branchSpec.desc ? '<br><small style="font-size:10px;color:#9bb0a4;font-weight:normal;">' + branchSpec.desc + '</small>' : '') + '</div>';
   }
 
   if(t.type !== 'blocker'){
