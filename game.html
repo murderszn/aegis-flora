@@ -502,6 +502,9 @@
 <div id="game-container"></div>
 <div id="vignette"></div>
 <div id="dmgflash"></div>
+<div id="letterbox-top" class="letterbox"></div>
+<div id="letterbox-bottom" class="letterbox"></div>
+<div id="filmgrain"></div>
 <div id="wavebanner"><div class="wb-title"></div><div class="wb-sub"></div></div>
 <div id="bosshp"><div class="boss-name">☠ GOLIATH COLOSSUS</div><div class="boss-track"><div class="boss-fill"></div></div></div>
 <div id="crosshair"></div>
@@ -652,7 +655,7 @@ var CELL_SIZE = 2.0;
 // Chunky toy-like presence (Roblox vibe): everything slightly oversized
 var CHUNK_TOWER = 1.3, CHUNK_CREEP = 1.28, CHUNK_TREE = 1.28, CHUNK_RUIN = 1.18;
 var SPAWN = { x: 0, y: 10 }, SANCTUM = { x: COLS - 1, y: 10 };
-var WAVE_MAX = 50, START_CASH = 35, START_LIVES = 20, SELL_RATE = 0.75;
+var WAVE_MAX = 50, START_CASH = 20, START_LIVES = 15, SELL_RATE = 0.75;
 
 var TOWERS = {
   gun: {
@@ -697,7 +700,7 @@ var BRANCH = {
 };
 
 var FOES = {
-  spider: { hp: 28, speed: 2.7, reward: 4, leak: 1, r: 0.22, kind: 'gnd', name: 'Skitter Scout', armor: 0, dmgMod: { Kinetic: 1.25, Blast: 1.0, Energy: 1.0, Sonic: 1.0 } },
+  spider: { hp: 28, speed: 2.7, reward: 3, leak: 1, r: 0.22, kind: 'gnd', name: 'Skitter Scout', armor: 0, dmgMod: { Kinetic: 1.25, Blast: 1.0, Energy: 1.0, Sonic: 1.0 } },
   tank:   { hp: 160, speed: 1.35, reward: 10, leak: 2, r: 0.32, kind: 'gnd', armored: true, name: 'Tread Tank', armor: 8, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
   walker: { hp: 540, speed: 0.95, reward: 22, leak: 4, r: 0.38, kind: 'gnd', armored: true, name: 'Diesel Walker', armor: 10, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
   boss:   { hp: 4400, speed: 0.65, reward: 150, leak: 10, r: 0.58, kind: 'gnd', armored: true, name: 'Goliath Colossus', armor: 16, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
@@ -1954,27 +1957,117 @@ function build3DEnvironment(){
   scene.add(sky);
   scene.userData.skyMat = skyMat;
   scene.userData.nextBolt = 6 + Math.random() * 8;
-  // near + far alpine ranges: dark layered silhouettes for Unreal-style depth
-  var peakMat = new THREE.MeshBasicMaterial({ color: 0x2b3d45, fog: false });
-  var peakMatFar = new THREE.MeshBasicMaterial({ color: 0x3d545e, fog: false, transparent: true, opacity: 0.9 });
-  var snowMat = new THREE.MeshBasicMaterial({ color: 0xcfd8d6, fog: false, transparent: true, opacity: 0.85 });
-  for(var ring = 0; ring < 2; ring++){
-    var rr = ring === 0 ? 150 : 240, n = ring === 0 ? 11 : 9;
-    for(var pk = 0; pk < n; pk++){
-      var ang = (pk + ring * 0.5) / n * Math.PI * 2;
-      var px = Math.cos(ang) * rr, pz = Math.sin(ang) * rr;
-      var ph = (ring === 0 ? 22 : 34) + ((pk * 13) % (ring === 0 ? 18 : 26));
-      var pw = (ring === 0 ? 30 : 42);
-      var peak = new THREE.Mesh(new THREE.ConeGeometry(pw, ph, 4), ring === 0 ? peakMat : peakMatFar);
-      peak.position.set(px, ph / 2 - 8, pz); peak.rotation.y = ang;
-      scene.add(peak);
-      if(ring === 1){
-        var snow = new THREE.Mesh(new THREE.ConeGeometry(11, ph * 0.3, 4), snowMat);
-        snow.position.set(px, ph - 8 - ph * 0.15, pz); snow.rotation.y = ang;
-        scene.add(snow);
+  // ---------- Cinematic Sky Archipelago: Majestic Floating Island Sanctuaries ----------
+  scene.userData.floatingIslands = [];
+  var islandGrassMat = new THREE.MeshStandardMaterial({ color: 0x1E4D34, roughness: 0.85, metalness: 0.1 });
+  var islandRockMat = new THREE.MeshStandardMaterial({ color: 0x2a3538, roughness: 0.95, flatShading: true });
+  var islandFarRockMat = new THREE.MeshStandardMaterial({ color: 0x1c272a, roughness: 1.0, flatShading: true });
+  var templeColumnMat = new THREE.MeshStandardMaterial({ color: 0xd9d1be, roughness: 0.4, metalness: 0.1 });
+  var waterStreamMat = new THREE.MeshBasicMaterial({ color: 0x5ccbc6, transparent: true, opacity: 0.65, depthWrite: false });
+
+  // 12 Majestic Floating Sister Islands in 2 cinematic depth tiers (replacing old pyramids)
+  var islandConfigs = [
+    // [radius, distance, angle, baseY, underDepth, hasTemple, hasWaterfall, hasCypress]
+    // Tier 1: Mid-distance panoramic islands
+    [22, 145, 0.45, 12, 38, true, true, true],
+    [18, 160, 1.25, -6, 32, false, true, true],
+    [26, 175, 2.10, 18, 44, true, false, true],
+    [16, 150, 3.20, -12, 28, false, true, false],
+    [24, 165, 4.15, 8, 40, true, true, true],
+    [20, 155, 5.25, -4, 34, false, false, true],
+    // Tier 2: Far horizon celestial sanctuaries
+    [38, 260, 0.85, 28, 60, true, true, false],
+    [32, 280, 1.80, -18, 52, false, true, false],
+    [42, 310, 2.75, 34, 68, true, false, false],
+    [30, 270, 3.80, -22, 48, false, true, false],
+    [36, 295, 4.70, 22, 58, true, true, false],
+    [28, 250, 5.80, -14, 46, false, false, false]
+  ];
+
+  islandConfigs.forEach(function(cfg, idx){
+    var iRad = cfg[0], iDist = cfg[1], iAng = cfg[2], iBaseY = cfg[3], iDepth = cfg[4];
+    var hasTemple = cfg[5], hasWater = cfg[6], hasCyp = cfg[7];
+    var isFar = iDist > 200;
+
+    var ig = new THREE.Group();
+    var ix = Math.cos(iAng) * iDist;
+    var iz = Math.sin(iAng) * iDist;
+    ig.position.set(ix, iBaseY, iz);
+    ig.rotation.y = iAng + Math.PI * 0.5;
+
+    // Plateau Grass Top
+    var topMesh = new THREE.Mesh(new THREE.CylinderGeometry(iRad, iRad * 0.88, 3.5, 14), islandGrassMat);
+    topMesh.position.y = 1.75;
+    ig.add(topMesh);
+
+    // Inverted Organic Rock Underbelly (rugged multi-facet cone, not a 4-sided pyramid)
+    var rMat = isFar ? islandFarRockMat : islandRockMat;
+    var botMesh = new THREE.Mesh(new THREE.ConeGeometry(iRad * 0.88, iDepth, 14, 3), rMat);
+    botMesh.rotation.x = Math.PI;
+    botMesh.position.y = -iDepth * 0.5;
+    ig.add(botMesh);
+
+    // Glowing Mana Crystal hanging at the bottom tip
+    var crys = new THREE.Mesh(new THREE.OctahedronGeometry(Math.max(1.2, iRad * 0.12), 0),
+      idx % 2 === 0 ? MATS.cyanGlow : MATS.amberGlow);
+    crys.position.y = -iDepth - 0.5;
+    ig.add(crys);
+
+    // Miniature Ancient Temple Ruins on top
+    if(hasTemple){
+      var tGroup = new THREE.Group();
+      tGroup.position.set(0, 3.5, 0);
+      var nCols = 6;
+      for(var tc = 0; tc < nCols; tc++){
+        var tAng = (tc / nCols) * Math.PI * 2;
+        var tCol = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 3.2, 10), templeColumnMat);
+        tCol.position.set(Math.cos(tAng) * (iRad * 0.35), 1.6, Math.sin(tAng) * (iRad * 0.35));
+        tGroup.add(tCol);
+      }
+      var tRoof = new THREE.Mesh(new THREE.CylinderGeometry(iRad * 0.4, iRad * 0.42, 0.6, 12), templeColumnMat);
+      tRoof.position.y = 3.5;
+      tGroup.add(tRoof);
+      ig.add(tGroup);
+    }
+
+    // Mediterranean Cypress Trees on the plateau
+    if(hasCyp){
+      var nTrees = 2 + (idx % 3);
+      for(var tr = 0; tr < nTrees; tr++){
+        var trAng = (tr / nTrees) * Math.PI * 2 + 0.4;
+        var trDist = (0.2 + (tr % 2) * 0.35) * iRad;
+        var treeGroup = new THREE.Group();
+        treeGroup.position.set(Math.cos(trAng) * trDist, 3.5, Math.sin(trAng) * trDist);
+        var trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, 1.8, 6), MATS.wood);
+        trunk.position.y = 0.9;
+        treeGroup.add(trunk);
+        var crown = new THREE.Mesh(new THREE.ConeGeometry(0.85, 4.2, 7), MATS.leaf);
+        crown.position.y = 3.5;
+        treeGroup.add(crown);
+        ig.add(treeGroup);
       }
     }
-  }
+
+    // Cascading Sky Waterfall spilling off the rim into mist
+    if(hasWater){
+      var wHeight = Math.min(35, iDepth * 0.85);
+      var fallMesh = new THREE.Mesh(new THREE.PlaneGeometry(iRad * 0.22, wHeight), waterStreamMat);
+      fallMesh.position.set(iRad * 0.75, -wHeight * 0.5 + 2, 0);
+      fallMesh.rotation.y = Math.PI * 0.5;
+      ig.add(fallMesh);
+    }
+
+    scene.add(ig);
+    scene.userData.floatingIslands.push({
+      group: ig,
+      baseY: iBaseY,
+      phase: idx * 0.85,
+      speed: 0.4 + (idx % 3) * 0.15,
+      amp: 1.2 + (idx % 2) * 0.8,
+      spin: (idx % 2 === 0 ? 1 : -1) * (0.012 + (idx % 3) * 0.006)
+    });
+  });
+
   // low storm banks circling the island + camera-facing mist walls
   for(var cl = 0; cl < 10; cl++){
     var a2 = cl / 10 * Math.PI * 2;
@@ -1990,21 +2083,6 @@ function build3DEnvironment(){
     mist.scale.set(130, 34, 1);
     mist.position.set(Math.cos(ma) * 135, 9, Math.sin(ma) * 135);
     scene.add(mist);
-  }
-  // distant floating spires on the horizon
-  for(var sp = 0; sp < 5; sp++){
-    var sa = 0.6 + sp * 1.15;
-    var sr = 150 + (sp % 2) * 40;
-    var sh = 34 + sp * 6;
-    var spire = new THREE.Mesh(new THREE.ConeGeometry(9, sh, 6),
-      new THREE.MeshStandardMaterial({ color: 0x3a4148, roughness: 1, flatShading: true }));
-    spire.rotation.x = Math.PI;
-    spire.position.set(Math.cos(sa) * sr, -sh * 0.28, Math.sin(sa) * sr);
-    scene.add(spire);
-    var scap = new THREE.Mesh(new THREE.CylinderGeometry(8.4, 8.4, 2.4, 8),
-      new THREE.MeshStandardMaterial({ color: 0x2D7246, roughness: 1 }));
-    scap.position.set(Math.cos(sa) * sr, 2.5, Math.sin(sa) * sr);
-    scene.add(scap);
   }
   // Classical Corinthian Colonnades
   var colGeom = new THREE.CylinderGeometry(0.7, 0.85, 9, 24);
@@ -3024,9 +3102,9 @@ function sellTower(t){
 }
 
 // ---------- Creep Waves & Spawning ----------
-function hpScale(w){ return 1 + 0.16 * (w - 1) + 0.009 * (w - 1) * (w - 1); }
+function hpScale(w){ return 1 + 0.22 * (w - 1) + 0.012 * (w - 1) * (w - 1); }
 function waveComp(w){
-  var c = [{ type: 'spider', count: 4 + Math.floor(w * 1.5), gap: 0.45 }];
+  var c = [{ type: 'spider', count: 5 + Math.floor(w * 1.6), gap: 0.45 }];
   if(w >= 2) c.push({ type: 'tank', count: 1 + Math.floor(w * 0.8), gap: 0.95 });
   if(w >= 3) c.push({ type: 'drone', count: 2 + Math.floor(w * 0.7), gap: 0.75 });
   if(w >= 5) c.push({ type: 'walker', count: Math.floor((w - 1) * 0.55), gap: 1.25 });
@@ -3329,10 +3407,10 @@ function update(dt){
 
   // 3. Wave completion
   if(S.phase === 'combat' && !S.spawnQueue.length && !S.foes.length){
-    var bonus = 20 + S.wave * 3;
+    var bonus = 15 + S.wave * 2;
     S.cash += bonus; S.score += S.wave * 25;
     if(S.wave >= WAVE_MAX){ gameOver(true); return; }
-    S.phase = 'build'; S.waveT = 15;
+    S.phase = 'build'; S.waveT = 12;
   }
   if(S.phase === 'build' && S.wave > 0 && S.wave < WAVE_MAX){
     S.waveT -= dt;
@@ -4331,6 +4409,14 @@ function animate(){
   // sanctum core breathes: mana light swells and fades
   if(scene.userData.sanctumLight){
     scene.userData.sanctumLight.intensity = 3.6 + Math.sin(S.time * 2.4) * 0.9;
+  }
+  // floating sister islands ambient breathing & slow majestic rotation
+  if(scene.userData.floatingIslands){
+    for(var fii = 0; fii < scene.userData.floatingIslands.length; fii++){
+      var fis = scene.userData.floatingIslands[fii];
+      fis.group.position.y = fis.baseY + Math.sin(S.time * fis.speed + fis.phase) * fis.amp;
+      fis.group.rotation.y += dt * fis.spin;
+    }
   }
 
   // Golden sun pollen particles drifting on dynamic wind currents
