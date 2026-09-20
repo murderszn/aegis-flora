@@ -511,6 +511,10 @@
 <div id="crosshair"></div>
 <div id="padmap-modal"><div id="padmap-card">
   <h2>🎮 CONTROLLER MAPPING</h2>
+  <div id="pad-live-status" style="margin: 8px 0 12px; padding: 8px 12px; background: rgba(0,0,0,0.45); border: 1px solid rgba(0,245,212,0.3); border-radius: 6px; font-size: 11.5px; display: flex; align-items: center; gap: 8px;">
+    <span id="pad-live-dot" class="pad-dot" style="width: 10px; height: 10px; border-radius: 50%; background: #5a6a60; display: inline-block;"></span>
+    <span id="pad-live-text" style="color: #efe6cf; flex: 1;">Scanning for controller… (Press any button on controller to awaken Web Gamepad)</span>
+  </div>
   <div class="padmap-sub">Click <b>Rebind</b>, then press any button on your controller. Sticks (move / look) and triggers (zoom) are fixed. The D-pad always mirrors: ▲ ◀ cycle towers · ▼ cancel · ▶ call wave. Mapping saves to this browser.</div>
   <div id="padmap-rows"></div>
   <div style="display:flex;gap:10px;margin-top:14px;">
@@ -4708,7 +4712,7 @@ function getActiveGamepad(){
   var valid = [];
   for(var i = 0; i < raw.length; i++){
     var p = raw[i];
-    if(p && p.connected && (p.buttons || p.axes)) valid.push(p);
+    if(p && p.connected !== false && (p.buttons || p.axes)) valid.push(p);
   }
   if(valid.length === 0) return null;
 
@@ -4718,7 +4722,7 @@ function getActiveGamepad(){
     if(pad.buttons){
       for(var bi = 0; bi < pad.buttons.length; bi++){
         var b = pad.buttons[bi];
-        if(b && (b.pressed || (typeof b.value === 'number' && b.value > 0.4) || b === true)){
+        if(b && (b.pressed || (typeof b.value === 'number' && b.value > 0.3) || b === true)){
           PAD.lastActiveIndex = pad.index;
           return pad;
         }
@@ -4726,7 +4730,7 @@ function getActiveGamepad(){
     }
     if(pad.axes){
       for(var ai = 0; ai < pad.axes.length; ai++){
-        if(Math.abs(pad.axes[ai] || 0) > 0.18){
+        if(Math.abs(pad.axes[ai] || 0) > 0.16){
           PAD.lastActiveIndex = pad.index;
           return pad;
         }
@@ -4790,6 +4794,10 @@ function padCycleTower(dir){
 
 function padPress(btn){
   audio();
+  if(document.getElementById('loading-screen')){
+    dismissGtaLoadingScreen();
+    return;
+  }
   var M = PADMAP;
   if(btn === M.place){ // place selected tower at crosshair, or inspect unit there
     var g = centerTile();
@@ -4808,9 +4816,15 @@ function padPress(btn){
           found = S.towers[ti]; break;
         }
       }
-      S.selTower = found;
-      if(found){ showInspect(); sfx('click'); }
-      else hideInspect();
+      if(found){
+        S.selTower = found;
+        showInspect(); sfx('click');
+      } else {
+        // If nothing is under crosshair, auto-select Tower 1 (Petal Gatling) so pressing A immediately equips a tower
+        selectBuild(PAD_TOWERS[0]);
+        toast('Equipped ' + TOWERS[PAD_TOWERS[0]].name + ' — Press ' + padBtnName(M.place) + ' to place');
+        sfx('click');
+      }
     }
   }
   else if(btn === M.cancel){
@@ -4851,6 +4865,12 @@ function padPress(btn){
   }
   else if(btn === M.speed){ cycleSpeed(); }
   else if(btn === M.pause){ togglePause(); }
+  else if(btn === 8){
+    // Back / Select button opens controller mapping
+    var pmModal = document.getElementById('padmap-modal');
+    if(pmModal && pmModal.classList.contains('open')) closePadmap();
+    else openPadmap();
+  }
   // L3 / R3 ability shortcuts (Left Stick Click = Root, Right Stick Click = Solar Flare)
   else if(btn === 10){ useSanctumAbility('root'); padRumble(0.4, 0.5, 120); }
   else if(btn === 11){ useSanctumAbility('flare'); padRumble(0.7, 0.7, 160); }
@@ -5027,8 +5047,48 @@ function renderPadmap(){
     rows.appendChild(row);
   });
 }
-function openPadmap(){ renderPadmap(); document.getElementById('padmap-modal').classList.add('open'); }
-function closePadmap(){ padRebinding = null; document.getElementById('padmap-modal').classList.remove('open'); }
+var padLiveTimer = null;
+function updatePadmapLiveStatus(){
+  var st = document.getElementById('pad-live-text');
+  var dot = document.getElementById('pad-live-dot');
+  if(!st || !dot) return;
+  var gp = getActiveGamepad();
+  if(gp){
+    var pressed = [];
+    if(gp.buttons){
+      for(var i = 0; i < gp.buttons.length; i++){
+        var b = gp.buttons[i];
+        if(b && (b.pressed || (typeof b.value === 'number' && b.value > 0.3) || b === true)){
+          pressed.push(padBtnName(i));
+        }
+      }
+    }
+    dot.style.background = '#00f5d4';
+    dot.style.boxShadow = '0 0 8px #00f5d4';
+    var txt = '<b>Connected:</b> ' + (gp.id ? gp.id.slice(0, 32) : 'Controller ' + gp.index);
+    if(pressed.length > 0) txt += ' · <span style="color:#00f5d4;font-weight:bold">Pressing: ' + pressed.join(', ') + '</span>';
+    st.innerHTML = txt;
+  } else {
+    dot.style.background = '#ff5d5d';
+    dot.style.boxShadow = 'none';
+    st.innerHTML = '<b>No controller detected by browser yet.</b> Tap any button on your controller to activate.';
+  }
+}
+
+function openPadmap(){
+  renderPadmap();
+  document.getElementById('padmap-modal').classList.add('open');
+  updatePadmapLiveStatus();
+  if(padLiveTimer) clearInterval(padLiveTimer);
+  padLiveTimer = setInterval(updatePadmapLiveStatus, 100);
+}
+
+function closePadmap(){
+  padRebinding = null;
+  document.getElementById('padmap-modal').classList.remove('open');
+  if(padLiveTimer){ clearInterval(padLiveTimer); padLiveTimer = null; }
+}
+
 function startPadRebind(key){
   padRebinding = key; renderPadmap();
   toast('Press any button on controller for "' + key + '"… (Esc cancels)');
@@ -5100,6 +5160,7 @@ function pollGamepad(dt){
     controls.target.x = Math.max(-lim, Math.min(lim, controls.target.x));
     controls.target.z = Math.max(-lim, Math.min(lim, controls.target.z));
     controls.target.y = 0;
+    controls.update();
   }
 
   // look: right stick turns view like an RTS / strategy camera
@@ -5111,6 +5172,7 @@ function pollGamepad(dt){
     off.x = nx; off.z = nz;
     off.y = Math.max(2.5, Math.min(95, off.y - ry * dt * 32)); // stick-up elevates view
     camera.position.copy(controls.target).add(off);
+    controls.update();
   }
 
   // zoom: triggers dolly
@@ -5122,6 +5184,7 @@ function pollGamepad(dt){
     var len = Math.max(8, Math.min(200, off2.length() * (1 + (ltVal - rtVal) * dt * 1.8)));
     off2.setLength(len);
     camera.position.copy(controls.target).add(off2);
+    controls.update();
   }
 
   // buttons (edge triggered)
@@ -5172,16 +5235,18 @@ function pollGamepad(dt){
           existingTower = S.towers[ti]; break;
         }
       }
+      var twPos = gridToWorld3D(g.gx, g.gy, 0.15);
+      hoverBoxMesh.position.copy(twPos);
       if(existingTower){
-        var twPos = gridToWorld3D(g.gx, g.gy, 0.15);
-        hoverBoxMesh.position.copy(twPos);
         hoverBoxMesh.material.color.setHex(0x00f5d4);
         hoverBoxMesh.visible = true;
         cross.className = 'inspect-target';
       } else {
+        hoverBoxMesh.material.color.setHex(0x3a554a);
+        hoverBoxMesh.visible = true;
         cross.className = '';
-        if(!S.selTower){ hoverBoxMesh.visible = false; rangeRingMesh.visible = false; }
       }
+      rangeRingMesh.visible = false;
     } else {
       cross.className = '';
       if(!S.selected && !S.selTower){ hoverBoxMesh.visible = false; rangeRingMesh.visible = false; }
