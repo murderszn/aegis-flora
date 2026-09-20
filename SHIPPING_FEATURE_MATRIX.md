@@ -62,8 +62,8 @@ This document is the single source of truth for all gameplay, architecture, and 
 | `walker` | **Diesel Walker** | Ground (Medium) | 10 | **🟢 Verified** | Bipedal heavy armored siege walker. | `large_wave_performance.test.js` |
 | `ship` | **Sky Zeppelin** | Flying (Air Heavy) | 6 | **🟢 Verified** | Flying fortress with high leak penalty (5 HP). | `large_wave_performance.test.js` |
 | `boss` | **Goliath Colossus** | Ground (Titan) | 16/8 | **🟢 Verified** | Multi-phase titan encounter: Phase 1 Siege (16 Armor + Support repair drones), Phase 2 EMP Overcharge (Seismic EMP tower disable + 15% Hardlight Shield), Phase 3 Berserk Core Meltdown (+35% speed, core armor reduced to 8 for counterplay, seismic stomps). | `boss_phases_mechanics.test.js` |
-| `prowler` | **Steam Prowler** | Ground (Skirmish) | 2 | **🔵 Planned** | High-mobility skirmisher with evasion dodge chance (#22). | Open Issue #22 |
-| `ram` | **Dreadnought Ram** | Ground (Battering) | 14 | **🔵 Planned** | Heavy battering ram unit targeting towers if trapped in long maze (#22). | Open Issue #22 |
+| `prowler` | **Steam Prowler** | Ground (Skirmish) | 2 | **🟢 Verified** | High-mobility skirmisher with 20% steam-screen evasion against Kinetic/Energy attacks; counter with Bloom AoE or Sonic resonance (+35% bonus). | `missing_enemy_archetypes.test.js` |
+| `ram` | **Dreadnought Ram** | Ground (Battering) | 12 | **🟢 Verified** | Heavy siege juggernaut with hydraulic battering ram that stalls adjacent tower reload cooldowns; melt with Energy/Sonic or Chrono Stutter freeze. | `missing_enemy_archetypes.test.js` |
 
 ---
 

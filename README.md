@@ -337,16 +337,16 @@ See [`SHIPPING_FEATURE_MATRIX.md`](./SHIPPING_FEATURE_MATRIX.md) for the verifie
 - [x] Spatial target indexing & zero-allocation object pools (`DMG_POOL`, `FX_SHARED`)
 - [x] Full targeting priority system (First / Last / Strongest / Weakest / Closest)
 - [x] Elite branch mechanics (Rail-Needler pierce, Refraction split, Sol Invictus scorch, Chrono freeze, Resonance shatter)
-- [x] Guided 8-step first-run mazing tutorial
-- [x] Tactical Clarity mode (scenery desaturation, bloom dimming, plinths & threat rings)
-- [x] Audio safety pipeline (immediate mute & clamped decibel explosion bus)
+- [x] Guided 8-step first-run mazing tutorial (#9)
+- [x] Tactical Clarity mode (scenery desaturation, bloom dimming, plinths & threat rings) (#10)
+- [x] Audio safety pipeline (immediate mute & clamped decibel explosion bus) (#4, #5)
+- [x] Windows-first standalone Steam packaging, D3D11 backend, and CI workflow (#13)
+- [x] Dedicated Sanctum leak alarm klaxon and victory/defeat stingers (#19)
+- [x] Gesture-driven AudioContext initialization & auto-resume (#20)
+- [x] Goliath Colossus multi-phase boss encounter with repair drones, EMP, shields, and berserk state (#21)
+- [x] Steam Prowler & Dreadnought Ram enemy archetypes with dodge evasion and siege counterplay (#22)
 
 ### 🟡 In Progress / Planned (Open Issues)
-- [ ] Windows standalone release package (#13)
-- [ ] Dedicated Sanctum leak / defeat audio stinger (#19)
-- [ ] Gesture-driven AudioContext initialization (#20)
-- [ ] Boss affixes & multi-phase abilities (#21)
-- [ ] Additional enemy archetypes (Steam Prowler, Dreadnought Ram) (#22)
 - [ ] Licensed solarpunk ambient soundtrack loop (#27)
 
 ---
