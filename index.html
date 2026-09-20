@@ -192,6 +192,7 @@
   #cam-mode {
     position: fixed; left: 18px; top: 64px; z-index: 9; font-size: 11px; color: #e0f4ec;
     background: rgba(10, 24, 20, 0.85); border: 1px solid var(--bronze-dk);
+    max-width: 44vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     padding: 5px 12px; border-radius: 12px; display: flex; align-items: center; gap: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.5);
   }
@@ -199,7 +200,7 @@
 
   /* --- Unit & Tower Inspector Card --- */
   #inspect {
-    position: fixed; right: 18px; bottom: 142px; z-index: 12; width: 330px; display: none;
+    position: fixed; right: 18px; bottom: 158px; z-index: 12; width: 330px; display: none;
     background: rgba(16, 27, 23, 0.96); backdrop-filter: blur(8px);
     border: 1.5px solid var(--bronze); border-top: 4px solid var(--gold);
     border-radius: 6px; padding: 12px 14px; font-size: 12px;
@@ -235,28 +236,92 @@
     text-align: center; pointer-events: none;
   }
 
-  /* --- Victory / Defeat Modal Banner --- */
+  /* --- Victory / Defeat Modal Banner & Stats Dashboard --- */
   #banner {
     position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
-    flex-direction: column; gap: 16px; background: rgba(7, 16, 14, 0.9); z-index: 30;
-    text-align: center; backdrop-filter: blur(10px);
+    background: rgba(4, 9, 8, 0.88); z-index: 50; backdrop-filter: blur(14px);
+    overflow-y: auto; padding: 20px;
   }
-  #banner .banner-art {
-    width: 220px; height: 130px; object-fit: cover; border-radius: 6px;
-    border: 2px solid var(--bronze); box-shadow: 0 0 25px rgba(201,162,39,0.4);
-    margin-bottom: 6px;
+  .banner-card {
+    background: linear-gradient(160deg, rgba(16, 28, 24, 0.96) 0%, rgba(8, 14, 12, 0.98) 100%);
+    border: 2px solid var(--bronze); border-radius: 10px;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.85), 0 0 35px rgba(201,162,39,0.25);
+    max-width: 860px; width: 100%; display: flex; flex-direction: column; gap: 16px;
+    padding: 24px; box-sizing: border-box; color: #e6dfcb;
   }
-  #banner h1 {
-    font-family: Georgia, serif; font-size: 44px; letter-spacing: 4px;
-    color: var(--gold); font-weight: normal; text-shadow: 0 0 20px rgba(240,168,30,0.5);
+  .banner-header {
+    display: flex; gap: 20px; align-items: center; border-bottom: 1px solid rgba(201,162,39,0.3);
+    padding-bottom: 16px;
   }
-  #banner p { font-size: 15px; color: #e6dfcb; max-width: 520px; line-height: 1.5; }
-  #banner button {
+  .banner-art {
+    width: 140px; height: 95px; object-fit: cover; border-radius: 6px;
+    border: 1.5px solid var(--bronze); box-shadow: 0 0 15px rgba(201,162,39,0.35); flex-shrink: 0;
+  }
+  .banner-header-text { flex: 1; text-align: left; }
+  .banner-tag {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  .banner-header-text h1 {
+    font-family: Georgia, serif; font-size: 30px; letter-spacing: 3px;
+    color: var(--gold); font-weight: normal; margin: 0 0 6px 0;
+    text-shadow: 0 0 16px rgba(240,168,30,0.4);
+  }
+  .banner-header-text p { font-size: 14px; color: #b7cbbf; margin: 0; line-height: 1.4; }
+  
+  .stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  @media(max-width: 680px){
+    .stats-grid { grid-template-columns: 1fr; }
+    .banner-header { flex-direction: column; text-align: center; }
+    .banner-header-text { text-align: center; }
+  }
+  .stats-col {
+    background: rgba(10, 20, 18, 0.75); border: 1px solid rgba(201,162,39,0.25);
+    border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 7px;
+  }
+  .stats-header {
+    display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700;
+    letter-spacing: 1.5px; color: var(--gold); border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding-bottom: 6px; text-transform: uppercase;
+  }
+  .stat-row {
+    display: flex; justify-content: space-between; align-items: center; font-size: 13px;
+    color: #cfdcd3;
+  }
+  .stat-row strong { font-weight: 600; color: #fff; }
+  .stat-row .gold-val { color: var(--gold); }
+  .stat-row .teal-val { color: var(--teal); }
+  .stat-row .red-val { color: var(--coral); }
+  
+  .creep-roster {
+    display: flex; flex-direction: column; gap: 5px; max-height: 165px; overflow-y: auto;
+  }
+  .creep-roster-row {
+    display: flex; justify-content: space-between; align-items: center; font-size: 12px;
+    background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 4px;
+  }
+  .creep-roster-name { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+  
+  .banner-actions {
+    display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid rgba(201,162,39,0.3);
+    padding-top: 16px; flex-wrap: wrap;
+  }
+  .btn-banner-primary {
     background: linear-gradient(180deg, #f0c040 0%, #c99316 100%);
-    border: none; font-size: 16px; padding: 10px 32px; border-radius: 4px;
+    border: none; font-size: 14px; padding: 10px 24px; border-radius: 4px;
     cursor: pointer; font-family: inherit; font-weight: bold; color: #211602;
-    box-shadow: 0 0 16px rgba(240,192,64,0.4);
+    box-shadow: 0 0 16px rgba(240,192,64,0.35); transition: transform 0.1s ease, filter 0.1s ease;
   }
+  .btn-banner-primary:hover { filter: brightness(1.1); transform: scale(1.02); }
+  .btn-banner-secondary {
+    background: rgba(30, 48, 42, 0.85); border: 1px solid var(--bronze);
+    color: #e6dfcb; font-size: 13px; padding: 9px 18px; border-radius: 4px;
+    cursor: pointer; font-family: inherit; font-weight: 600;
+    transition: background 0.12s ease, border-color 0.12s ease;
+  }
+  .btn-banner-secondary:hover { background: rgba(45, 72, 63, 0.95); border-color: var(--gold); }
 
   /* --- Cinematic vignette + sanctum damage flash (post feel without postprocessing) --- */
   #vignette {
@@ -282,8 +347,8 @@
   #wavebanner.danger .wb-title { color: #ffb3ab; text-shadow: 0 0 24px rgba(255,59,48,0.7), 0 2px 6px #000; }
   /* --- Boss HP bar --- */
   #bosshp {
-    position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 13;
-    width: min(560px, 60vw); display: none; pointer-events: none;
+    position: fixed; top: 104px; left: 50%; transform: translateX(-50%); z-index: 13;
+    width: min(560px, 52vw); display: none; pointer-events: none;
     background: rgba(8,12,10,0.85); border: 1px solid var(--hostile-red); border-radius: 4px; padding: 5px 10px 7px;
     box-shadow: 0 0 18px rgba(255,59,48,0.35);
   }
@@ -302,12 +367,128 @@
   #crosshair::before { left: 12px; top: 2px; width: 2px; height: 22px; }
   #crosshair::after { top: 12px; left: 2px; height: 2px; width: 22px; }
   #crosshair.bad::before, #crosshair.bad::after { background: var(--hostile-red); box-shadow: 0 0 6px var(--hostile-red); }
-  #gamepad-status {
-    position: fixed; right: 18px; top: 64px; z-index: 9; display: none;
-    font-family: var(--font-stats); font-size: 11px; color: #e0f4ec;
-    background: rgba(10, 24, 20, 0.85); border: 1px solid var(--bronze-dk);
-    padding: 5px 12px; border-radius: 12px;
+  /* --- Gamepad HUD chip (lives in the top bar — never floats over the HUD) --- */
+  #btnPad .pad-dot { width: 8px; height: 8px; border-radius: 50%; background: #5a6a60; display: inline-block; margin-right: 6px; }
+  #btnPad.connected { border-color: var(--teal-glow); color: #fff; box-shadow: 0 0 10px rgba(0,245,212,0.35); }
+  #btnPad.connected .pad-dot { background: var(--teal-glow); box-shadow: 0 0 6px var(--teal-glow); }
+
+  /* --- Dock layout: radar + arsenal fit the drawer in one row --- */
+  #drawer { overflow: hidden; }
+  .dock-content { display: flex; gap: 10px; width: 100%; height: 100%; min-width: 0; align-items: stretch; }
+  .radar-panel { flex: 0 0 auto; display: flex; flex-direction: column; min-width: 0; }
+  .arsenal-panel { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+  .dock-heading {
+    font-size: 9px; letter-spacing: 1.5px; color: #9fb3a8; font-weight: bold;
+    display: flex; align-items: center; gap: 6px; margin-bottom: 5px; white-space: nowrap;
   }
+  .dock-heading .heading-mark { width: 8px; height: 8px; background: var(--bronze); display: inline-block; transform: rotate(45deg); flex-shrink: 0; }
+  .dock-heading .heading-end { margin-left: auto; color: #6d7f74; font-weight: 400; overflow: hidden; text-overflow: ellipsis; }
+  #build-grid { display: flex; gap: 10px; flex: 1; min-width: 0; min-height: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+  #drawer .card { flex: 1 1 0; min-width: 168px; }
+  .preview-wrap { position: fixed; left: 18px; bottom: 158px; z-index: 9; max-width: 50vw; }
+  .preview-kicker { font-size: 9px; letter-spacing: 1.5px; color: var(--gold); font-weight: bold; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .preview-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--gold-glow); box-shadow: 0 0 6px var(--gold-glow); animation: padblink 1.6s infinite; }
+  #preview { position: static; max-width: 100%; }
+
+  /* --- Streamlined command bar: vitals + wave condensed into chips --- */
+  #topbar { height: 46px; gap: 10px; padding: 4px 12px; }
+  #topbar .logo-thumb { width: 28px; height: 28px; }
+  #topbar .logo { font-size: 15px; }
+  #topbar .brand-copy small { display: none; }
+  #topbar .brand-copy { display: flex; align-items: center; }
+  #topbar .resource-group { gap: 6px; }
+  #topbar .stat {
+    flex-direction: row; align-items: center; gap: 6px; font-size: 13px;
+    background: rgba(0,0,0,0.38); border: 1px solid rgba(201,162,39,0.28);
+    border-radius: 11px; padding: 3px 10px 5px; position: relative;
+  }
+  #topbar .stat small { font-size: 0; letter-spacing: 0; }
+  #topbar .stat small .resource-icon { font-size: 13px; }
+  #topbar .stat .stat-unit { font-size: 10px; opacity: 0.65; font-weight: 400; }
+  #topbar .stat-meter {
+    position: absolute; left: 9px; right: 9px; bottom: 2px; height: 2px;
+    background: rgba(0,0,0,0.65); border-radius: 1px; overflow: hidden;
+  }
+  #topbar .stat-meter i { display: block; height: 100%; }
+  #healthFill { background: #ff7676; box-shadow: 0 0 4px rgba(255,118,118,0.8); }
+  #manaFill { background: #5ce1e6; box-shadow: 0 0 4px rgba(92,225,230,0.8); }
+  #topbar .wave-group {
+    flex-direction: row; align-items: center; gap: 8px;
+    background: rgba(0,0,0,0.38); border: 1px solid rgba(201,162,39,0.28);
+    border-radius: 11px; padding: 3px 10px 5px; white-space: nowrap;
+  }
+  #phaseLabel { font-size: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); padding: 0; flex-shrink: 0; }
+  #topbar.is-combat #phaseLabel { background: var(--hostile-red); box-shadow: 0 0 6px var(--hostile-red); animation: padblink 1s infinite; }
+  #topbar .wave-value { font-size: 10px; letter-spacing: 1px; color: #9fb3a8; }
+  #topbar .wave-value b { font-size: 13px; color: #fff; letter-spacing: 0; }
+  #topbar .score-line { font-size: 0; }
+  #topbar .score-line::before { content: '★ '; font-size: 11px; color: var(--gold); }
+  #topbar .score-line b { font-size: 12px; color: var(--gold-glow); }
+  #topbar .btn { padding: 5px 10px; font-size: 12px; }
+  #topbar .wave-group { display: flex; }
+
+  /* --- Responsive HUD fit: everything stays inside the viewport --- */
+  #topbar, #topbar .resource-group, #topbar .wave-group, #topbar .command-group { min-width: 0; }
+  #topbar { overflow-x: auto; scrollbar-width: none; }
+  #topbar::-webkit-scrollbar { display: none; }
+  #topbar .stat, #topbar .wave-group { flex-shrink: 0; }
+  #topbar .stat-value { display: inline-flex; align-items: baseline; gap: 3px; line-height: 1; }
+  #topbar .stat small { letter-spacing: 0; }
+  #topbar .command-group { display: flex; align-items: center; gap: 8px; }
+  #topbar .resource-group { display: flex; align-items: center; gap: 14px; }
+  @media (max-width: 1320px){
+    .bar { gap: 10px; padding: 6px 10px; }
+    #topbar .logo { font-size: 15px; }
+    #topbar .logo-thumb { width: 30px; height: 30px; }
+    .stat { font-size: 13px; }
+    .btn { font-size: 12px; padding: 5px 10px; }
+    #drawer .card { min-width: 150px; }
+    .card .ds { display: none; }
+    .cam-hint, kbd { display: none; }
+    #minimap-wrap { width: 112px; }
+  }
+  @media (max-width: 980px){
+    .btn .btn-label { display: none; }
+    #btnWave { font-size: 12px; }
+    .dock-heading .heading-end { display: none; }
+    #drawer { height: 122px; padding: 8px 10px 10px; }
+    .preview-wrap { bottom: 132px; max-width: 70vw; }
+    #inspect { width: min(330px, 92vw); right: 8px; bottom: 132px; }
+    #toast { bottom: 170px; max-width: 92vw; }
+    #wavebanner .wb-title { font-size: 28px; letter-spacing: 4px; }
+    #banner h1 { font-size: 30px; }
+    #cam-mode { max-width: 60vw; }
+  }
+  @media (max-height: 720px){
+    #drawer { height: 118px; }
+    .preview-wrap { bottom: 128px; }
+    #inspect { bottom: 128px; }
+  }
+  /* --- Controller mapping modal --- */
+  #padmap-modal {
+    position: fixed; inset: 0; z-index: 40; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(5, 10, 9, 0.78); backdrop-filter: blur(6px);
+  }
+  #padmap-modal.open { display: flex; }
+  #padmap-card {
+    width: min(460px, 92vw); max-height: 86vh; overflow-y: auto;
+    background: linear-gradient(180deg, #1b211e 0%, #0c1412 100%);
+    border: 2px solid var(--bronze-dk); outline: 1px solid rgba(201,162,39,0.4); outline-offset: -4px;
+    border-radius: 8px; padding: 18px 20px 20px; color: #efe6cf;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+  }
+  #padmap-card h2 { font-family: var(--font-display); letter-spacing: 2px; color: var(--gold); font-size: 19px; margin-bottom: 2px; }
+  #padmap-card .padmap-sub { font-size: 11.5px; color: #9fb3a8; margin-bottom: 12px; line-height: 1.5; }
+  .padmap-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid rgba(201,162,39,0.18); }
+  .padmap-row .act { flex: 1; font-size: 13px; font-weight: 600; }
+  .padmap-row .act small { display: block; font-weight: 400; font-size: 10.5px; color: #9fb3a8; }
+  .padmap-key {
+    font-family: var(--font-stats); font-size: 12px; font-weight: bold; min-width: 86px; text-align: center;
+    background: #24352c; border: 1px solid var(--bronze-dk); border-radius: 4px; padding: 4px 8px; color: #ffd873;
+  }
+  .padmap-key.waiting { color: #fff; border-color: var(--teal-glow); animation: padblink 0.8s infinite; }
+  @keyframes padblink { 50% { opacity: 0.4; } }
 </style>
 <link rel="stylesheet" href="hud.css">
 
@@ -324,7 +505,16 @@
 <div id="wavebanner"><div class="wb-title"></div><div class="wb-sub"></div></div>
 <div id="bosshp"><div class="boss-name">☠ GOLIATH COLOSSUS</div><div class="boss-track"><div class="boss-fill"></div></div></div>
 <div id="crosshair"></div>
-<div id="gamepad-status">🎮 <span id="gamepad-name">Gamepad</span> · LS slide map · RS turn + rise · A place · X wave · Y view</div>
+<div id="padmap-modal"><div id="padmap-card">
+  <h2>🎮 CONTROLLER MAPPING</h2>
+  <div class="padmap-sub">Click <b>Rebind</b>, then press any button on your controller. Sticks (move / look) and triggers (zoom) are fixed. The D-pad always mirrors: ▲ ◀ cycle towers · ▼ cancel · ▶ call wave. Mapping saves to this browser.</div>
+  <div id="padmap-rows"></div>
+  <div style="display:flex;gap:10px;margin-top:14px;">
+    <button class="btn" id="btnPadReset">Reset defaults</button>
+    <span style="flex:1"></span>
+    <button class="btn primary" id="btnPadClose">Done</button>
+  </div>
+</div></div>
 
 <!-- Sanctum command bar -->
 <div class="bar" id="topbar">
@@ -333,13 +523,14 @@
     <span class="brand-copy"><small>THE VERDANT SANCTUM</small><span class="logo">AEGIS <em>FLORA</em></span></span>
   </div>
   <div class="resource-group" aria-label="Sanctum resources">
-    <div class="stat lives"><small><i class="resource-icon">✦</i> Sanctum</small><span class="stat-value"><b id="lives">20</b><span class="stat-unit" id="maxLivesLabel"> / 20 HP</span></span><span class="stat-meter"><i id="healthFill"></i></span></div>
-    <div class="stat cash"><small><i class="resource-icon">◇</i> Scrap</small><span class="stat-value"><span class="stat-unit">¤ </span><b id="cash">0</b></span></div>
-    <div class="stat mana"><small><i class="resource-icon">✧</i> Solar energy</small><span class="stat-value"><b id="mana">100</b><span class="stat-unit"> / 100</span></span><span class="stat-meter"><i id="manaFill"></i></span></div>
+    <div class="stat lives" title="Sanctum HP"><small><i class="resource-icon">✦</i> Sanctum</small><span class="stat-value"><b id="lives">20</b><span class="stat-unit" id="maxLivesLabel"> / 20 HP</span></span><span class="stat-meter"><i id="healthFill"></i></span></div>
+    <div class="stat cash" title="Scrap gold"><small><i class="resource-icon">◇</i> Scrap</small><span class="stat-value"><span class="stat-unit">¤ </span><b id="cash">0</b></span></div>
+    <div class="stat mana" title="Solar energy"><small><i class="resource-icon">✧</i> Solar energy</small><span class="stat-value"><b id="mana">100</b><span class="stat-unit"> / 100</span></span><span class="stat-meter"><i id="manaFill"></i></span></div>
   </div>
   <div class="wave-group"><small id="phaseLabel">PREPARE DEFENSES</small><span class="wave-value">WAVE <b id="wave">0 / 50</b></span><span class="score-line">SCORE <b id="score">0</b></span></div>
   <div class="command-group">
     <button class="btn utility" id="btnCam" title="Toggle Camera (C)"><span class="btn-icon">◈</span><span class="btn-label">View</span><kbd>C</kbd></button>
+    <button class="btn utility" id="btnPad" title="Controller mapping — no pad connected"><span class="btn-icon">🎮</span><span class="btn-label" id="btnPadLabel"><i class="pad-dot"></i>No pad</span></button>
     <span class="command-divider"></span>
     <button class="btn ability" id="btnRoot" title="Verdant Overgrowth (D) — 35 Mana"><span class="btn-icon">✿</span><span class="btn-label">Root</span><kbd>D</kbd></button>
     <button class="btn ability" id="btnFlare" title="Solar Flare (F) — 75 Mana"><span class="btn-icon">☼</span><span class="btn-label">Flare</span><kbd>F</kbd></button>
@@ -374,10 +565,77 @@
 <div id="toast"></div>
 
 <div id="banner">
-  <img src="assets/aegis_master.jpg" class="banner-art" alt="End Banner" onerror="this.style.display='none'">
-  <h1 id="bannerTitle">GRID SECURED</h1>
-  <p id="bannerSub"></p>
-  <button id="btnAgain">Play Again</button>
+  <div class="banner-card">
+    <div class="banner-header">
+      <img src="assets/aegis_master.jpg" class="banner-art" alt="End Banner" onerror="this.style.display='none'">
+      <div class="banner-header-text">
+        <div id="bannerTag" class="banner-tag">SANCTUM DEBRIEFING</div>
+        <h1 id="bannerTitle">GRID SECURED</h1>
+        <p id="bannerSub"></p>
+      </div>
+    </div>
+
+    <!-- 4-Card Telemetry Dashboard -->
+    <div class="stats-grid">
+      <!-- 1. Farm & Economy -->
+      <div class="stats-col">
+        <div class="stats-header">
+          <span class="stats-icon">💰</span>
+          <span>RESOURCES & HARVEST</span>
+        </div>
+        <div class="stat-row"><span>Total Scrap Harvested:</span><strong id="statHarvested" class="gold-val">$0</strong></div>
+        <div class="stat-row"><span>Scrap Spent on Defenses:</span><strong id="statSpent">$0</strong></div>
+        <div class="stat-row"><span>Deconstruction Refunds:</span><strong id="statRefunded">$0</strong></div>
+        <div class="stat-row"><span>Peak Scrap Reserves:</span><strong id="statPeakCash">$0</strong></div>
+        <div class="stat-row"><span>Surplus Remaining:</span><strong id="statSurplus" class="teal-val">$0</strong></div>
+        <div class="stat-row"><span>Scrap Per Min (SPM):</span><strong id="statSPM" class="gold-val">0 / min</strong></div>
+      </div>
+
+      <!-- 2. Combat & Firepower -->
+      <div class="stats-col">
+        <div class="stats-header">
+          <span class="stats-icon">⚔️</span>
+          <span>FIREPOWER & COMBAT</span>
+        </div>
+        <div class="stat-row"><span>Automata Scrapped:</span><strong id="statKills" class="gold-val">0</strong></div>
+        <div class="stat-row"><span>Sanctum Leaks:</span><strong id="statLeaks" class="red-val">0</strong></div>
+        <div class="stat-row"><span>Containment Efficiency:</span><strong id="statKillRate" class="teal-val">100%</strong></div>
+        <div class="stat-row"><span>Total Kinetic/Energy Output:</span><strong id="statDamageDealt">0 dmg</strong></div>
+        <div class="stat-row"><span>MVP Battery:</span><strong id="statMVP" class="gold-val">None</strong></div>
+        <div class="stat-row"><span>MVP Damage Share:</span><strong id="statMVPShare" class="teal-val">0%</strong></div>
+      </div>
+
+      <!-- 3. Casualty Roster by Archetype -->
+      <div class="stats-col">
+        <div class="stats-header">
+          <span class="stats-icon">👾</span>
+          <span>CASUALTY ROSTER</span>
+        </div>
+        <div id="statCreepRoster" class="creep-roster"></div>
+      </div>
+
+      <!-- 4. Labyrinth Mazing & Meta Data -->
+      <div class="stats-col">
+        <div class="stats-header">
+          <span class="stats-icon">🏛️</span>
+          <span>MAZING & SANCTUM META</span>
+        </div>
+        <div class="stat-row"><span>Labyrinth Detour:</span><strong id="statDetour" class="teal-val">0 steps (+0%)</strong></div>
+        <div class="stat-row"><span>Batteries Erected:</span><strong id="statTowersBuilt">0</strong></div>
+        <div class="stat-row"><span>Elite Specializations:</span><strong id="statUpgrades">0</strong></div>
+        <div class="stat-row"><span>Sanctum Magic Casts:</span><strong id="statAbilities">0 (0 Flares / 0 Roots)</strong></div>
+        <div class="stat-row"><span>Verdant Glyphs:</span><strong id="statGlyphsActive" class="gold-val">None</strong></div>
+        <div class="stat-row"><span>Match Seed & Time:</span><strong id="statSeedTime">#1 · 00:00</strong></div>
+      </div>
+    </div>
+
+    <!-- Actions Footer -->
+    <div class="banner-actions">
+      <button id="btnAgain" class="btn-banner-primary">⚔️ Play Again</button>
+      <button id="btnCopyStats" class="btn-banner-secondary">📋 Copy Match Stats</button>
+      <button id="btnGlyphsReport" class="btn-banner-secondary">✧ Verdant Glyphs</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -464,8 +722,10 @@ function applyDamage(f, dmg, dtype, shatteredBonus){
   if(dtype === 'Kinetic' || dtype === 'Blast') mult *= armorMultiplier(f.armor || 0);
   // Shattered bonus (+35% damage taken)
   if(shatteredBonus && f.shattered > 0) mult *= 1.35;
-  f.hp -= dmg * mult;
-  return Math.round(dmg * mult);
+  var actual = Math.max(0, dmg * mult);
+  f.hp -= actual;
+  if(S) S.totalDamageDealt = (S.totalDamageDealt || 0) + actual;
+  return Math.round(actual);
 }
 
 function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
@@ -517,7 +777,18 @@ function newState(seed){
     selected: null, selTower: null,
     kills: 0, leaked: 0, time: 0,
     sanctum: { abilityCD: 0, rootCD: 0, rootTargets: [] },
-    glyphs: loadGlyphs()
+    glyphs: loadGlyphs(),
+    // Telemetry & Post-Match Statistics
+    totalEarned: START_CASH,
+    totalSpent: 0,
+    totalRefunded: 0,
+    totalDamageDealt: 0,
+    towersBuilt: 0,
+    upgradesPurchased: 0,
+    peakCash: START_CASH,
+    killsByType: { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0 },
+    leakedByType: { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0 },
+    abilitiesUsed: { flare: 0, root: 0 }
   };
 }
 
@@ -2655,6 +2926,10 @@ function killFoe(f){
   if(f.dead) return; f.dead = true;
   deathDisassembly(f);
   S.cash += f.reward; S.score += f.reward * 10; S.kills++;
+  S.totalEarned = (S.totalEarned || 0) + f.reward;
+  if(!S.killsByType) S.killsByType = { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0 };
+  if(f.type) S.killsByType[f.type] = (S.killsByType[f.type] || 0) + 1;
+  S.peakCash = Math.max(S.peakCash || 0, S.cash);
 }
 
 // ---------- Placement & Mazing Rules ----------
@@ -2675,6 +2950,8 @@ function placeAt(gx, gy, key){
   var cost = TOWERS[key].cost;
   if(S.cash < cost) return { ok: false, why: 'Need $' + cost + ' Scrap (have $' + S.cash + ').' };
   S.cash -= cost;
+  S.totalSpent = (S.totalSpent || 0) + cost;
+  S.towersBuilt = (S.towersBuilt || 0) + 1;
   S.blocked[idx(gx, gy)] = 1;
 
   var mesh = create3DTowerMesh(key);
@@ -2707,7 +2984,10 @@ function upgradeTo(t, branch){
   var spec = BRANCH[t.type][branch];
   if(!spec) return { ok: false, why: 'No such upgrade.' };
   if(S.cash < spec.cost) return { ok: false, why: 'Need $' + spec.cost + ' Scrap.' };
-  S.cash -= spec.cost; t.invested += spec.cost; t.branch = branch;
+  S.cash -= spec.cost;
+  S.totalSpent = (S.totalSpent || 0) + spec.cost;
+  S.upgradesPurchased = (S.upgradesPurchased || 0) + 1;
+  t.invested += spec.cost; t.branch = branch;
   // visible elite trim: brass root ring + branch-colored pip + power pop
   var ringColor = branch === 'A' ? 0xFFB703 : 0x00F5D4;
   var trim = new THREE.Mesh(new THREE.TorusGeometry(1.05, 0.09, 8, 28),
@@ -2731,7 +3011,10 @@ function sellTower(t){
   scene.remove(t.mesh);
   S.towers.splice(i, 1);
   S.blocked[idx(t.gx, t.gy)] = 0;
-  S.cash += Math.round(t.invested * SELL_RATE);
+  var refund = Math.round(t.invested * SELL_RATE);
+  S.totalRefunded = (S.totalRefunded || 0) + refund;
+  S.cash += refund;
+  S.peakCash = Math.max(S.peakCash || 0, S.cash);
   if(S.selTower === t){ S.selTower = null; hideInspect(); }
   rerouteFoes();
   updatePathVisualizer();
@@ -2876,6 +3159,8 @@ function update(dt){
         scene.remove(f.mesh);
         S.foes.splice(i, 1);
         S.lives -= f.leak; S.leaked++;
+        if(!S.leakedByType) S.leakedByType = { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0 };
+        if(f.type) S.leakedByType[f.type] = (S.leakedByType[f.type] || 0) + 1;
         sfx('alarm');
         sanctumFlash();
         addTrauma(0.35);
@@ -3100,13 +3385,156 @@ function update(dt){
   refreshHud();
 }
 
+var LAST_MATCH_REPORT = '';
 function gameOver(win){
   S.phase = win ? 'win' : 'over';
+
+  // 1. Time & SPM Calculations
+  var totalSecs = Math.floor(S.time || 0);
+  var mins = Math.floor(totalSecs / 60);
+  var secs = totalSecs % 60;
+  var timeStr = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+  var spm = Math.round((S.totalEarned || S.cash) / Math.max(0.2, (S.time || 1) / 60));
+
+  // 2. Combat & Kill Rate
+  var totalCreeps = (S.kills || 0) + (S.leaked || 0);
+  var killRate = totalCreeps > 0 ? Math.round(((S.kills || 0) / totalCreeps) * 100) : 100;
+
+  // 3. MVP Tower Battery
+  var mvp = null;
+  var totalTowerDmg = 0;
+  for(var t of S.towers){
+    var td = t.totalDmg || 0;
+    totalTowerDmg += td;
+    if(!mvp || td > (mvp.totalDmg || 0)){
+      mvp = t;
+    }
+  }
+  var mvpStr = 'None';
+  var mvpShare = '0%';
+  if(mvp && (mvp.totalDmg || 0) > 0){
+    var spec = mvp.branch ? BRANCH[mvp.type][mvp.branch] : null;
+    var bName = spec ? spec.name : TOWERS[mvp.type].name;
+    mvpStr = bName + ' (' + mvp.gx + ',' + mvp.gy + ') · ' + Math.round(mvp.totalDmg).toLocaleString() + ' dmg';
+    mvpShare = (totalTowerDmg > 0 ? Math.round((mvp.totalDmg / totalTowerDmg) * 100) : 0) + '% (' + (mvp.kills || 0) + ' kills)';
+  }
+
+  // 4. Labyrinth Mazing Detour
+  var p = findPath(SPAWN.x, SPAWN.y, S.blocked);
+  var pathLen = p ? p.length : 0;
+  var straightLine = Math.abs(SANCTUM.x - SPAWN.x) + Math.abs(SANCTUM.y - SPAWN.y);
+  var detourPct = straightLine > 0 ? Math.max(0, Math.round(((pathLen - straightLine) / straightLine) * 100)) : 0;
+  var detourStr = pathLen + ' tiles (+' + detourPct + '% detour)';
+
+  // 5. Casualty Roster Breakdown
+  var creepDefs = [
+    { key: 'spider', name: 'Skitter Scout', icon: '🕷️' },
+    { key: 'tank',   name: 'Tread Tank',   icon: '🛡️' },
+    { key: 'drone',  name: 'Rotor Drone',  icon: '🛸' },
+    { key: 'walker', name: 'Diesel Walker',icon: '🦾' },
+    { key: 'ship',   name: 'Zeppelin Hull',icon: '⛵' },
+    { key: 'boss',   name: 'Goliath Titan',icon: '👑' }
+  ];
+  var rosterHtml = '';
+  var rosterText = [];
+  for(var cd of creepDefs){
+    var k = (S.killsByType && S.killsByType[cd.key]) || 0;
+    var l = (S.leakedByType && S.leakedByType[cd.key]) || 0;
+    rosterHtml += '<div class="creep-roster-row">' +
+      '<span class="creep-roster-name">' + cd.icon + ' ' + cd.name + '</span>' +
+      '<span><strong class="gold-val">' + k + '</strong> slain / <strong class="' + (l > 0 ? 'red-val' : '') + '">' + l + '</strong> leaked</span>' +
+      '</div>';
+    rosterText.push(cd.name + ': ' + k + ' slain, ' + l + ' leaked');
+  }
+  var rosterEl = document.getElementById('statCreepRoster');
+  if(rosterEl) rosterEl.innerHTML = rosterHtml;
+
+  // 6. Meta Glyphs & Abilities
+  var glyphsActive = [];
+  if(S.glyphs){
+    for(var gk in S.glyphs){
+      if(S.glyphs[gk] > 0 && GLYPH_DEFS[gk]){
+        glyphsActive.push(GLYPH_DEFS[gk].name + ' Lv.' + S.glyphs[gk]);
+      }
+    }
+  }
+  var glyphStr = glyphsActive.length ? glyphsActive.join(', ') : 'None Active';
+  var flares = (S.abilitiesUsed && S.abilitiesUsed.flare) || 0;
+  var roots = (S.abilitiesUsed && S.abilitiesUsed.root) || 0;
+
+  // 7. Render to Banner Elements
+  var tagEl = document.getElementById('bannerTag');
+  if(tagEl) tagEl.textContent = win ? 'SANCTUM DEFENDED · MISSION ACCOMPLISHED' : 'PERIMETER COMPROMISED · DEFEAT';
   document.getElementById('bannerTitle').textContent = win ? 'SANCTUM SECURED' : 'SANCTUM BREACHED';
   document.getElementById('bannerSub').textContent =
-    (win ? 'All ' + WAVE_MAX + ' waves repelled! ' : 'Overrun on wave ' + S.wave + '. ') +
-    'Final Score: ' + S.score + '. Automata scrapped: ' + S.kills + '.';
+    (win ? 'All ' + WAVE_MAX + ' waves repelled! ' : 'Overrun on wave ' + S.wave + ' of ' + WAVE_MAX + '. ') +
+    'Final Score: ' + S.score.toLocaleString() + ' · Match Duration: ' + timeStr;
+
+  document.getElementById('statHarvested').textContent = '$' + (S.totalEarned || S.cash).toLocaleString();
+  document.getElementById('statSpent').textContent = '$' + (S.totalSpent || 0).toLocaleString();
+  document.getElementById('statRefunded').textContent = '$' + (S.totalRefunded || 0).toLocaleString();
+  document.getElementById('statPeakCash').textContent = '$' + (S.peakCash || S.cash).toLocaleString();
+  document.getElementById('statSurplus').textContent = '$' + S.cash.toLocaleString();
+  document.getElementById('statSPM').textContent = spm + ' / min';
+
+  document.getElementById('statKills').textContent = S.kills.toLocaleString();
+  document.getElementById('statLeaks').textContent = S.leaked.toLocaleString();
+  document.getElementById('statKillRate').textContent = killRate + '%';
+  document.getElementById('statDamageDealt').textContent = Math.round(S.totalDamageDealt || 0).toLocaleString() + ' dmg';
+  document.getElementById('statMVP').textContent = mvpStr;
+  document.getElementById('statMVPShare').textContent = mvpShare;
+
+  document.getElementById('statDetour').textContent = detourStr;
+  document.getElementById('statTowersBuilt').textContent = (S.towersBuilt || 0) + ' constructed';
+  document.getElementById('statUpgrades').textContent = (S.upgradesPurchased || 0) + ' elite upgrades';
+  document.getElementById('statAbilities').textContent = (flares + roots) + ' casts (' + flares + ' Flares / ' + roots + ' Roots)';
+  document.getElementById('statGlyphsActive').textContent = glyphStr;
+  document.getElementById('statSeedTime').textContent = '#' + S.seed + ' · ' + timeStr;
+
+  // 8. Generate Match Report for Clipboard
+  LAST_MATCH_REPORT = [
+    '═══════════════ AEGIS FLORA MISSION REPORT ═══════════════',
+    'Status: ' + (win ? 'VICTORY — SANCTUM SECURED' : 'DEFEAT — SANCTUM BREACHED'),
+    'Wave Cleared: ' + S.wave + ' / ' + WAVE_MAX + ' | Final Score: ' + S.score.toLocaleString() + ' | Duration: ' + timeStr,
+    '----------------------------------------------------------',
+    'FARM & ECONOMY:',
+    '  • Harvested: $' + (S.totalEarned || S.cash).toLocaleString() + ' | Spent: $' + (S.totalSpent || 0).toLocaleString(),
+    '  • Deconstruction Refunds: $' + (S.totalRefunded || 0).toLocaleString() + ' | Final Surplus: $' + S.cash.toLocaleString(),
+    '  • Peak Scrap: $' + (S.peakCash || S.cash).toLocaleString() + ' | Farm Rate: ' + spm + ' Scrap/min',
+    '----------------------------------------------------------',
+    'COMBAT & FIREPOWER:',
+    '  • Creeps Destroyed: ' + S.kills + ' | Creeps Leaked: ' + S.leaked + ' (' + killRate + '% efficiency)',
+    '  • Total Damage Inflicted: ' + Math.round(S.totalDamageDealt || 0).toLocaleString() + ' HP',
+    '  • MVP Battery: ' + mvpStr + ' (' + mvpShare + ')',
+    '----------------------------------------------------------',
+    'CASUALTIES BY ARCHETYPE:',
+    '  • ' + rosterText.join('\n  • '),
+    '----------------------------------------------------------',
+    'LABYRINTH & METADATA:',
+    '  • Maze Detour: ' + detourStr,
+    '  • Batteries Built: ' + (S.towersBuilt || 0) + ' (' + (S.upgradesPurchased || 0) + ' upgraded)',
+    '  • Sanctum Magic: ' + (flares + roots) + ' casts (' + flares + ' Solar Flares, ' + roots + ' Overgrowth Roots)',
+    '  • Verdant Glyphs: ' + glyphStr,
+    '  • Match Seed: #' + S.seed,
+    '══════════════════════════════════════════════════════════'
+  ].join('\n');
+
   document.getElementById('banner').style.display = 'flex';
+}
+
+function copyMatchStats(){
+  if(!LAST_MATCH_REPORT){ toast('No match data to copy'); return; }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(LAST_MATCH_REPORT).then(function(){
+      toast('📋 Match scorecard copied to clipboard!');
+    }).catch(function(){
+      toast('Match report printed to console!');
+      console.log(LAST_MATCH_REPORT);
+    });
+  } else {
+    toast('Match report printed to console!');
+    console.log(LAST_MATCH_REPORT);
+  }
 }
 
 // ---------- Tactical Minimap Radar: creep dots, tower silhouettes, A* line, frustum ----------
@@ -3364,6 +3792,7 @@ function bindInput(){
       if(!startWave()){ toast('Wave already raging!'); sfx('error'); }
     }
     else if(k === 'escape'){
+      closePadmap();
       S.selected = null; S.selTower = null; hideInspect(); paintCards();
       hoverBoxMesh.visible = false; rangeRingMesh.visible = false;
     }
@@ -3376,6 +3805,18 @@ function bindInput(){
 
   el.btnWave.addEventListener('click', function(){ audio(); startWave(); });
   el.btnCam.addEventListener('click', setCameraIsometric);
+  var btnPad = document.getElementById('btnPad');
+  if(btnPad) btnPad.addEventListener('click', function(){ audio(); sfx('click'); openPadmap(); });
+  var btnPadClose = document.getElementById('btnPadClose');
+  if(btnPadClose) btnPadClose.addEventListener('click', function(){ sfx('click'); closePadmap(); });
+  var btnPadReset = document.getElementById('btnPadReset');
+  if(btnPadReset) btnPadReset.addEventListener('click', function(){
+    PADMAP = Object.assign({}, PADMAP_DEFAULT);
+    try { localStorage.removeItem('aegis_padmap'); } catch(e){}
+    renderPadmap(); updatePadPill(); sfx('click'); toast('Controller mapping reset');
+  });
+  var padModal = document.getElementById('padmap-modal');
+  if(padModal) padModal.addEventListener('click', function(ev){ if(ev.target === padModal) closePadmap(); });
   el.btnPause.addEventListener('click', togglePause);
   el.btnSpeed.addEventListener('click', cycleSpeed);
   // Tactical radar click-to-jump: click minimap to move camera target
@@ -3389,7 +3830,12 @@ function bindInput(){
   });
   el.btnGlyph = document.getElementById('btnGlyph');
   if(el.btnGlyph) el.btnGlyph.addEventListener('click', toggleGlyphShop);
-  document.getElementById('btnAgain').addEventListener('click', resetGame);
+  var btnAgain = document.getElementById('btnAgain');
+  if(btnAgain) btnAgain.addEventListener('click', resetGame);
+  var btnCopy = document.getElementById('btnCopyStats');
+  if(btnCopy) btnCopy.addEventListener('click', copyMatchStats);
+  var btnRepGlyph = document.getElementById('btnGlyphsReport');
+  if(btnRepGlyph) btnRepGlyph.addEventListener('click', toggleGlyphShop);
 }
 
 function onWindowResize(){
@@ -3431,7 +3877,8 @@ function padCycleTower(dir){
 }
 function padPress(btn){
   audio();
-  if(btn === 0){ // A: place selected tower at crosshair, or inspect unit there
+  var M = PADMAP;
+  if(btn === M.place){ // place selected tower at crosshair, or inspect unit there
     var g = centerTile();
     if(!g) return;
     if(S.selected){
@@ -3446,34 +3893,117 @@ function padPress(btn){
       else hideInspect();
     }
   }
-  else if(btn === 1){ S.selected = null; S.selTower = null; hideInspect(); paintCards(); } // B: cancel
-  else if(btn === 2){ if(!startWave()){ toast('Wave already raging!'); sfx('error'); } } // X: wave
-  else if(btn === 3){ toggleCameraView(); } // Y: camera view
-  else if(btn === 4){ padCycleTower(-1); } // LB
-  else if(btn === 5){ padCycleTower(1); } // RB
-  else if(btn === 8){ cycleSpeed(); } // back: speed
-  else if(btn === 9){ togglePause(); } // start: pause
-  else if(btn === 12){ padCycleTower(-1); } // dpad L
-  else if(btn === 13){ S.selected = null; S.selTower = null; hideInspect(); paintCards(); } // dpad D: cancel
-  else if(btn === 14){ padCycleTower(1); } // dpad R
-  else if(btn === 15){ if(!startWave()){ toast('Wave already raging!'); sfx('error'); } } // dpad U: wave
+  else if(btn === M.cancel){ S.selected = null; S.selTower = null; hideInspect(); paintCards(); }
+  else if(btn === M.wave){ if(!startWave()){ toast('Wave already raging!'); sfx('error'); } }
+  else if(btn === M.view){ toggleCameraView(); }
+  else if(btn === M.prev){ padCycleTower(-1); }
+  else if(btn === M.next){ padCycleTower(1); }
+  else if(btn === M.speed){ cycleSpeed(); }
+  else if(btn === M.pause){ togglePause(); }
+  // fixed D-pad aliases (always live): Up/Down/Left/Right
+  else if(btn === 12){ padCycleTower(-1); }
+  else if(btn === 13){ S.selected = null; S.selTower = null; hideInspect(); paintCards(); }
+  else if(btn === 14){ padCycleTower(1); }
+  else if(btn === 15){ if(!startWave()){ toast('Wave already raging!'); sfx('error'); } }
+}
+
+// ---------- Controller setup modal: remap every action button ----------
+var PADMAP_DEFAULT = { place: 0, cancel: 1, wave: 2, view: 3, prev: 4, next: 5, speed: 8, pause: 9 };
+var PADMAP_ACTIONS = [
+  ['place', 'Place / Select', 'Put tower at crosshair, or inspect'],
+  ['cancel', 'Cancel', 'Clear selection, close panel'],
+  ['wave', 'Call Wave', 'Send the next wave (also D-pad ▶)'],
+  ['view', 'Camera view', 'Tactical ↔ boots-on-the-map'],
+  ['prev', 'Prev tower', 'Cycle dock backwards'],
+  ['next', 'Next tower', 'Cycle dock forwards'],
+  ['speed', 'Game speed', 'Cycle 1x · 2x · 4x'],
+  ['pause', 'Pause', 'Freeze / resume']
+];
+var PADMAP = (function(){
+  try {
+    var saved = JSON.parse(localStorage.getItem('aegis_padmap') || 'null');
+    if(saved) for(var k in PADMAP_DEFAULT) if(typeof saved[k] !== 'number') return Object.assign({}, PADMAP_DEFAULT);
+    if(saved) return saved;
+  } catch(e){}
+  return Object.assign({}, PADMAP_DEFAULT);
+})();
+var PADBTN_NAMES = ['A / Cross', 'B / Circle', 'X / Square', 'Y / Triangle', 'LB', 'RB', 'LT', 'RT', 'Back / Share', 'Start', 'L3', 'R3', 'D-Up', 'D-Down', 'D-Left', 'D-Right'];
+function padBtnName(i){ return (i >= 0 && i < PADBTN_NAMES.length) ? PADBTN_NAMES[i] : 'Btn ' + i; }
+// HUD chip in the top bar always shows the LIVE mapping so the wave button is never a mystery
+function updatePadPill(){
+  var chip = document.getElementById('btnPad');
+  var label = document.getElementById('btnPadLabel');
+  if(!chip) return;
+  if(PAD.active){
+    chip.classList.add('connected');
+    if(label) label.innerHTML = '<i class="pad-dot"></i>' + padBtnName(PADMAP.wave) + ' wave';
+    chip.title = 'Connected: ' + (PAD.name || 'Gamepad') +
+      ' — ' + padBtnName(PADMAP.place) + ' place · ' + padBtnName(PADMAP.wave) + ' wave · ' +
+      padBtnName(PADMAP.view) + ' view · sticks move/look · click to remap';
+  } else {
+    chip.classList.remove('connected');
+    if(label) label.innerHTML = '<i class="pad-dot"></i>No pad';
+    chip.title = 'Controller mapping — no pad connected. Click to remap.';
+  }
+}
+var padRebinding = null;
+function renderPadmap(){
+  var rows = document.getElementById('padmap-rows');
+  if(!rows) return;
+  rows.innerHTML = '';
+  PADMAP_ACTIONS.forEach(function(a){
+    var key = a[0];
+    var row = document.createElement('div');
+    row.className = 'padmap-row';
+    row.innerHTML = '<div class="act">' + a[1] + '<small>' + a[2] + '</small></div>' +
+      '<div class="padmap-key' + (padRebinding === key ? ' waiting' : '') + '" id="padkey_' + key + '">' +
+      (padRebinding === key ? 'press button…' : padBtnName(PADMAP[key])) + '</div>';
+    var btn = document.createElement('button');
+    btn.className = 'btn'; btn.textContent = 'Rebind';
+    btn.addEventListener('click', function(){ startPadRebind(key); });
+    row.appendChild(btn);
+    rows.appendChild(row);
+  });
+}
+function openPadmap(){ renderPadmap(); document.getElementById('padmap-modal').classList.add('open'); }
+function closePadmap(){ padRebinding = null; document.getElementById('padmap-modal').classList.remove('open'); }
+function startPadRebind(key){
+  padRebinding = key; renderPadmap();
+  toast('Press a button for "' + key + '"… (Esc cancels)');
+  var waited = 0;
+  var iv = setInterval(function(){
+    if(padRebinding !== key){ clearInterval(iv); return; }
+    var pads = [];
+    try { pads = navigator.getGamepads ? navigator.getGamepads() : []; } catch(e){}
+    for(var p of pads){
+      if(!p || !p.connected) continue;
+      for(var b = 0; b < p.buttons.length; b++){
+        if(p.buttons[b] && p.buttons[b].pressed){
+          PADMAP[key] = b;
+          try { localStorage.setItem('aegis_padmap', JSON.stringify(PADMAP)); } catch(e){}
+          padRebinding = null; renderPadmap(); updatePadPill(); sfx('upgrade');
+          toast('"' + key + '" → ' + padBtnName(b));
+          clearInterval(iv);
+          return;
+        }
+      }
+    }
+    if((waited += 100) > 12000){ padRebinding = null; renderPadmap(); toast('Rebind timed out'); clearInterval(iv); }
+  }, 100);
 }
 function pollGamepad(dt){
   var pads = [];
   try { pads = navigator.getGamepads ? navigator.getGamepads() : []; } catch(e){}
   var gp = null;
   for(var p of pads){ if(p && p.connected){ gp = p; break; } }
-  var status = document.getElementById('gamepad-status');
   var cross = document.getElementById('crosshair');
   if(!gp){
-    if(PAD.active){ PAD.active = false; PAD.prev = []; if(status) status.style.display = 'none'; if(cross) cross.style.display = 'none'; }
+    if(PAD.active){ PAD.active = false; PAD.prev = []; updatePadPill(); if(cross) cross.style.display = 'none'; }
     return;
   }
   if(!PAD.active){
     PAD.active = true; PAD.name = gp.id || 'Gamepad';
-    var nm = document.getElementById('gamepad-name');
-    if(nm) nm.textContent = PAD.name.slice(0, 28);
-    if(status) status.style.display = 'block';
+    updatePadPill();
     if(cross) cross.style.display = 'block';
     toast('Gamepad linked — ' + PAD.name.slice(0, 32));
   }
@@ -3484,7 +4014,7 @@ function pollGamepad(dt){
   if((lx || ly) && controls){
     var fwd = new THREE.Vector3().subVectors(controls.target, camera.position);
     fwd.y = 0; fwd.normalize();
-    var right = new THREE.Vector3(fwd.z, 0, -fwd.x);
+    var right = new THREE.Vector3(-fwd.z, 0, fwd.x); // true camera-right (was negated)
     var spd = 16 * dt * (S && S.camView === 'immersive' ? 0.6 : 1);
     var slide = new THREE.Vector3();
     slide.addScaledVector(right, lx * spd);
@@ -3646,6 +4176,8 @@ function useSanctumAbility(type){
   if(type === 'flare' && S.sanctum.abilityCD > 0){ toast('Solar Flare cooling: ' + Math.ceil(S.sanctum.abilityCD) + 's'); sfx('error'); return; }
 
   S.mana -= ability.cost;
+  if(!S.abilitiesUsed) S.abilitiesUsed = { flare: 0, root: 0 };
+  S.abilitiesUsed[type] = (S.abilitiesUsed[type] || 0) + 1;
 
   if(type === 'root'){
     S.sanctum.rootCD = ability.cooldown;
@@ -3721,6 +4253,8 @@ function resetGame(){
   var bonus = getGlyphBonus();
   S = newState((Math.random() * 1e9) | 0);
   S.cash = bonus.startCash;
+  S.totalEarned = bonus.startCash;
+  S.peakCash = bonus.startCash;
   S.lives = bonus.maxLives;
   S.maxLives = bonus.maxLives;
   seedRuins();
