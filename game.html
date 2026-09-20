@@ -1807,34 +1807,94 @@ function initThreeJS(){
   window.addEventListener('resize', onWindowResize);
 }
 
-function setCameraIsometric(){
-  camera.position.set(48, 56, 48);
-  camera.lookAt(0, 0, 0);
-  if(controls){
-    controls.target.set(0, 0, 0);
-    controls.update();
+var camTween = null;
+function flyCameraTo(pos, tgt, dur){
+  if(!controls) return;
+  camTween = { p0: camera.position.clone(), t0: controls.target.clone(),
+    p1: pos.clone(), t1: tgt.clone(), t: 0, dur: dur || 1.4 };
+}
+function stepCamTween(dt){
+  if(!camTween) return;
+  camTween.t += dt;
+  var k = Math.min(1, camTween.t / camTween.dur);
+  var e = k * k * (3 - 2 * k);
+  camera.position.lerpVectors(camTween.p0, camTween.p1, e);
+  controls.target.lerpVectors(camTween.t0, camTween.t1, e);
+  if(k >= 1) camTween = null;
+}
+// grabbing the camera (drag / wheel / stick) hands control back instantly
+function releaseDirector(){
+  camTween = null;
+  if(S && S.camView === 'director'){
+    S.camView = 'immersive';
+    document.body.classList.remove('director');
+    updateCamPill();
   }
-  S.camView = 'tactical';
+}
+function actionCentroid(){
+  if(S && S.foes.length){
+    var sx = 0, sz = 0;
+    for(var f of S.foes){ sx += f.x; sz += f.y; }
+    var w = gridToWorld3D(sx / S.foes.length, sz / S.foes.length, 0);
+    return { x: w.x, z: w.z };
+  }
+  return { x: 0, z: 0 };
+}
+function setCameraIsometric(){
+  if(!controls){ camera.position.set(48, 56, 48); camera.lookAt(0, 0, 0); } // pre-controls boot snap
+  else flyCameraTo(new THREE.Vector3(48, 56, 48), new THREE.Vector3(0, 0, 0), 1.4);
+  if(S) S.camView = 'tactical';
+  document.body.classList.remove('director');
   updateCamPill();
 }// Boots-on-the-map view: low over-the-shoulder camera like Roblox/Minecraft third person
 function setCameraImmersive(){
   var tx = controls ? controls.target.x : 0, tz = controls ? controls.target.z : 0;
-  if(controls) controls.target.set(tx, 0, tz);
-  camera.position.set(tx + 7, 6.5, tz + 13);
-  camera.lookAt(tx, 1.5, tz);
-  if(controls) controls.update();
-  S.camView = 'immersive';
+  flyCameraTo(new THREE.Vector3(tx + 7, 6.5, tz + 13), new THREE.Vector3(tx, 0, tz), 1.4);
+  if(S) S.camView = 'immersive';
+  document.body.classList.remove('director');
+  updateCamPill();
+}
+// Director mode: the game films itself — slow push-in on the action, letterboxed
+function setCameraDirector(){
+  var c = actionCentroid();
+  flyCameraTo(new THREE.Vector3(c.x + 24, 17, c.z + 24), new THREE.Vector3(c.x, 0, c.z), 2.2);
+  if(S) S.camView = 'director';
+  document.body.classList.add('director');
   updateCamPill();
 }
 function toggleCameraView(){
-  if(S && S.camView === 'immersive') setCameraIsometric();
-  else setCameraImmersive();
+  if(!S) return;
+  if(S.camView === 'tactical') setCameraImmersive();
+  else if(S.camView === 'immersive') setCameraDirector();
+  else setCameraIsometric();
 }
 function updateCamPill(){
   var pill = document.querySelector('#cam-mode span');
-  if(pill) pill.innerHTML = (S && S.camView === 'immersive')
-    ? 'BOOTS-ON-THE-MAP VIEW <span class="cam-hint">· Right drag / Right-stick to look · T for tactical</span>'
-    : 'TACTICAL VIEW <span class="cam-hint">· Right drag to orbit · Scroll to zoom · T for boots-on-map</span>';
+  if(!pill) return;
+  if(S && S.camView === 'immersive')
+    pill.innerHTML = 'BOOTS-ON-THE-MAP VIEW <span class="cam-hint">· Right drag / Right-stick to look · T for director</span>';
+  else if(S && S.camView === 'director')
+    pill.innerHTML = '🎬 DIRECTOR VIEW <span class="cam-hint">· Auto-filming the battle · Drag to take over · T for tactical</span>';
+  else
+    pill.innerHTML = 'TACTICAL VIEW <span class="cam-hint">· Right drag to orbit · Scroll to zoom · T for boots-on-map</span>';
+}
+function stepDirector(dt){
+  if(!S || S.camView !== 'director' || camTween || !controls) return;
+  var c = actionCentroid();
+  var k = 1 - Math.exp(-1.6 * dt);
+  controls.target.x += (c.x - controls.target.x) * k;
+  controls.target.z += (c.z - controls.target.z) * k;
+  controls.target.y = 0;
+  var off = new THREE.Vector3().subVectors(camera.position, controls.target);
+  var ang = dt * 0.11; // slow cinematic orbit
+  var cos = Math.cos(ang), sin = Math.sin(ang);
+  var nx = off.x * cos - off.z * sin, nz = off.x * sin + off.z * cos;
+  off.x = nx; off.z = nz;
+  var len = off.length();
+  var wantLen = 36;
+  off.setLength(len + (wantLen - len) * k);
+  off.y += (17 - off.y) * k; // gentle push-in height
+  camera.position.copy(controls.target).add(off);
 }
 
 function build3DLighting(){
@@ -2525,21 +2585,21 @@ function create3DTowerMesh(type){
     var clone = GLTF_CACHE.gatling.clone();
     clone.scale.set(0.65, 0.65, 0.65);
     root.add(clone);
-    root.userData = { isGltf: true, model: clone };
+    root.userData = { isGltf: true, model: clone, turn: clone };
     return root;
   }
   if(type === 'rocket' && GLTF_CACHE.mortar){
     var clone = GLTF_CACHE.mortar.clone();
     clone.scale.set(0.7, 0.7, 0.7);
     root.add(clone);
-    root.userData = { isGltf: true, model: clone };
+    root.userData = { isGltf: true, model: clone, turn: clone };
     return root;
   }
   if(type === 'slow' && GLTF_CACHE.resonance){
     var clone = GLTF_CACHE.resonance.clone();
     clone.scale.set(0.65, 0.65, 0.65);
     root.add(clone);
-    root.userData = { isGltf: true, model: clone };
+    root.userData = { isGltf: true, model: clone, turn: clone };
     return root;
   }
 
@@ -2606,16 +2666,36 @@ function create3DTowerMesh(type){
     crystal.position.y = 2.75; root.add(crystal);
     addHalo(crystal, 0x00F5D4, 1.6, 0.35);
     addContactShadow(root, 2.6, 0.5);
-    root.userData = { crystal: crystal };
+
+    var turn = new THREE.Group();
+    turn.position.y = 2.75;
+    var lensRing = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.08, 8, 24), MATS.brass);
+    lensRing.rotation.x = Math.PI / 2;
+    turn.add(lensRing);
+    for(var pr = -1; pr <= 1; pr += 2){
+      var prong = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.75, 6), MATS.brass);
+      prong.rotation.x = Math.PI / 2;
+      prong.position.set(pr * 0.38, 0, 0.4);
+      turn.add(prong);
+    }
+    root.add(turn);
+    root.userData = { crystal: crystal, turn: turn };
   }
   else {
     var ob = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.3, 0.85), MATS.stone);
     ob.position.y = 1.15; root.add(ob);
 
+    var turn = new THREE.Group();
+    turn.position.y = 1.8;
     var rRing = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.09, 8, 24), MATS.brass);
-    rRing.position.y = 1.7; rRing.rotation.x = Math.PI / 2;
-    root.add(rRing);
-    root.userData = { pulseRing: rRing };
+    rRing.rotation.x = Math.PI / 2;
+    turn.add(rRing);
+    var dish = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.2, 0.32, 16), MATS.brass);
+    dish.rotation.x = Math.PI / 2;
+    dish.position.set(0, 0, 0.38);
+    turn.add(dish);
+    root.add(turn);
+    root.userData = { pulseRing: rRing, turn: turn };
   }
 
   return root;
@@ -3320,15 +3400,53 @@ function update(dt){
       }
     }
 
+    t.curAngle = t.curAngle || 0;
+    t.hasTarget = false;
+
     if(best){
       var dx = best.x - tPos.x;
       var dy = best.y - tPos.y;
       var aimAngle = Math.atan2(dx, dy);
-
-      if(t.mesh.userData.turn){
-        t.mesh.userData.turn.rotation.y = aimAngle;
+      t.targetAngle = aimAngle;
+      t.hasTarget = true;
+    } else {
+      // Idle sentry sweep when no target is present during combat
+      if(S.phase === 'combat'){
+        t.idleAngle = (t.idleAngle || 0) + dt * 0.6;
+        t.targetAngle = (t.homeAngle !== undefined ? t.homeAngle : 0) + Math.sin(t.idleAngle + t.gx) * 0.45;
       }
+    }
+
+    // Smooth angular slerp interpolation toward targetAngle
+    if(t.targetAngle !== undefined){
+      var diff = (t.targetAngle - t.curAngle) % (Math.PI * 2);
+      if(diff < -Math.PI) diff += Math.PI * 2;
+      if(diff > Math.PI) diff -= Math.PI * 2;
+      var turnSpeed = t.hasTarget ? 11.5 : 2.5; // Fast responsive tracking when locked on target, smooth sweep while idle
+      t.curAngle += Math.sign(diff) * Math.min(Math.abs(diff), turnSpeed * dt);
+    }
+
+    // Apply rotation to turn assembly or model
+    if(t.mesh.userData.turn){
+      t.mesh.userData.turn.rotation.y = t.curAngle;
+    } else if(t.mesh.userData.model){
+      t.mesh.userData.model.rotation.y = t.curAngle;
+    } else {
+      t.mesh.rotation.y = t.curAngle;
+    }
+
+    if(best){
+      var dx = best.x - tPos.x;
+      var dy = best.y - tPos.y;
+      var forwardX = Math.sin(t.curAngle);
+      var forwardZ = Math.cos(t.curAngle);
+
       var tWorld = gridToWorld3D(t.gx + 0.5, t.gy + 0.5, 1.9);
+      var muzzlePos = new THREE.Vector3(
+        tWorld.x + forwardX * 1.15,
+        tWorld.y + 0.15,
+        tWorld.z + forwardZ * 1.15
+      );
       var bWorld = gridToWorld3D(best.x, best.y, best.air ? 2.5 : 0.7);
       var spec = t.branch ? BRANCH[t.type][t.branch] : null;
 
@@ -3342,8 +3460,8 @@ function update(dt){
         damageNumber(bWorld, dmg, 'Kinetic');
         // directional stagger
         best.x += dx * 0.008; best.y += dy * 0.008;
-        spawnTracer(tWorld, bWorld, 0xFFD60A);
-        spawnMuzzleFlash(tWorld, 0xFFD60A);
+        spawnTracer(muzzlePos, bWorld, 0xFFD60A);
+        spawnMuzzleFlash(muzzlePos, 0xFFD60A);
         spawnShellCasing(tWorld);
         t.kills = t.kills || 0; t.totalDmg = (t.totalDmg || 0) + dmg;
         if(best.hp <= 0){ t.kills++; }
@@ -3358,7 +3476,12 @@ function update(dt){
         var rdmg = (spec && spec.dmg) || 32;
         var splash = (spec && spec.splash) || 1.4;
         t.cd = riv;
-        spawnMortarShell(tWorld, bWorld.clone(), rdmg, splash);
+        var mortarMuzzle = new THREE.Vector3(
+          tWorld.x + forwardX * 0.95,
+          tWorld.y + 0.65,
+          tWorld.z + forwardZ * 0.95
+        );
+        spawnMortarShell(mortarMuzzle, bWorld.clone(), rdmg, splash);
         t.totalDmg = (t.totalDmg || 0) + rdmg;
         sfx('launch');
       }
@@ -3372,8 +3495,12 @@ function update(dt){
         applyDamage(best, cur * dt, 'Energy', true);
         best.lastHitType = 'Energy';
         best.heatT = 0.4; // armor heats red-hot
-        if(Math.random() < 0.25) damageNumber(bWorld, cur*0.25, 'Energy');
-        spawnPrismBeam(tWorld, bWorld);
+        var beamMuzzle = new THREE.Vector3(
+          tWorld.x + forwardX * 0.85,
+          tWorld.y + 0.85,
+          tWorld.z + forwardZ * 0.85
+        );
+        spawnPrismBeam(beamMuzzle, bWorld);
         t.totalDmg = (t.totalDmg || 0) + cur * dt;
         if(best.hp <= 0){ t.kills = (t.kills||0)+1; }
         if(t.mesh.userData.crystal){
@@ -3896,6 +4023,14 @@ function bindInput(){
   });
   var padModal = document.getElementById('padmap-modal');
   if(padModal) padModal.addEventListener('click', function(ev){ if(ev.target === padModal) closePadmap(); });
+  // grabbing the canvas hands the camera back: drag (not click) or wheel exits director mode
+  var downPos = null;
+  renderer.domElement.addEventListener('pointerdown', function(ev){ downPos = { x: ev.clientX, y: ev.clientY }; });
+  renderer.domElement.addEventListener('pointerup', function(ev){
+    if(downPos && Math.hypot(ev.clientX - downPos.x, ev.clientY - downPos.y) > 6) releaseDirector();
+    downPos = null;
+  });
+  renderer.domElement.addEventListener('wheel', function(){ releaseDirector(); }, { passive: true });
   el.btnPause.addEventListener('click', togglePause);
   el.btnSpeed.addEventListener('click', cycleSpeed);
   // Tactical radar click-to-jump: click minimap to move camera target
@@ -4089,6 +4224,7 @@ function pollGamepad(dt){
   function dz(v){ return Math.abs(v) < 0.16 ? 0 : v; }
   var lx = dz(gp.axes[0] || 0), ly = dz(gp.axes[1] || 0);
   var rx = dz(gp.axes[2] || 0), ry = dz(gp.axes[3] || 0);
+  if(lx || ly || rx || ry) releaseDirector(); // stick input takes the camera back instantly
   // march: left stick SLIDES the map — camera and target travel together so the view never tilts
   if((lx || ly) && controls){
     var fwd = new THREE.Vector3().subVectors(controls.target, camera.position);
@@ -4442,6 +4578,8 @@ function animate(){
     }
   }
 
+  stepCamTween(dt);
+  stepDirector(dt);
   controls.update();
   pollGamepad(dt);
   // trauma decay → camera kick (mortars, flares, leaks)
