@@ -4044,9 +4044,26 @@ function killFoe(f){
   S.peakCash = Math.max(S.peakCash || 0, S.cash);
 }
 
+// Centralized Gameplay Mutation Guard: blocks state mutations when paused, game over, or victory
+function canMutateGameplay(actionName, silent){
+  if(!S) return false;
+  if(S.paused){
+    if(!silent){
+      toast('Game is paused — press P to resume');
+      sfx('error');
+    }
+    return false;
+  }
+  if(S.phase === 'over' || S.phase === 'win'){
+    return false;
+  }
+  return true;
+}
+
 // ---------- Placement & Mazing Rules ----------
 function canPlace(gx, gy){
   if(!S || !inB(gx, gy)) return { ok: false, why: '' };
+  if(S.paused) return { ok: false, why: 'Game is paused — resume to build.' };
   var i = idx(gx, gy);
   if((gx === SPAWN.x && gy === SPAWN.y) || (gx === SANCTUM.x && gy === SANCTUM.y))
     return { ok: false, why: 'Spawn gate and sanctum portal must stay clear!' };
@@ -4057,6 +4074,7 @@ function canPlace(gx, gy){
 }
 
 function placeAt(gx, gy, key){
+  if(!canMutateGameplay('place')) return { ok: false, why: 'Game is paused.' };
   var chk = canPlace(gx, gy);
   if(!chk.ok) return chk;
   var cost = TOWERS[key].cost;
@@ -4092,6 +4110,7 @@ function towerRange(t){
 }
 
 function upgradeTo(t, branch){
+  if(!canMutateGameplay('upgrade')) return { ok: false, why: 'Game is paused.' };
   if(!t || t.branch) return { ok: false, why: 'Already upgraded.' };
   var spec = BRANCH[t.type][branch];
   if(!spec) return { ok: false, why: 'No such upgrade.' };
@@ -4119,7 +4138,8 @@ function upgradeTo(t, branch){
 }
 
 function sellTower(t){
-  var i = S.towers.indexOf(t); if(i < 0) return;
+  if(!canMutateGameplay('sell')) return false;
+  var i = S.towers.indexOf(t); if(i < 0) return false;
   disposeSceneObject(t.mesh);
   S.towers.splice(i, 1);
   S.blocked[idx(t.gx, t.gy)] = 0;
@@ -4154,6 +4174,7 @@ function previewText(w){
 }
 
 function startWave(){
+  if(!canMutateGameplay('wave')) return false;
   if(!S || S.phase !== 'build' || S.wave >= WAVE_MAX) return false;
   S.wave++;
   S.spawnQueue = [];
@@ -4977,16 +4998,7 @@ function bindInput(){
     if(document.getElementById('loading-screen')) return;
     audio();
     var k = (ev.key || '').toLowerCase();
-    if(k === 'q' || k === '1') selectBuild('gun');
-    else if(k === 'w' || k === '2') selectBuild('rocket');
-    else if(k === 'e' || k === '3') selectBuild('beam');
-    else if(k === 'r' || k === '4') selectBuild('slow');
-    else if(k === 'c') setCameraIsometric();
-    else if(k === 't') toggleCameraView(); // tactical <-> boots-on-the-map
-    else if(k === ' '){
-      ev.preventDefault();
-      if(!startWave()){ toast('Wave already raging!'); sfx('error'); }
-    }
+    if(k === 'p') togglePause();
     else if(k === 'escape'){
       var sm = document.getElementById('settings-modal');
       var gs = document.getElementById('glyphShop');
@@ -5000,11 +5012,26 @@ function bindInput(){
       }
       else openSettings();
     }
-    else if(k === 'p') togglePause();
-    else if(k === 'd') useSanctumAbility('root');
-    else if(k === 'f') useSanctumAbility('flare');
+    else if(k === 'c') setCameraIsometric();
+    else if(k === 't') toggleCameraView(); // tactical <-> boots-on-the-map
     else if(k === 'v') cycleSpeed();
     else if(k === 'g') toggleGlyphShop();
+    else if(S && S.paused){
+      if(['q', 'w', 'e', 'r', '1', '2', '3', '4', ' ', 'd', 'f'].indexOf(k) >= 0){
+        ev.preventDefault();
+        canMutateGameplay('key');
+      }
+    }
+    else if(k === 'q' || k === '1') selectBuild('gun');
+    else if(k === 'w' || k === '2') selectBuild('rocket');
+    else if(k === 'e' || k === '3') selectBuild('beam');
+    else if(k === 'r' || k === '4') selectBuild('slow');
+    else if(k === ' '){
+      ev.preventDefault();
+      if(!startWave()){ toast('Wave already raging!'); sfx('error'); }
+    }
+    else if(k === 'd') useSanctumAbility('root');
+    else if(k === 'f') useSanctumAbility('flare');
   });
 
   el.btnWave.addEventListener('click', function(){ audio(); startWave(); });
@@ -5190,6 +5217,28 @@ function padPress(btn){
     if(btn === M.cancel || btn === 8) closePadmap();
     return;
   }
+  if(btn === M.pause){ togglePause(); return; }
+  if(btn === M.view){ toggleCameraView(); return; }
+  if(btn === M.speed){ cycleSpeed(); return; }
+  if(btn === M.cancel){
+    var sm = document.getElementById('settings-modal');
+    var pm = document.getElementById('padmap-modal');
+    var gs = document.getElementById('glyphShop');
+    if(sm && sm.classList.contains('open')) closeSettings();
+    else if(pm && pm.classList.contains('open')) closePadmap();
+    else if(gs && gs.style.display !== 'none') toggleGlyphShop();
+    else {
+      S.selected = null; S.selTower = null; hideInspect(); paintCards();
+      if(hoverBoxMesh) hoverBoxMesh.visible = false;
+      if(rangeRingMesh) rangeRingMesh.visible = false;
+    }
+    return;
+  }
+  if(S && S.paused){
+    canMutateGameplay('controller');
+    padRumble(0.8, 0.2, 80);
+    return;
+  }
   if(btn === M.place){ // place selected tower at crosshair, or inspect unit there
     var g = centerTile();
     if(!g){ toast('Aim the crosshair at the battlefield to place or select'); sfx('error'); return; }
@@ -5218,24 +5267,10 @@ function padPress(btn){
       }
     }
   }
-  else if(btn === M.cancel){
-    var sm = document.getElementById('settings-modal');
-    var pm = document.getElementById('padmap-modal');
-    var gs = document.getElementById('glyphShop');
-    if(sm && sm.classList.contains('open')) closeSettings();
-    else if(pm && pm.classList.contains('open')) closePadmap();
-    else if(gs && gs.style.display !== 'none') toggleGlyphShop();
-    else {
-      S.selected = null; S.selTower = null; hideInspect(); paintCards();
-      if(hoverBoxMesh) hoverBoxMesh.visible = false;
-      if(rangeRingMesh) rangeRingMesh.visible = false;
-    }
-  }
   else if(btn === M.wave){
     if(!startWave()){ toast('Wave already raging!'); sfx('error'); }
     else { padRumble(0.3, 0.7, 100); }
   }
-  else if(btn === M.view){ toggleCameraView(); }
   else if(btn === M.prev){
     if(S.selTower && !S.selTower.branch){
       var ra = upgradeTo(S.selTower, 'A');
@@ -5254,8 +5289,6 @@ function padPress(btn){
       padCycleTower(1);
     }
   }
-  else if(btn === M.speed){ cycleSpeed(); }
-  else if(btn === M.pause){ togglePause(); }
   // L3 / R3 ability shortcuts (Left Stick Click = Root, Right Stick Click = Solar Flare)
   else if(btn === 10){ useSanctumAbility('root'); padRumble(0.4, 0.5, 120); }
   else if(btn === 11){ useSanctumAbility('flare'); padRumble(0.7, 0.7, 160); }
@@ -5652,7 +5685,17 @@ function pollGamepad(dt){
   }
 }
 
-function togglePause(){ S.paused = !S.paused; refreshHud(); }
+function togglePause(explicitVal){
+  if(!S) return;
+  S.paused = (typeof explicitVal === 'boolean') ? explicitVal : !S.paused;
+  document.body.classList.toggle('is-paused', S.paused);
+  if(S.paused){
+    toast('Game Paused · Press P to Resume');
+  } else {
+    toast('Game Resumed');
+  }
+  refreshHud();
+}
 function cycleSpeed(){ S.speed = S.speed === 1 ? 2 : (S.speed === 2 ? 4 : 1); el.btnSpeed.textContent = S.speed + 'x'; }
 
 // ---------- Meta-Progression: Verdant Glyphs ----------
@@ -5749,6 +5792,7 @@ function hideGlyphShop(){
 
 // ---------- Sanctum Abilities ----------
 function useSanctumAbility(type){
+  if(!canMutateGameplay('ability')) return;
   if(!S || S.phase !== 'combat') return;
   var ability = type === 'root' ? { cost: 35, cooldown: 25, key: 'D', name: 'Verdant Overgrowth' }
     : { cost: 75, cooldown: 60, key: 'F', name: 'Solar Flare' };
@@ -6019,7 +6063,11 @@ var API = {
   upgradeTo: upgradeTo, sellTower: sellTower,
   startWave: startWave, spawnEnemy: spawnEnemy, update: update,
   waveComp: waveComp, previewText: previewText, mazeValid: mazeValid,
-  towerRange: towerRange
+  towerRange: towerRange,
+  canMutateGameplay: canMutateGameplay,
+  togglePause: togglePause,
+  isPaused: function(){ return S ? !!S.paused : false; },
+  useSanctumAbility: useSanctumAbility
 };
 window.RoboFlora = API;
 window.AegisFlora = API;
