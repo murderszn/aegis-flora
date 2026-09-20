@@ -70,10 +70,70 @@
   font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:.7px;
 }
 #topbar .btn.primary:hover { background:linear-gradient(135deg,#f7dfa0,#d6a85d); box-shadow:0 3px 20px rgba(216,169,88,.35); }
-#topbar .btn.square { width:39px; min-width:39px; padding:0; font:700 12px var(--font-stats); }
-#btnRoot,#btnFlare { background:rgba(242,240,220,.055) !important; border-color:rgba(212,211,181,.23) !important; color:#e8ebdb !important; box-shadow:inset 0 1px rgba(255,255,255,.07) !important; }
-#btnRoot:hover,#btnFlare:hover { border-color:#93cb9e !important; background:rgba(115,162,120,.16) !important; }
-#btnRoot:disabled,#btnFlare:disabled { opacity:.42; }
+/* --- Floating Ability Cluster (Bottom-Right Overlays) --- */
+#ability-cluster {
+  position: fixed; right: 24px; bottom: 196px; z-index: 15;
+  display: flex; gap: 12px; align-items: center; pointer-events: auto;
+}
+.ability-card {
+  position: relative; width: 66px; height: 66px; border-radius: 6px;
+  background: linear-gradient(135deg, rgba(14,35,42,0.95), rgba(8,20,24,0.98));
+  border: 1.5px solid rgba(224,204,155,0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6), inset 0 1px rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 4px; outline: none;
+}
+.ability-card:hover {
+  transform: translateY(-3px) scale(1.04);
+  border-color: #e7c789;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.8), 0 0 16px rgba(231,199,137,0.35);
+}
+.ability-card:active { transform: translateY(0) scale(0.97); }
+.ability-card .ab-icon { font-size: 24px; line-height: 1; margin-bottom: 2px; }
+.ability-card .ab-name { font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #f0e6cf; }
+.ability-card .ab-cost {
+  position: absolute; top: -7px; right: -7px; font-size: 9px; font-weight: 800;
+  background: #092026; border: 1px solid #57a9ac; color: #a5e5dd;
+  padding: 1px 6px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+.ability-card .ab-key {
+  position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-stats); font-size: 9px; font-weight: 900;
+  background: #dec28c; color: #102428; padding: 0 5px; border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+.ability-card.ready-root {
+  border-color: #5ccbc6;
+  box-shadow: 0 0 14px rgba(92,203,198,0.4), inset 0 0 10px rgba(92,203,198,0.15);
+}
+.ability-card.ready-flare {
+  border-color: #ff9f43;
+  box-shadow: 0 0 14px rgba(255,159,67,0.45), inset 0 0 10px rgba(255,159,67,0.18);
+}
+.ability-card:disabled, .ability-card.unusable {
+  opacity: 0.42; filter: grayscale(0.5); cursor: not-allowed;
+  box-shadow: none !important; transform: none !important;
+}
+
+/* --- Floating Quick-Control Transport Cluster (Top-Right) --- */
+#transport-cluster {
+  position: fixed; top: 88px; right: 20px; z-index: 9;
+  display: flex; gap: 6px; align-items: center;
+  padding: 5px 8px; border-radius: 4px;
+  background: rgba(12,32,39,0.85); border: 1px solid rgba(224,224,195,0.25);
+  box-shadow: 0 8px 22px rgba(5,18,17,0.25); backdrop-filter: blur(12px);
+}
+.tp-btn {
+  height: 28px; padding: 0 9px; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  background: rgba(242,240,220,0.06); border: 1px solid rgba(212,211,181,0.2); border-radius: 4px;
+  color: #e4eddc; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+  cursor: pointer; user-select: none; transition: all 0.15s ease; text-decoration: none; outline: none;
+}
+.tp-btn:hover { background: rgba(236,228,188,0.15); border-color: #e7c789; color: #fff; transform: translateY(-1px); }
+.tp-btn.square { width: 28px; min-width: 28px; padding: 0; font-family: var(--font-stats); }
+.tp-btn kbd { font-family: var(--font-stats); font-size: 8px; opacity: 0.7; margin-left: 2px; }
 #cam-mode {
   top:88px; left:20px; padding:7px 11px; border-radius:3px;
   border:1px solid rgba(224,224,195,.28); background:rgba(12,32,39,.82);
@@ -176,6 +236,36 @@
 #btnCloseGlyphs { display:block; width:100%; margin-top:16px; padding:9px; background:rgba(239,233,205,.07); color:#e9d5a8; border-color:rgba(222,194,137,.35); }
 #btnCloseGlyphs:hover { background:rgba(239,233,205,.14); }
 
+/* --- Settings modal (Video / Audio / Game) --- */
+#settings-modal {
+  position:fixed; inset:0; z-index:40; display:none;
+  align-items:center; justify-content:center;
+  background:rgba(5,10,9,.78); backdrop-filter:blur(6px);
+}
+#settings-modal.open { display:flex; }
+#settings-card {
+  width:min(480px,92vw); max-height:86vh; overflow-y:auto;
+  background:linear-gradient(180deg,#1b211e 0%,#0c1412 100%);
+  border:2px solid var(--bronze-dk, #7a6116); outline:1px solid rgba(201,162,39,.4); outline-offset:-4px;
+  border-radius:8px; padding:18px 20px 20px; color:#efe6cf;
+  box-shadow:0 12px 40px rgba(0,0,0,.7);
+}
+#settings-card h2 { font-family:Georgia,serif; letter-spacing:2px; color:var(--gold, #f0a81e); font-size:19px; margin-bottom:2px; }
+#settings-card .padmap-sub { font-size:11.5px; color:#9fb3a8; margin-bottom:10px; line-height:1.5; }
+#settings-card .padmap-sub b, #settings-card kbd { color:#ffd873; }
+#settings-card kbd { border:1px solid rgba(224,216,177,.3); border-radius:3px; padding:0 5px; font-family:ui-monospace,monospace; font-size:10px; }
+.settings-tabs { display:flex; gap:8px; margin-bottom:6px; }
+.settings-tabs .btn { flex:1; }
+.settings-tabs .btn.sel { border-color:var(--gold, #f0a81e); color:#fff; box-shadow:0 0 12px rgba(240,168,30,.3); }
+.settings-panel .padmap-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid rgba(201,162,39,.18); }
+.settings-panel .padmap-row .act { flex:1; font-size:13px; font-weight:600; }
+.settings-panel .padmap-row .act small { display:block; font-weight:400; font-size:10.5px; color:#9fb3a8; }
+.settings-panel input[type="range"] { width:150px; accent-color:#f0a81e; }
+.settings-panel .switch { width:20px; height:20px; accent-color:#2D7246; cursor:pointer; }
+.gfx-btns { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+.gfx-btns .btn { padding:4px 9px; font-size:11px; }
+.gfx-btns .btn.sel { border-color:var(--gold, #f0a81e); color:#ffd873; }
+
 /* --- Cinematic suite: letterbox, film grain, color grade --- */
 #game-container canvas { filter:saturate(1.12) contrast(1.06); }
 .letterbox { position:fixed; left:0; right:0; height:0; background:#000; z-index:8; transition:height .9s cubic-bezier(.6,0,.3,1); pointer-events:none; }
@@ -251,4 +341,120 @@ body.director #letterbox-top, body.director #letterbox-bottom { height:7vh; }
   .dock-content { width:max(820px,100%); }
   .preview-wrap,#inspect { bottom:177px; }
   #inspect { right:8px; width:min(330px,calc(100vw - 16px)); }
+  #transport-cluster { top: auto; bottom: 182px; left: 20px; right: auto; }
+  #ability-cluster { right: 12px; bottom: 182px; }
+  .ability-card { width: 56px; height: 56px; }
+  .ability-card .ab-icon { font-size: 20px; }
+}
+
+/* --- Grand Theft Auto Cinematic Solarpunk Loading Screen --- */
+#loading-screen {
+  position: fixed; inset: 0; z-index: 99999;
+  background: #09171b; color: #f0e5cf;
+  overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.85s;
+}
+#loading-screen.fade-out {
+  opacity: 0; visibility: hidden; pointer-events: none;
+}
+.gta-backdrop-layer {
+  position: absolute; inset: 0; z-index: 1; overflow: hidden;
+}
+.gta-bg-img {
+  position: absolute; inset: -4%; width: 108%; height: 108%;
+  background-size: cover; background-position: center;
+  transition: opacity 1.2s ease-in-out, transform 5s cubic-bezier(0.2, 0.8, 0.3, 1);
+  transform: scale(1.0); opacity: 0;
+}
+.gta-bg-img.active {
+  opacity: 1; transform: scale(1.06) translate(-1%, -1%);
+}
+.gta-bg-img.prev {
+  opacity: 0; transform: scale(1.1);
+}
+.gta-vignette {
+  position: absolute; inset: 0; z-index: 2;
+  background: radial-gradient(circle at center, transparent 38%, rgba(5,13,16,0.68) 78%, rgba(3,9,11,0.95) 100%),
+              linear-gradient(180deg, rgba(8,18,22,0.85) 0%, transparent 22%, transparent 68%, rgba(6,14,17,0.95) 100%);
+  pointer-events: none;
+}
+.gta-scanlines {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0.16;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.6) 0px, rgba(0,0,0,0.6) 1px, transparent 1px, transparent 3px);
+}
+.gta-hud-top {
+  position: relative; z-index: 10; padding: 32px 42px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.gta-logo-group {
+  display: flex; align-items: center; gap: 14px;
+}
+.gta-brand-logo {
+  width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid #dec28c;
+  box-shadow: 0 0 20px rgba(222,194,140,0.4);
+}
+.gta-title-main {
+  font-family: var(--font-serif); font-size: 22px; font-weight: 800; letter-spacing: 3px; color: #fff;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.9);
+}
+.gta-title-sub {
+  font-size: 9px; font-weight: 700; letter-spacing: 2px; color: #dec28c; opacity: 0.9;
+}
+.gta-telemetry {
+  font-family: var(--font-stats); font-size: 10px; letter-spacing: 1.5px; color: #a4beaf;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8); text-align: right; line-height: 1.5;
+}
+.gta-hud-bottom {
+  position: relative; z-index: 10; padding: 42px;
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 36px;
+}
+.gta-intel-box {
+  max-width: 580px;
+}
+.gta-badge-strip {
+  display: flex; gap: 8px; margin-bottom: 10px;
+}
+.gta-pill {
+  font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+  background: #dec28c; color: #0d1e22; padding: 2px 8px; border-radius: 2px;
+}
+.gta-pill.wire {
+  background: transparent; border: 1px solid #dec28c; color: #dec28c;
+}
+.gta-intel-head {
+  font-family: var(--font-serif); font-size: 36px; font-weight: 900; letter-spacing: 2px; color: #ffffff;
+  margin: 0 0 8px 0; text-transform: uppercase; text-shadow: 0 4px 18px rgba(0,0,0,0.9);
+}
+.gta-intel-body {
+  font-size: 13px; line-height: 1.55; color: #dce7dc; text-shadow: 0 2px 10px rgba(0,0,0,0.9);
+  margin: 0 0 12px 0;
+}
+.gta-intel-footer {
+  font-family: var(--font-stats); font-size: 10px; color: #8faea1; letter-spacing: 1.2px;
+}
+.gta-progress-box {
+  min-width: 320px; text-align: right;
+}
+.gta-status-row {
+  display: flex; justify-content: space-between; font-family: var(--font-stats);
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #dec28c; margin-bottom: 8px;
+}
+.gta-bar-track {
+  height: 4px; width: 100%; background: rgba(222,194,140,0.18); border-radius: 2px; overflow: hidden;
+  border: 1px solid rgba(222,194,140,0.3);
+}
+.gta-bar-fill {
+  height: 100%; width: 0%; background: linear-gradient(90deg, #38bdf8, #dec28c);
+  transition: width 0.35s ease; box-shadow: 0 0 10px #dec28c;
+}
+.gta-continue-prompt {
+  margin-top: 12px; font-family: var(--font-stats); font-size: 10px; font-weight: 800;
+  letter-spacing: 2px; color: #fff; cursor: pointer; animation: gtablink 1.4s infinite;
+}
+@media (max-width: 768px) {
+  .gta-hud-top { padding: 20px 24px; }
+  .gta-hud-bottom { padding: 24px; flex-direction: column; align-items: flex-start; gap: 20px; }
+  .gta-intel-head { font-size: 26px; }
+  .gta-progress-box { width: 100%; min-width: 0; text-align: left; }
 }
