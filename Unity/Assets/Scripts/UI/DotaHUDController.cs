@@ -6,11 +6,17 @@ namespace AegisFlora.UI
 {
     public class DotaHUDController : MonoBehaviour
     {
+        public static DotaHUDController Instance { get; private set; }
+
         [Header("Resource & Vitality Readouts")]
         public Text livesText;
         public Text scrapText;
         public Text waveText;
         public Slider sanctumHealthBar;
+
+        [Header("Defeat & Feedback Screens")]
+        public GameObject defeatScreen;
+        public Image sanctumDamageVignette;
 
         [Header("Tower Build Dock Buttons")]
         public Button btnGatling;  // Q
@@ -25,6 +31,53 @@ namespace AegisFlora.UI
         public GameObject resonancePrefab;
 
         private GameObject selectedTowerPrefab = null;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+        }
+
+        public void UpdateHUD(int lives, int maxLives, int scrap, int wave)
+        {
+            if (livesText != null) livesText.text = lives.ToString();
+            if (scrapText != null) scrapText.text = scrap.ToString();
+            if (waveText != null) waveText.text = $"Wave {wave}";
+            if (sanctumHealthBar != null && maxLives > 0)
+            {
+                sanctumHealthBar.value = Mathf.Clamp01((float)lives / maxLives);
+            }
+        }
+
+        public void TriggerSanctumDamageFlash()
+        {
+            if (sanctumDamageVignette != null)
+            {
+                sanctumDamageVignette.color = new Color(1f, 0f, 0f, 0.4f);
+                CancelInvoke(nameof(ResetDamageFlash));
+                Invoke(nameof(ResetDamageFlash), 0.25f);
+            }
+        }
+
+        private void ResetDamageFlash()
+        {
+            if (sanctumDamageVignette != null)
+            {
+                sanctumDamageVignette.color = new Color(1f, 0f, 0f, 0f);
+            }
+        }
+
+        public void ShowDefeatScreen()
+        {
+            if (defeatScreen != null)
+            {
+                defeatScreen.SetActive(true);
+            }
+        }
 
         private void Update()
         {

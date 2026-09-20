@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using AegisFlora.Mazing;
+using AegisFlora.Core;
 
 namespace AegisFlora.Enemies
 {
@@ -21,6 +23,12 @@ namespace AegisFlora.Enemies
         public Renderer meshRenderer;
         public GameObject deathExplosionPrefab;
         public Transform healthBarForeground;
+
+        [Header("Sanctum Breach & Leak")]
+        public GameObject breachVFXPrefab;
+        public AudioClip breachSFX;
+
+        public static event Action<CreepAgent, int> OnCreepSanctumBreached;
 
         private List<Vector2Int> currentPath;
         private int currentWaypointIndex = 0;
@@ -172,7 +180,32 @@ namespace AegisFlora.Enemies
 
         private void ReachSanctum()
         {
-            // Damage player Sanctum
+            // 1. Fire static breach event
+            OnCreepSanctumBreached?.Invoke(this, sanctumDamage);
+
+            // 2. Play breach visual effects
+            if (breachVFXPrefab != null)
+            {
+                Instantiate(breachVFXPrefab, transform.position, Quaternion.identity);
+            }
+            else if (deathExplosionPrefab != null)
+            {
+                Instantiate(deathExplosionPrefab, transform.position, Quaternion.identity);
+            }
+
+            // 3. Play breach audio
+            if (breachSFX != null)
+            {
+                AudioSource.PlayClipAtPoint(breachSFX, transform.position);
+            }
+
+            // 4. Notify centralized GameManager to decrement lives and trigger defeat if lives <= 0
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.RegisterLeak(this, sanctumDamage);
+            }
+
+            // 5. Destroy creep agent
             Destroy(gameObject);
         }
 
