@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aegis Flora 3D — Solarpunk-Mecha Mazing Tower Defense</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Roboto+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     /* 60% Foundation — Carrara / travertine / gunmetal */
@@ -196,11 +199,24 @@
 
   /* --- Unit & Tower Inspector Card --- */
   #inspect {
-    position: fixed; right: 18px; bottom: 158px; z-index: 12; width: 330px; display: none;
+    position: fixed; right: 20px; bottom: 188px; z-index: 20; width: 320px; display: none;
     background: rgba(16, 27, 23, 0.96); backdrop-filter: blur(8px);
     border: 1.5px solid var(--bronze); border-top: 4px solid var(--gold);
     border-radius: 6px; padding: 12px 14px; font-size: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+    box-shadow: 0 16px 36px rgba(0,0,0,0.7);
+  }
+  body.inspect-active #ability-cluster {
+    right: 360px !important;
+  }
+  .inspect-close-btn {
+    background: transparent; border: 1px solid rgba(218, 194, 138, 0.35);
+    color: #c4b58e; border-radius: 3px; width: 22px; height: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; cursor: pointer; margin-left: auto; flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+  .inspect-close-btn:hover {
+    background: rgba(220, 80, 80, 0.25); border-color: #ff6b6b; color: #fff;
   }
   #inspect .inspect-header { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
   #inspect .inspect-thumb {
@@ -2017,7 +2033,7 @@ function populatePerimeterFloraAndRuins(){
   console.log('Perimeter Flora, Trees & Ruins successfully mounted to scene!');
 }
 
-// Materials Library — AAA PBR: procedural marble veins / brass patina / iron pitting / foliage SSS
+// Materials Library — AAA PBR: procedural normal maps / marble veins / brass patina / iron pitting / foliage SSS
 var MATS = {};
 var TEX = {};
 function canvasTex(size, painter, rx, ry){
@@ -2029,90 +2045,234 @@ function canvasTex(size, painter, rx, ry){
   t.anisotropy = 4;
   return t;
 }
+
+// Procedural tangent-space normal map generator from height derivatives
+function canvasNormalMap(size, heightPainter, strength, rx, ry){
+  var cv = document.createElement('canvas'); cv.width = cv.height = size;
+  var ctx = cv.getContext('2d');
+  var imgData = ctx.createImageData(size, size);
+  var pixels = imgData.data;
+  var height = new Float32Array(size * size);
+  heightPainter(height, size);
+  var str = strength || 2.4;
+  for(var y = 0; y < size; y++){
+    var y0 = ((y - 1 + size) % size) * size;
+    var y1 = ((y + 1) % size) * size;
+    var yc = y * size;
+    for(var x = 0; x < size; x++){
+      var x0 = (x - 1 + size) % size;
+      var x1 = (x + 1) % size;
+      var dx = (height[yc + x1] - height[yc + x0]) * str;
+      var dy = (height[y1 + x] - height[y0 + x]) * str;
+      var len = Math.sqrt(dx * dx + dy * dy + 1.0);
+      var idx = (yc + x) * 4;
+      pixels[idx]     = Math.floor((-dx / len * 0.5 + 0.5) * 255);
+      pixels[idx + 1] = Math.floor((-dy / len * 0.5 + 0.5) * 255);
+      pixels[idx + 2] = Math.floor((1.0 / len * 0.5 + 0.5) * 255);
+      pixels[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+  var t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  if(rx) t.repeat.set(rx, ry || rx);
+  t.anisotropy = 4;
+  return t;
+}
+
 function initMaterials(){
-  // --- Carrara marble: ivory #F4EEDD + grey veins + polished top variation ---
+  // --- 1. Carrara Marble: Ivory #F4EEDD + grey calcite veins + micro-roughness + normal map ---
   TEX.marbleMap = canvasTex(512, function(ctx, S2){
-    ctx.fillStyle = '#e9ddc5'; ctx.fillRect(0,0,S2,S2);
+    ctx.fillStyle = '#f2ebd9'; ctx.fillRect(0,0,S2,S2);
     var r = mulberry(1234);
-    for(var i=0;i<2600;i++){ // grain speckle
-      ctx.fillStyle = 'rgba(120,115,100,'+(0.03+r()*0.05)+')';
+    for(var i=0;i<3200;i++){ // fine calcite grain speckle
+      ctx.fillStyle = 'rgba(125,120,105,'+(0.03+r()*0.05)+')';
       ctx.fillRect(r()*S2, r()*S2, 1.5, 1.5);
     }
-    ctx.lineWidth = 1.1;
-    for(var v=0; v<26; v++){ // grey veins
-      ctx.strokeStyle = 'rgba(110,115,125,'+(0.18+r()*0.25)+')';
+    ctx.lineWidth = 1.2;
+    for(var v=0; v<28; v++){ // primary grey dendritic veins
+      ctx.strokeStyle = 'rgba(105,112,122,'+(0.16+r()*0.24)+')';
       ctx.beginPath();
       var x=r()*S2, y=r()*S2; ctx.moveTo(x,y);
-      for(var s=0;s<6;s++){ x+=(r()-0.5)*140; y+=(r()-0.5)*140; ctx.lineTo(x,y); }
+      for(var s=0;s<7;s++){ x+=(r()-0.5)*130; y+=(r()-0.5)*130; ctx.lineTo(x,y); }
       ctx.stroke();
     }
-    for(var c=0;c<7;c++){ // edge chips / pits
-      ctx.fillStyle = 'rgba(90,82,69,'+(0.25+r()*0.2)+')';
+    // subtle inlaid gold mosaic flecks
+    for(var g=0;g<35;g++){
+      ctx.fillStyle = 'rgba(218,178,88,'+(0.2+r()*0.3)+')';
+      ctx.fillRect(r()*S2, r()*S2, 2.5, 2.5);
+    }
+    for(var c=0;c<8;c++){ // edge chips / weathered pits
+      ctx.fillStyle = 'rgba(85,78,65,'+(0.22+r()*0.2)+')';
       ctx.beginPath(); ctx.arc(r()*S2, r()*S2, 2+r()*5, 0, 7); ctx.fill();
     }
   });
+
   TEX.marbleRough = canvasTex(256, function(ctx, S2){
-    ctx.fillStyle = '#5c5c5c'; ctx.fillRect(0,0,S2,S2); // ~0.36 roughness
+    ctx.fillStyle = '#525252'; ctx.fillRect(0,0,S2,S2); // ~0.32 polished marble plane
     var r = mulberry(77);
-    for(var i=0;i<900;i++){
-      var g = 60+((r()*50)|0); // polished highlights + edge wear
+    for(var i=0;i<1000;i++){
+      var g = 50+((r()*45)|0); // polished highlights (0.22) and edge wear
       ctx.fillStyle = 'rgb('+g+','+g+','+g+')';
       ctx.fillRect(r()*S2, r()*S2, 3+r()*8, 2+r()*4);
     }
   });
-  // --- Antique brass: base + green-copper patina blotches + scuff streaks ---
+
+  TEX.marbleNormal = canvasNormalMap(256, function(h, S2){
+    var r = mulberry(1234);
+    for(var i=0;i<S2*S2;i++) h[i] = 0.5;
+    for(var v=0; v<24; v++){
+      var x = Math.floor(r() * S2), y = Math.floor(r() * S2);
+      for(var s=0; s<45; s++){
+        x = (x + Math.floor((r()-0.5)*8) + S2) % S2;
+        y = (y + Math.floor((r()-0.5)*8) + S2) % S2;
+        h[y * S2 + x] = Math.min(1.0, h[y * S2 + x] + 0.18);
+      }
+    }
+  }, 2.6);
+
+  // --- 2. Antique Brass: Warm burnished brass + verdigris patina + concentric lathe lines ---
   TEX.brassMap = canvasTex(256, function(ctx, S2){
     ctx.fillStyle = '#C59B27'; ctx.fillRect(0,0,S2,S2);
     var r = mulberry(913);
-    for(var i=0;i<60;i++){ // patina verdigris in crevices
-      ctx.fillStyle = 'rgba(94,155,138,'+(0.12+r()*0.3)+')';
-      ctx.beginPath(); ctx.arc(r()*S2, r()*S2, 4+r()*16, 0, 7); ctx.fill();
+    for(var i=0;i<80;i++){ // turquoise patina verdigris in crevices
+      ctx.fillStyle = 'rgba(94,155,138,'+(0.15+r()*0.35)+')';
+      ctx.beginPath(); ctx.arc(r()*S2, r()*S2, 3+r()*14, 0, 7); ctx.fill();
     }
-    ctx.strokeStyle = 'rgba(255,240,200,0.35)';
-    for(var s2=0;s2<40;s2++){ // edge-scuff highlights
-      ctx.lineWidth = 0.8; ctx.beginPath();
-      var x=r()*S2, y=r()*S2; ctx.moveTo(x,y); ctx.lineTo(x+20+r()*30, y+(r()-0.5)*8); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,245,215,0.4)';
+    for(var s2=0;s2<45;s2++){ // buffed specular highlights
+      ctx.lineWidth = 0.9; ctx.beginPath();
+      var bx=r()*S2, by=r()*S2; ctx.moveTo(bx,by); ctx.lineTo(bx+25+r()*35, by+(r()-0.5)*6); ctx.stroke();
     }
   });
-  // --- Cast iron: gunmetal + pitting + anisotropic brush lines + soot ---
+
+  TEX.brassRough = canvasTex(256, function(ctx, S2){
+    ctx.fillStyle = '#444444'; ctx.fillRect(0,0,S2,S2); // ~0.27 baseline
+    var r = mulberry(913);
+    for(var i=0;i<60;i++){ // patina has higher roughness ~0.55
+      ctx.fillStyle = 'rgba(140,140,140,'+(0.2+r()*0.3)+')';
+      ctx.beginPath(); ctx.arc(r()*S2, r()*S2, 4+r()*12, 0, 7); ctx.fill();
+    }
+  });
+
+  TEX.brassNormal = canvasNormalMap(256, function(h, S2){
+    var r = mulberry(442);
+    for(var i=0;i<S2*S2;i++) h[i] = 0.5;
+    // Concentric lathe tooling rings and rivet indentations
+    for(var ri=0; ri<6; ri++){
+      var cx = Math.floor(r()*S2), cy = Math.floor(r()*S2);
+      for(var deg=0; deg<360; deg+=10){
+        var rad = deg * Math.PI / 180;
+        var px = (cx + Math.floor(Math.cos(rad) * 12) + S2) % S2;
+        var py = (cy + Math.floor(Math.sin(rad) * 12) + S2) % S2;
+        h[py * S2 + px] = Math.min(1.0, h[py * S2 + px] + 0.25);
+      }
+    }
+  }, 2.8);
+
+  // --- 3. Cast Iron: Gunmetal + pitting + anisotropic brush lines + carbon soot ---
   TEX.ironMap = canvasTex(256, function(ctx, S2){
     ctx.fillStyle = '#22262B'; ctx.fillRect(0,0,S2,S2);
     var r = mulberry(551);
-    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-    for(var l=0;l<120;l++){ ctx.lineWidth=1; ctx.beginPath(); var y=r()*S2; ctx.moveTo(0,y); ctx.lineTo(S2,y+(r()-0.5)*6); ctx.stroke(); }
-    for(var i=0;i<500;i++){ // hammer/pit marks
-      ctx.fillStyle = 'rgba(0,0,0,'+(0.2+r()*0.35)+')';
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    for(var l=0;l<130;l++){ ctx.lineWidth=1; ctx.beginPath(); var y=r()*S2; ctx.moveTo(0,y); ctx.lineTo(S2,y+(r()-0.5)*5); ctx.stroke(); }
+    for(var i=0;i<600;i++){ // hammer/sand-pit marks
+      ctx.fillStyle = 'rgba(0,0,0,'+(0.25+r()*0.4)+')';
       ctx.fillRect(r()*S2, r()*S2, 1+r()*3, 1+r()*2);
     }
-    var grd = ctx.createLinearGradient(0,S2*0.6,0,S2); // carbon soot near bottom (muzzles/stacks)
-    grd.addColorStop(0,'rgba(0,0,0,0)'); grd.addColorStop(1,'rgba(5,4,3,0.55)');
+    var grd = ctx.createLinearGradient(0,S2*0.55,0,S2); // carbon soot buildup near exhaust/muzzles
+    grd.addColorStop(0,'rgba(0,0,0,0)'); grd.addColorStop(1,'rgba(6,5,4,0.65)');
     ctx.fillStyle = grd; ctx.fillRect(0,0,S2,S2);
   });
+
+  TEX.ironRough = canvasTex(256, function(ctx, S2){
+    ctx.fillStyle = '#767676'; ctx.fillRect(0,0,S2,S2); // ~0.46 rough cast
+    var r = mulberry(551);
+    for(var i=0;i<400;i++){
+      var g = 100+((r()*50)|0); // sand-cast pits
+      ctx.fillStyle = 'rgb('+g+','+g+','+g+')';
+      ctx.fillRect(r()*S2, r()*S2, 2+r()*4, 2+r()*3);
+    }
+  });
+
+  TEX.ironNormal = canvasNormalMap(256, function(h, S2){
+    var r = mulberry(772);
+    for(var i=0;i<S2*S2;i++) h[i] = 0.5;
+    for(var p=0; p<400; p++){
+      var px = Math.floor(r() * S2), py = Math.floor(r() * S2);
+      h[py * S2 + px] = Math.max(0.0, h[py * S2 + px] - 0.22);
+    }
+  }, 2.5);
+
+  // --- 4. Solarpunk Foliage Normal Map ---
+  TEX.leafNormal = canvasNormalMap(256, function(h, S2){
+    for(var y=0; y<S2; y++){
+      var spine = Math.abs(y - S2/2) / (S2/2);
+      for(var x=0; x<S2; x++){
+        var rib = Math.sin((x + y * 0.5) * 0.3) * 0.1;
+        h[y * S2 + x] = 0.5 + (1.0 - spine) * 0.2 + rib;
+      }
+    }
+  }, 1.8);
+
   TEX.groundDetail = null; // built in build3DGrid (needs COLS/ROWS)
 
-  MATS.marble = new THREE.MeshStandardMaterial({ map: TEX.marbleMap, roughnessMap: TEX.marbleRough, color: 0xffffff, roughness: 0.38, metalness: 0.04 });
-  MATS.marbleTop = new THREE.MeshStandardMaterial({ map: TEX.marbleMap, color: 0xf2e8d2, roughness: 0.25, metalness: 0.05 }); // polished pediment tops
-  MATS.brass = new THREE.MeshStandardMaterial({ map: TEX.brassMap, color: 0xffffff, roughness: 0.27, metalness: 0.91 });
-  MATS.iron = new THREE.MeshStandardMaterial({ map: TEX.ironMap, color: 0xffffff, roughness: 0.46, metalness: 0.88 });
-  MATS.stone = new THREE.MeshStandardMaterial({ color: 0x8a8272, roughness: 0.72, metalness: 0.02 });
-  // Foliage: two-sided + emissive-backed fake SSS transmission, glossy coat
-  MATS.peony = new THREE.MeshStandardMaterial({ color: 0xDD858A, roughness: 0.42, metalness: 0.0, side: THREE.DoubleSide, emissive: 0xB85F6A, emissiveIntensity: 0.18 });
-  MATS.goldFlower = new THREE.MeshStandardMaterial({ color: 0xEAB14D, roughness: 0.4, metalness: 0.05, side: THREE.DoubleSide, emissive: 0xC98A32, emissiveIntensity: 0.2 });
-  MATS.leaf = new THREE.MeshStandardMaterial({ color: 0x315F49, roughness: 0.45, metalness: 0.0, side: THREE.DoubleSide, emissive: 0x244735, emissiveIntensity: 0.18 });
-  MATS.wisteria = new THREE.MeshStandardMaterial({ color: 0x9d7bca, roughness: 0.5, metalness: 0.0, side: THREE.DoubleSide, emissive: 0x5a3d8a, emissiveIntensity: 0.3, transparent: true, opacity: 0.92 });
+  // --- AAA PBR Materials instantiation ---
+  MATS.marble = new THREE.MeshStandardMaterial({
+    map: TEX.marbleMap, roughnessMap: TEX.marbleRough, normalMap: TEX.marbleNormal,
+    normalScale: new THREE.Vector2(0.35, 0.35), color: 0xffffff, roughness: 0.35, metalness: 0.04
+  });
+  MATS.marbleTop = new THREE.MeshStandardMaterial({
+    map: TEX.marbleMap, roughnessMap: TEX.marbleRough, normalMap: TEX.marbleNormal,
+    normalScale: new THREE.Vector2(0.2, 0.2), color: 0xf4eedd, roughness: 0.24, metalness: 0.05
+  });
+  MATS.brass = new THREE.MeshStandardMaterial({
+    map: TEX.brassMap, roughnessMap: TEX.brassRough, normalMap: TEX.brassNormal,
+    normalScale: new THREE.Vector2(0.55, 0.55), color: 0xffffff, roughness: 0.28, metalness: 0.92
+  });
+  MATS.iron = new THREE.MeshStandardMaterial({
+    map: TEX.ironMap, roughnessMap: TEX.ironRough, normalMap: TEX.ironNormal,
+    normalScale: new THREE.Vector2(0.65, 0.65), color: 0xffffff, roughness: 0.48, metalness: 0.88
+  });
+  MATS.stone = new THREE.MeshStandardMaterial({
+    normalMap: TEX.marbleNormal, normalScale: new THREE.Vector2(0.5, 0.5),
+    color: 0x8a8272, roughness: 0.72, metalness: 0.02
+  });
+
+  // Foliage: double-sided with calibrated forward SSS transmission
+  MATS.peony = new THREE.MeshStandardMaterial({
+    color: 0xE05780, roughness: 0.38, metalness: 0.0, side: THREE.DoubleSide,
+    emissive: 0x8A2A48, emissiveIntensity: 0.24
+  });
+  MATS.goldFlower = new THREE.MeshStandardMaterial({
+    color: 0xFFB703, roughness: 0.36, metalness: 0.05, side: THREE.DoubleSide,
+    emissive: 0x946505, emissiveIntensity: 0.24
+  });
+  MATS.leaf = new THREE.MeshStandardMaterial({
+    color: 0x2D7246, roughness: 0.40, metalness: 0.0, side: THREE.DoubleSide,
+    normalMap: TEX.leafNormal, normalScale: new THREE.Vector2(0.4, 0.4),
+    emissive: 0x1A3828, emissiveIntensity: 0.20
+  });
+  MATS.wisteria = new THREE.MeshStandardMaterial({
+    color: 0x9D7BCA, roughness: 0.45, metalness: 0.0, side: THREE.DoubleSide,
+    emissive: 0x4A2D6E, emissiveIntensity: 0.32, transparent: true, opacity: 0.94
+  });
+
+  // 10% Combat Telemetry: High-Energy Crystals
   MATS.cyanGlow = new THREE.MeshStandardMaterial({
-    color: 0x00f5d4, emissive: 0x00f5d4, emissiveIntensity: 2.8, roughness: 0.1, metalness: 0.1
+    color: 0x00F5D4, emissive: 0x00F5D4, emissiveIntensity: 3.2, roughness: 0.12, metalness: 0.1
   });
   MATS.amberGlow = new THREE.MeshStandardMaterial({
-    color: 0xFF6B35, emissive: 0xFF6B35, emissiveIntensity: 3.0, roughness: 0.25, metalness: 0.1
+    color: 0xFF6B35, emissive: 0xFF6B35, emissiveIntensity: 3.4, roughness: 0.22, metalness: 0.1
   });
   MATS.headlight = new THREE.MeshStandardMaterial({
-    color: 0xffaa1e, emissive: 0xffaa1e, emissiveIntensity: 3.5, roughness: 0.2
+    color: 0xFFAA1E, emissive: 0xFFAA1E, emissiveIntensity: 3.6, roughness: 0.2
   });
   MATS.rubber = new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.9, metalness: 0.1 });
   MATS.hostileRed = new THREE.MeshStandardMaterial({
-    color: 0xFF3B30, emissive: 0xFF3B30, emissiveIntensity: 3.2, roughness: 0.3
+    color: 0xFF3B30, emissive: 0xFF3B30, emissiveIntensity: 3.5, roughness: 0.25
   });
+
   // Soft atmospheric glow texture — deliberately NO hot white core (avoids cheap glare-disc look)
   TEX.halo = canvasTex(128, function(ctx, S2){
     var g = ctx.createRadialGradient(S2/2,S2/2,2,S2/2,S2/2,S2/2);
@@ -2175,6 +2335,130 @@ function getIdealPixelRatio(profile){
   return Math.min(dpr, GFX.safari ? 1.5 : 2.0, Math.sqrt(pixelBudget / (w * h)));
 }
 
+// ---------- AAA Post-Processing Compositor (Zero Dependency, Screen-Space Bloom + ACES Tonemap + Teal Lift) ----------
+var POST = {
+  enabled: true,
+  renderTarget: null,
+  postCamera: null,
+  postScene: null,
+  postMaterial: null,
+  postQuad: null,
+  width: 0,
+  height: 0
+};
+
+function initPostProcessing(){
+  if(POST.postScene || !renderer) return;
+  POST.postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  POST.postScene = new THREE.Scene();
+  
+  var dpr = (renderer.getPixelRatio ? renderer.getPixelRatio() : 1) || 1;
+  var w = Math.floor(window.innerWidth * dpr) || 800;
+  var h = Math.floor(window.innerHeight * dpr) || 600;
+  POST.width = w; POST.height = h;
+
+  POST.renderTarget = new THREE.WebGLRenderTarget(w, h, {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    format: THREE.RGBAFormat,
+    stencilBuffer: false,
+    depthBuffer: true
+  });
+
+  POST.postMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      tDiffuse: { value: POST.renderTarget.texture },
+      uResolution: { value: new THREE.Vector2(w, h) },
+      uBloomThreshold: { value: 0.85 },
+      uBloomIntensity: { value: 0.5 },
+      uVignette: { value: 0.28 },
+      uTealShadow: { value: new THREE.Vector3(0.04, 0.08, 0.12) }
+    },
+    vertexShader: [
+      'varying vec2 vUv;',
+      'void main(){',
+      '  vUv = uv;',
+      '  gl_Position = vec4(position.xy, 0.0, 1.0);',
+      '}'
+    ].join('\n'),
+    fragmentShader: [
+      'varying vec2 vUv;',
+      'uniform sampler2D tDiffuse;',
+      'uniform vec2 uResolution;',
+      'uniform float uBloomThreshold;',
+      'uniform float uBloomIntensity;',
+      'uniform float uVignette;',
+      'uniform vec3 uTealShadow;',
+      '',
+      '// Fitted ACES Filmic Tone Mapping Curve',
+      'vec3 ACESFilm(vec3 x){',
+      '  float a = 2.51;',
+      '  float b = 0.03;',
+      '  float c = 2.43;',
+      '  float d = 0.59;',
+      '  float e = 0.14;',
+      '  return clamp((x*(a*x+b))/(x*(c*x+d)+e), 0.0, 1.0);',
+      '}',
+      '',
+      'void main(){',
+      '  vec2 texel = 1.0 / uResolution;',
+      '  vec4 baseColor = texture2D(tDiffuse, vUv);',
+      '  ',
+      '  // 8-tap Screen-Space Bloom isolation with 0.85 threshold',
+      '  vec3 bloom = vec3(0.0);',
+      '  vec2 offsets[8];',
+      '  offsets[0] = vec2(-2.5, -2.5) * texel;',
+      '  offsets[1] = vec2( 2.5, -2.5) * texel;',
+      '  offsets[2] = vec2(-2.5,  2.5) * texel;',
+      '  offsets[3] = vec2( 2.5,  2.5) * texel;',
+      '  offsets[4] = vec2(-4.0,  0.0) * texel;',
+      '  offsets[5] = vec2( 4.0,  0.0) * texel;',
+      '  offsets[6] = vec2( 0.0, -4.0) * texel;',
+      '  offsets[7] = vec2( 0.0,  4.0) * texel;',
+      '  ',
+      '  for(int i = 0; i < 8; i++){',
+      '    vec3 s = texture2D(tDiffuse, vUv + offsets[i]).rgb;',
+      '    float lum = dot(s, vec3(0.2126, 0.7152, 0.0722));',
+      '    if(lum > uBloomThreshold){',
+      '      bloom += (s - uBloomThreshold) * 0.125;',
+      '    }',
+      '  }',
+      '  ',
+      '  vec3 color = baseColor.rgb + bloom * uBloomIntensity * 2.2;',
+      '  ',
+      '  // Lift shadows with cinematic deep cerulean teal tint',
+      '  float luma = dot(color, vec3(0.299, 0.587, 0.114));',
+      '  float shadowMask = clamp(1.0 - luma * 2.2, 0.0, 1.0);',
+      '  color += uTealShadow * shadowMask * 0.35;',
+      '  ',
+      '  // ACES Tone Mapping',
+      '  color = ACESFilm(color);',
+      '  ',
+      '  // Optical Vignette',
+      '  vec2 uvDist = (vUv - 0.5) * 1.414;',
+      '  float vig = 1.0 - dot(uvDist, uvDist) * uVignette;',
+      '  color *= clamp(vig, 0.0, 1.0);',
+      '  ',
+      '  gl_FragColor = vec4(color, 1.0);',
+      '}'
+    ].join('\n'),
+    depthTest: false,
+    depthWrite: false
+  });
+
+  POST.postQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), POST.postMaterial);
+  POST.postScene.add(POST.postQuad);
+}
+
+function resizePostProcessing(w, h){
+  if(!POST.renderTarget) return;
+  POST.width = w; POST.height = h;
+  POST.renderTarget.setSize(w, h);
+  if(POST.postMaterial && POST.postMaterial.uniforms.uResolution){
+    POST.postMaterial.uniforms.uResolution.value.set(w, h);
+  }
+}
+
 function applyGraphicsProfile(){
   var dpr = getIdealPixelRatio(GFX.profile);
   var width = window.innerWidth, height = window.innerHeight;
@@ -2202,6 +2486,7 @@ function applyGraphicsProfile(){
     }
   }
   resizeCombatCanvas();
+  resizePostProcessing(Math.round(width * dpr), Math.round(height * dpr));
   updateGfxPill();
 }
 
@@ -2285,6 +2570,7 @@ function initThreeJS(){
   container.appendChild(renderer.domElement);
 
   initCombatCanvas();
+  initPostProcessing();
   applyGraphicsProfile();
 
   controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -2402,8 +2688,8 @@ function stepDirector(dt){
 }
 
 function build3DLighting(){
-  // 1) Key Sun: warm golden #FFF4DC at 3.0 — long soft contact-hardening shadows
-  var sun = new THREE.DirectionalLight(0xFFF0D5, 1.6);
+  // 1) Key Sun: warm golden #FFF4DC at 2.8 — long soft contact-hardening shadows
+  var sun = new THREE.DirectionalLight(0xFFF4DC, 2.8);
   sun.position.set(38, 60, 32);
   sun.castShadow = true;
   var initSz = (GFX.profile === 'perf') ? 1024 : (GFX.profile === 'balanced' ? 1536 : 2048);
@@ -2417,23 +2703,25 @@ function build3DLighting(){
   sun.shadow.camera.right = d;
   sun.shadow.camera.top = d;
   sun.shadow.camera.bottom = -d;
-  sun.shadow.bias = -0.0004;
+  sun.shadow.bias = -0.0003;
+  sun.shadow.radius = 1.6; // Contact-hardening penumbra falloff
   scene.add(sun);
   scene.userData.sun = sun;
 
   // 2) Ambient Fill: deep cerulean teal #0E3844 — cinematic lifted shadows
-  var fill = new THREE.DirectionalLight(0x477984, 0.45);
+  var fill = new THREE.DirectionalLight(0x0E3844, 0.55);
   fill.position.set(-35, 25, -35);
   scene.add(fill);
 
-  var hemi = new THREE.HemisphereLight(0x8da9ad, 0x263a30, 0.48);
+  var hemi = new THREE.HemisphereLight(0x8da9ad, 0x0E2830, 0.40);
   scene.add(hemi);
 
-  // 3) Rim / Accent: incandescent solar amber — silhouette edges on turrets/mechs/capitals
-  var rim = new THREE.DirectionalLight(0xe9aa68, 0.6);
+  // 3) Rim / Accent: incandescent solar amber #FF6B35 — silhouette edges on turrets/mechs/capitals
+  var rim = new THREE.DirectionalLight(0xFF6B35, 0.75);
   rim.position.set(-30, 14, 42);
   scene.add(rim);
   scene.userData.rim = rim;
+
   // lightning strike light: idle at 0, spikes with sky flash so the ground feels the bolt
   var bolt = new THREE.DirectionalLight(0xbfd8ff, 0);
   bolt.position.set(30, 70, -40);
@@ -2441,14 +2729,17 @@ function build3DLighting(){
   scene.userData.boltLight = bolt;
 
   // Crepuscular god-ray shafts through colonnade gaps (additive volumetric fakes)
-  var shaftMat = new THREE.MeshBasicMaterial({ color: 0xffe9b0, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
+  var shaftMat = new THREE.MeshBasicMaterial({
+    color: 0xffe4ac, transparent: true, opacity: 0.05,
+    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false
+  });
   scene.userData.shafts = [];
   for(var sgi=0; sgi<7; sgi++){
-    var sg = new THREE.PlaneGeometry(3.2, 26);
+    var sg = new THREE.PlaneGeometry(3.6, 28);
     var shaft = new THREE.Mesh(sg, shaftMat.clone());
     shaft.position.set(-18 + sgi * 6.2, 9, -14 + (sgi % 2) * 2);
     shaft.rotation.set(0.35, 0.5, 0.62);
-    shaft.material.opacity = 0.028 + Math.random() * 0.025;
+    shaft.material.opacity = 0.032 + Math.random() * 0.02;
     scene.add(shaft);
     scene.userData.shafts.push(shaft);
   }
@@ -3488,22 +3779,24 @@ function updateBossBar(){
 function spawnPrismBeam(from, to){
   var dir = to.clone().sub(from); var len = dir.length();
   var coreG = new THREE.CylinderGeometry(0.09, 0.09, len, 8, 1, true);
-  var core = new THREE.Mesh(coreG, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));
-  var sheathG = new THREE.CylinderGeometry(0.22, 0.22, len, 8, 1, true);
-  var sheath = new THREE.Mesh(sheathG, new THREE.MeshBasicMaterial({ color: 0x00F5D4, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  var core = new THREE.Mesh(coreG, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.98, blending: THREE.AdditiveBlending, depthWrite: false }));
+  var sheathG = new THREE.CylinderGeometry(0.24, 0.24, len, 8, 1, true);
+  var sheath = new THREE.Mesh(sheathG, new THREE.MeshBasicMaterial({ color: 0x00F5D4, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
   var grp = new THREE.Group();
   grp.add(core); grp.add(sheath);
   grp.position.copy(from.clone().add(to).multiplyScalar(0.5));
   grp.lookAt(to); grp.rotateX(Math.PI/2);
-  addHalo(grp, 0x00F5D4, 2.2, 0.35);
+  addHalo(grp, 0x00F5D4, 2.5, 0.45);
   scene.add(grp);
-  FX.beams.push({ mesh: grp, life: 0.06, max: 0.06 });
-  // sparking contact
-  for(var i=0;i<3;i++){
-    var s = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), MATS.cyanGlow);
+  FX.beams.push({ mesh: grp, life: 0.07, max: 0.07 });
+  // violent sparking contact + dynamic point light
+  var L = fxLight(0x00F5D4, 4.5, 9);
+  if(L) L.position.copy(to);
+  for(var i=0;i<4;i++){
+    var s = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), MATS.cyanGlow);
     s.position.copy(to);
     scene.add(s);
-    FX.sparks.push({ mesh: s, vx: (Math.random()-0.5)*6, vy: 2+Math.random()*4, vz: (Math.random()-0.5)*6, life: 0.35, grav: 10 });
+    FX.sparks.push({ mesh: s, vx: (Math.random()-0.5)*7, vy: 2+Math.random()*4, vz: (Math.random()-0.5)*7, life: 0.35, grav: 10 });
   }
 }
 function spawnResonanceRing(worldPos, range, violet){
@@ -3615,11 +3908,16 @@ function renderCombatFX(dt){
 
 function hitFlashCreep(f){
   f.flashT = 0.06;
+  if(f.dirX !== undefined && f.dirY !== undefined){
+    // Directional mechanical knockback / stagger impulse
+    f.x -= f.dirX * 0.035;
+    f.y -= f.dirY * 0.035;
+  }
   if(f.mesh && f.mesh.traverse){
     f.mesh.traverse(function(ch){ if(ch.isMesh && ch.material && ch.material.emissive){ ch.userData._e = ch.material.emissive.getHex(); ch.material.emissive.setHex(0xffffff); } });
     setTimeout(function(){
       f.mesh.traverse(function(ch){ if(ch.isMesh && ch.userData._e !== undefined && ch.material.emissive) ch.material.emissive.setHex(ch.userData._e); });
-    }, 16);
+    }, 18);
   }
 }
 function deathDisassembly(f){
@@ -4549,7 +4847,8 @@ function showInspect(){
   var html =
     '<div class="inspect-header">' +
       '<img class="inspect-thumb" src="' + c.img + '" alt="' + c.name + '" onerror="this.style.display=\'none\'">' +
-      '<div><h4>' + c.name + (t.branch ? ' — ' + BRANCH[t.type][t.branch].name : ' T1') + '</h4><div class="sub">3D Solarpunk Defense Engine · <span class="' + dmgCls + '" style="font-weight:bold">' + dtype + '</span></div></div>' +
+      '<div style="flex:1;min-width:0;"><h4>' + c.name + (t.branch ? ' — ' + BRANCH[t.type][t.branch].name : ' T1') + '</h4><div class="sub">3D Solarpunk Defense Engine · <span class="' + dmgCls + '" style="font-weight:bold">' + dtype + '</span></div></div>' +
+      '<button id="btnCloseInspect" class="inspect-close-btn" title="Close Inspector (Esc)">✕</button>' +
     '</div>' +
     '<div class="row" style="font-family:var(--font-stats)">RNG <b>' + towerRange(t).toFixed(1) + '</b> · DPS <b>' + dps + '</b> · Kills <b>' + (t.kills || 0) + '</b><br>Total dmg <b>' + Math.round(t.totalDmg || 0) + '</b></div>' +
     '<div class="row"><div style="height:6px;background:#0a1512;border:1px solid #3d4f45;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + Math.min(100, (t.totalDmg||0)/20) + '%;background:linear-gradient(90deg,#00F5D4,#FFB703)"></div></div><div style="font-size:10px;color:#9bb0a4">LIVE DPS METER</div></div>';
@@ -4567,9 +4866,20 @@ function showInspect(){
   if(a) a.addEventListener('click', function(){ var r = upgradeTo(t, 'A'); if(!r.ok){ toast(r.why); sfx('error'); } else showInspect(); });
   if(b) b.addEventListener('click', function(){ var r = upgradeTo(t, 'B'); if(!r.ok){ toast(r.why); sfx('error'); } else showInspect(); });
   document.getElementById('btnSellTower').addEventListener('click', function(){ sellTower(t); });
+  var closeBtn = document.getElementById('btnCloseInspect');
+  if(closeBtn) closeBtn.addEventListener('click', function(ev){
+    ev.stopPropagation();
+    S.selTower = null;
+    hideInspect();
+    if(rangeRingMesh) rangeRingMesh.visible = false;
+  });
   box.style.display = 'block';
+  document.body.classList.add('inspect-active');
 }
-function hideInspect(){ if(el.inspect) el.inspect.style.display = 'none'; }
+function hideInspect(){
+  if(el.inspect) el.inspect.style.display = 'none';
+  document.body.classList.remove('inspect-active');
+}
 
 function refreshHud(){
   if(!el.lives) return;
@@ -5649,7 +5959,14 @@ function animate(){
     camera.position.y += (Math.random() - 0.5) * sh * 0.6;
     camera.position.z += (Math.random() - 0.5) * sh;
   }
-  renderer.render(scene, camera);
+  if(POST.enabled && POST.renderTarget && POST.postScene && GFX.profile !== 'perf'){
+    renderer.setRenderTarget(POST.renderTarget);
+    renderer.render(scene, camera);
+    renderer.setRenderTarget(null);
+    renderer.render(POST.postScene, POST.postCamera);
+  } else {
+    renderer.render(scene, camera);
+  }
   renderCombatFX(dt);
   stepFpsAndDrs(dt);
 }
