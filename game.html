@@ -4702,54 +4702,15 @@ var PAD = { active: false, prev: [], name: '', lastActiveIndex: null, idleFrames
 var PAD_TOWERS = ['gun', 'rocket', 'beam', 'slow'];
 
 function getActiveGamepad(){
-  var raw = null;
   try {
-    raw = (typeof navigator.getGamepads === 'function') ? navigator.getGamepads() :
-          ((typeof navigator.webkitGetGamepads === 'function') ? navigator.webkitGetGamepads() : null);
+    var raw = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads() : []);
+    if(!raw) return null;
+    for(var i = 0; i < raw.length; i++){
+      var p = raw[i];
+      if(p && (p.connected || (p.buttons && p.buttons.length > 0))) return p;
+    }
   } catch(e){}
-  if(!raw) return null;
-
-  var valid = [];
-  for(var i = 0; i < raw.length; i++){
-    var p = raw[i];
-    if(p && p.connected !== false && (p.buttons || p.axes)) valid.push(p);
-  }
-  if(valid.length === 0) return null;
-
-  // 1. Scan for any gamepad with active inputs (buttons pressed or sticks displaced)
-  for(var j = 0; j < valid.length; j++){
-    var pad = valid[j];
-    if(pad.buttons){
-      for(var bi = 0; bi < pad.buttons.length; bi++){
-        var b = pad.buttons[bi];
-        if(b && (b.pressed || (typeof b.value === 'number' && b.value > 0.3) || b === true)){
-          PAD.lastActiveIndex = pad.index;
-          return pad;
-        }
-      }
-    }
-    if(pad.axes){
-      for(var ai = 0; ai < pad.axes.length; ai++){
-        if(Math.abs(pad.axes[ai] || 0) > 0.16){
-          PAD.lastActiveIndex = pad.index;
-          return pad;
-        }
-      }
-    }
-  }
-
-  // 2. Fall back to the last active pad if still connected
-  if(PAD.lastActiveIndex !== null && PAD.lastActiveIndex !== undefined){
-    for(var k = 0; k < valid.length; k++){
-      if(valid[k].index === PAD.lastActiveIndex) return valid[k];
-    }
-  }
-
-  // 3. Fall back to standard mapping or any connected gamepad with controls
-  for(var m = 0; m < valid.length; m++){
-    if(valid[m].mapping === 'standard' || (valid[m].buttons && valid[m].buttons.length >= 4)) return valid[m];
-  }
-  return valid[0];
+  return null;
 }
 
 function padRumble(strong, weak, dur){
