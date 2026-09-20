@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aegis Flora — Solarpunk 3D Mazing Tower Defense by murderszn</title>
-  <meta name="description" content="A luxury Solarpunk 3D Mazing Tower Defense game developed by murderszn. Sculpt living labyrinths across an open Greco-Roman ruins battlefield and repel the clockwork automata legion. Wishlist on Steam or play the free web demo.">
+  <meta name="description" content="A luxury Solarpunk 3D Mazing Tower Defense game developed by murderszn. Sculpt living labyrinths across an open Greco-Roman ruins battlefield and repel the clockwork automata legion. Play the free web demo.">
   <meta name="author" content="murderszn">
   <meta name="theme-color" content="#030706">
 
-  <!-- OpenGraph / Steam / Social Metadata -->
+  <!-- OpenGraph / Social Metadata -->
   <meta property="og:title" content="Aegis Flora — Solarpunk 3D Mazing Tower Defense">
   <meta property="og:description" content="Sculpt living labyrinths, deploy botanical artillery, and defend the Floating Sanctum of Olympos against 50 waves of automata incursions. Developed by murderszn.">
   <meta property="og:type" content="website">
@@ -21,7 +21,7 @@
   <meta name="twitter:site" content="@murderszn">
   <meta name="twitter:creator" content="@murderszn">
   <meta name="twitter:title" content="Aegis Flora — Solarpunk 3D Mazing Tower Defense">
-  <meta name="twitter:description" content="Tactical freeform mazing, botanical artillery, and dieselpunk automata incursions. Developed by murderszn. Wishlist on Steam!">
+  <meta name="twitter:description" content="Tactical freeform mazing, botanical artillery, and dieselpunk automata incursions. Developed by murderszn.">
   <meta name="twitter:image" content="https://murderszn.github.io/aegis-flora/assets/aegis_master.jpg">
 
   <link rel="icon" type="image/jpeg" href="assets/aegis_flora_logo.jpg">
@@ -36,12 +36,6 @@
       --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
       --gold: #e2c082;
       --gold-dim: rgba(226, 192, 130, 0.3);
-      --steam-blue: #1b2838;
-      --steam-cyan: #66c0f4;
-      --steam-cyan-glow: rgba(102, 192, 244, 0.35);
-      --steam-dark: #0f161f;
-      --card-bg: rgba(6, 14, 11, 0.78);
-      --card-border: rgba(255, 255, 255, 0.12);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -88,7 +82,7 @@
       color: #ffffff; text-transform: uppercase; font-weight: 400;
     }
     .nav-links {
-      display: flex; align-items: center; gap: 24px;
+      display: flex; align-items: center; gap: 28px;
     }
     .nav-link-simple {
       color: var(--text-dim); text-decoration: none; font-size: 12px; font-weight: 600;
@@ -100,31 +94,10 @@
       display: flex; align-items: center; gap: 14px;
     }
 
-    /* Steam & Action Buttons */
-    .btn-steam {
-      display: inline-flex; align-items: center; gap: 9px;
-      background: linear-gradient(135deg, #1b2838 0%, #121922 100%);
-      color: var(--steam-cyan); font-weight: 700; font-size: 12px;
-      letter-spacing: 2px; text-transform: uppercase; padding: 10px 22px; border-radius: 30px;
-      text-decoration: none; border: 1px solid rgba(102, 192, 244, 0.45);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 14px rgba(102, 192, 244, 0.15);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-      cursor: pointer;
-    }
-    .btn-steam:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6), 0 0 22px rgba(102, 192, 244, 0.35);
-      border-color: var(--steam-cyan);
-      color: #ffffff;
-    }
-    .btn-steam svg {
-      width: 16px; height: 16px; fill: currentColor; flex-shrink: 0;
-    }
-
     .btn-launch {
       display: inline-flex; align-items: center; gap: 8px;
       background: #ffffff; color: #080c0a; font-weight: 700; font-size: 12px;
-      letter-spacing: 2px; text-transform: uppercase; padding: 10px 22px; border-radius: 30px;
+      letter-spacing: 2px; text-transform: uppercase; padding: 10px 24px; border-radius: 30px;
       text-decoration: none; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
       transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
     }
@@ -245,11 +218,8 @@
 
     /* CTAs in Chapter 1 & Chapter 6 */
     .hero-btn-row {
-      display: flex; gap: 16px; align-items: center; margin-top: 10px;
-      flex-wrap: wrap;
-    }
-    .chapter-content.align-center .hero-btn-row {
-      justify-content: center;
+      display: flex; gap: 16px; align-items: center; justify-content: center;
+      margin-top: 10px; flex-wrap: wrap;
     }
     .btn-primary-hero {
       display: inline-flex; align-items: center; gap: 10px;
@@ -272,28 +242,10 @@
     .btn-ghost-hero:hover {
       border-color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.1);
     }
-    .btn-steam-hero {
-      display: inline-flex; align-items: center; gap: 11px;
-      background: linear-gradient(135deg, #1b2838 0%, #0d141e 100%);
-      color: #ffffff; font-weight: 700; font-size: 13px; letter-spacing: 2px;
-      text-transform: uppercase; padding: 15px 34px; border-radius: 40px;
-      text-decoration: none; border: 1px solid rgba(102, 192, 244, 0.6);
-      box-shadow: 0 4px 28px rgba(0, 0, 0, 0.6), 0 0 20px rgba(102, 192, 244, 0.25);
-      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-      cursor: pointer;
-    }
-    .btn-steam-hero:hover {
-      transform: translateY(-2px);
-      border-color: #66c0f4;
-      box-shadow: 0 8px 36px rgba(0, 0, 0, 0.7), 0 0 30px rgba(102, 192, 244, 0.5);
-    }
-    .btn-steam-hero svg {
-      width: 18px; height: 18px; fill: var(--steam-cyan);
-    }
 
-    /* Platform & Feature Highlights Pill Strip */
+    /* Platform Pill Strip */
     .platform-pill-strip {
-      display: flex; align-items: center; justify-content: center; gap: 20px;
+      display: flex; align-items: center; justify-content: center; gap: 24px;
       margin-top: 36px; flex-wrap: wrap; color: var(--text-dim);
       font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 500;
     }
@@ -344,69 +296,13 @@
     .cinematic-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #030706; }
     .cinematic-caption { grid-column: 1; justify-self: end; color: var(--text-dim); font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; }
 
-    /* Steam Features Grid Section */
-    .steam-features-section {
-      position: relative; z-index: 10; padding: 110px 8vw 80px;
-      background: linear-gradient(180deg, transparent 0%, rgba(3, 10, 8, 0.75) 20%, rgba(3, 10, 8, 0.85) 80%, transparent 100%);
-    }
-    .section-header-center {
-      text-align: center; max-width: 780px; margin: 0 auto 64px;
-    }
-    .features-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px; max-width: 1240px; margin: 0 auto;
-    }
-    .feature-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px; padding: 36px 30px;
-      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-      position: relative; overflow: hidden;
-    }
-    .feature-card::before {
-      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      opacity: 0; transition: opacity 0.25s ease;
-    }
-    .feature-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(226, 192, 130, 0.45);
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 20px rgba(226, 192, 130, 0.1);
-    }
-    .feature-card:hover::before { opacity: 1; }
-    .feature-icon-box {
-      font-size: 28px; margin-bottom: 20px; display: inline-block;
-    }
-    .feature-title {
-      font-family: var(--font-serif); font-size: 22px; color: #ffffff;
-      margin-bottom: 12px; letter-spacing: 1px; font-weight: 400;
-    }
-    .feature-desc {
-      font-size: 14px; color: #b8c9c0; line-height: 1.7; font-weight: 300;
-    }
-    .feature-tag {
-      display: inline-block; margin-top: 18px; font-size: 10px;
-      letter-spacing: 2px; font-weight: 600; text-transform: uppercase;
-      color: var(--gold);
-    }
-
-    /* Steam Visual Gallery Section */
+    /* Visual Gallery Section (Containerless, Floating) */
     .steam-gallery-section {
       position: relative; z-index: 10; padding: 100px 8vw;
       background: linear-gradient(180deg, transparent 0%, rgba(2, 6, 5, 0.9) 30%, rgba(2, 6, 5, 0.9) 70%, transparent 100%);
     }
-    .gallery-filter-bar {
-      display: flex; justify-content: center; gap: 12px; margin-bottom: 40px; flex-wrap: wrap;
-    }
-    .gallery-filter-btn {
-      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);
-      color: var(--text-dim); font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
-      padding: 8px 18px; border-radius: 20px; cursor: pointer; transition: all 0.2s ease;
-    }
-    .gallery-filter-btn.active, .gallery-filter-btn:hover {
-      background: rgba(255, 255, 255, 0.14); color: #ffffff;
-      border-color: rgba(226, 192, 130, 0.5);
+    .section-header-center {
+      text-align: center; max-width: 780px; margin: 0 auto 54px;
     }
     .gallery-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -466,116 +362,76 @@
     }
     .lightbox-close:hover { opacity: 1; }
 
-    /* Steam Store Capsule & System Specifications Section */
-    .steam-specs-section {
+    /* Pure Containerless Intel & Specifications Section */
+    .containerless-intel-section {
       position: relative; z-index: 10; padding: 90px 8vw 120px;
       max-width: 1280px; margin: 0 auto;
     }
-    .specs-layout {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start;
+    .intel-layout {
+      display: grid; grid-template-columns: 1fr 1.2fr; gap: 70px; align-items: start;
     }
-
-    /* Steam Store Widget Mockup */
-    .steam-widget-card {
-      background: linear-gradient(145deg, #101822 0%, #0b1118 100%);
-      border: 1px solid rgba(102, 192, 244, 0.35);
-      border-radius: 12px; padding: 32px;
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 24px rgba(102, 192, 244, 0.12);
+    .intel-column-left, .intel-column-right {
       position: relative;
     }
-    .steam-widget-header {
-      display: flex; gap: 18px; align-items: center; margin-bottom: 24px;
+    .intel-title {
+      font-family: var(--font-serif); font-size: 28px; color: #ffffff;
+      letter-spacing: 2px; margin-bottom: 18px; font-weight: 400;
     }
-    .steam-widget-thumb {
-      width: 110px; height: 65px; border-radius: 6px; object-fit: cover;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+    .intel-title em {
+      font-style: italic; color: var(--gold);
     }
-    .steam-widget-game-title {
-      font-family: var(--font-serif); font-size: 22px; color: #ffffff; letter-spacing: 2px;
+    .intel-prose {
+      font-size: 14px; color: #c3d3cb; line-height: 1.8; font-weight: 300;
+      margin-bottom: 28px;
     }
-    .steam-widget-game-sub {
-      font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--steam-cyan);
-      margin-top: 4px;
+    .intel-meta-list {
+      display: flex; flex-direction: column; gap: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px 0; margin-bottom: 24px;
     }
-    .steam-metadata-list {
-      display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px;
-      font-size: 13px; border-top: 1px solid rgba(255, 255, 255, 0.08);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 18px 0;
+    .intel-row {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
     }
-    .steam-meta-row {
-      display: flex; justify-content: space-between; align-items: center;
+    .intel-label {
+      color: var(--text-dim); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: 600;
     }
-    .steam-meta-label {
-      color: var(--text-dim); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    .intel-val {
+      color: #ffffff; font-size: 13px; font-weight: 400; text-align: right;
     }
-    .steam-meta-value {
-      color: #ffffff; font-weight: 500;
+    .intel-val a {
+      color: var(--gold); text-decoration: none; border-bottom: 1px dotted rgba(226, 192, 130, 0.4);
+      transition: color 0.2s, border-color 0.2s;
     }
-    .steam-meta-value a {
-      color: var(--steam-cyan); text-decoration: none; border-bottom: 1px dotted rgba(102, 192, 244, 0.5);
-    }
-    .steam-meta-value a:hover {
+    .intel-val a:hover {
       color: #ffffff; border-bottom-color: #ffffff;
     }
-    .steam-tag-row {
-      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 26px;
+    .intel-tag-strip {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px;
     }
-    .steam-tag {
-      background: rgba(102, 192, 244, 0.1); border: 1px solid rgba(102, 192, 244, 0.25);
-      color: #b5daf1; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-      padding: 5px 12px; border-radius: 14px;
-    }
-    .steam-widget-actions {
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .btn-wishlist-large {
-      display: flex; align-items: center; justify-content: center; gap: 12px;
-      background: linear-gradient(90deg, #1978b8 0%, #208bd4 100%);
-      color: #ffffff; font-weight: 700; font-size: 13px; letter-spacing: 2px;
-      text-transform: uppercase; padding: 14px 24px; border-radius: 6px;
-      text-decoration: none; border: none; cursor: pointer;
-      box-shadow: 0 4px 20px rgba(32, 139, 212, 0.4);
-      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-    }
-    .btn-wishlist-large:hover {
-      background: linear-gradient(90deg, #208bd4 0%, #3ca5ea 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 26px rgba(32, 139, 212, 0.6);
+    .intel-tag {
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--text-dim); border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 4px 12px; border-radius: 16px;
     }
 
-    /* System Requirements Card */
-    .specs-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px; padding: 32px;
-      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    }
-    .specs-title {
-      font-family: var(--font-serif); font-size: 20px; color: #ffffff;
-      letter-spacing: 1.5px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between;
-    }
-    .deck-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4);
-      color: #4ade80; font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
-      text-transform: uppercase; padding: 4px 10px; border-radius: 12px;
-    }
+    /* Containerless Specifications Columns */
     .specs-columns {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 24px; font-size: 12px; line-height: 1.7;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 32px; font-size: 12px; line-height: 1.7;
     }
     .specs-col h4 {
       font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold);
-      margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     .specs-col ul {
-      list-style: none; display: flex; flex-direction: column; gap: 10px;
+      list-style: none; display: flex; flex-direction: column; gap: 12px;
     }
     .specs-col li strong {
       color: var(--text-dim); font-weight: 500; display: block; font-size: 10px;
-      letter-spacing: 1px; text-transform: uppercase;
+      letter-spacing: 1.5px; text-transform: uppercase;
     }
     .specs-col li span {
-      color: #e2e8e4; font-size: 12px;
+      color: #e2e8e4; font-size: 12px; font-weight: 300;
     }
 
     /* Act VI Final CTA section */
@@ -608,30 +464,15 @@
     .footer-credit a:hover {
       color: #ffffff; border-bottom-color: #ffffff;
     }
-    .footer-right { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+    .footer-right { display: flex; gap: 28px; flex-wrap: wrap; align-items: center; }
     .footer-right a {
       color: var(--text-dim); text-decoration: none; font-size: 11px;
       letter-spacing: 1.5px; text-transform: uppercase; transition: color 0.2s;
     }
     .footer-right a:hover { color: #ffffff; }
 
-    /* Toast Notification for Wishlist Click */
-    .steam-toast {
-      position: fixed; bottom: 32px; right: 32px; z-index: 999;
-      background: linear-gradient(145deg, #1b2838 0%, #121a24 100%);
-      border: 1px solid var(--steam-cyan);
-      border-radius: 8px; padding: 16px 24px;
-      color: #ffffff; font-size: 13px; display: flex; align-items: center; gap: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(102, 192, 244, 0.3);
-      transform: translateY(120%); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease;
-      pointer-events: none;
-    }
-    .steam-toast.visible {
-      transform: translateY(0); opacity: 1; pointer-events: auto;
-    }
-
     @media (max-width: 1024px) {
-      .specs-layout { grid-template-columns: 1fr; }
+      .intel-layout { grid-template-columns: 1fr; gap: 48px; }
       header.site-header { padding: 0 24px; }
       .nav-links { display: none; }
     }
@@ -665,21 +506,14 @@
 
     <nav class="nav-links" aria-label="Main Navigation">
       <a href="#chapter-sanctum" class="nav-link-simple">Sanctum</a>
-      <a href="#chapter-features" class="nav-link-simple">Features</a>
       <a href="#gameplay-cinematic" class="nav-link-simple">Cinematic</a>
       <a href="#steam-gallery" class="nav-link-simple">Gallery</a>
-      <a href="#steam-specs" class="nav-link-simple">Specs</a>
+      <a href="#game-intel" class="nav-link-simple">Specs</a>
       <a href="https://github.com/murderszn/aegis-flora" target="_blank" rel="noopener" class="nav-link-simple">GitHub</a>
     </nav>
 
     <div class="header-actions">
-      <button type="button" class="btn-steam js-wishlist-trigger" title="Wishlist Aegis Flora on Steam">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.811c0 .052.005.105.005.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 12-5.373 12-12S18.605 0 11.979 0zM7.54 18.217c0-.139.022-.273.057-.402l-2.031-.84c-.28.615-.436 1.298-.436 2.019 0 .19.014.376.037.56l2.128-.881c-.156-.448-.25-.929-.25-1.436zm4.184-9.308c0-1.871 1.522-3.393 3.393-3.393 1.874 0 3.395 1.522 3.395 3.393 0 1.874-1.521 3.396-3.395 3.396-1.871 0-3.393-1.522-3.393-3.396zm3.393-2.262c-1.247 0-2.261 1.015-2.261 2.262 0 1.25 1.014 2.264 2.261 2.264 1.25 0 2.264-1.014 2.264-2.264 0-1.247-1.014-2.262-2.264-2.262zm-6.242 11.57c-1.247 0-2.262-1.014-2.262-2.261 0-.309.066-.602.18-.871l1.45.599c-.04.148-.063.304-.063.465 0 .83.676 1.506 1.506 1.506.495 0 .934-.242 1.21-.614l1.58.653c-.615.932-1.666 1.523-2.871 1.523z"/>
-        </svg>
-        <span>Wishlist</span>
-      </button>
-      <a href="game.html" class="btn-launch">Play Demo</a>
+      <a href="game.html" class="btn-launch">Play Game</a>
     </div>
   </header>
 
@@ -718,7 +552,7 @@
     <section class="chapter-section" id="chapter-sanctum" data-scene="0">
       <div class="chapter-content align-center">
         
-        <!-- Steam & Developer Credit Badge -->
+        <!-- Developer Credit Badge -->
         <div class="steam-dev-badge">
           <span class="pulse-dot"></span>
           <span>SOLARPUNK 3D MAZING TOWER DEFENSE · DEVELOPED BY <a href="https://github.com/murderszn" target="_blank" rel="noopener">MURDERSZN</a></span>
@@ -731,21 +565,13 @@
         </p>
 
         <div class="hero-btn-row">
-          <button type="button" class="btn-steam-hero js-wishlist-trigger">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.811c0 .052.005.105.005.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 12-5.373 12-12S18.605 0 11.979 0zM7.54 18.217c0-.139.022-.273.057-.402l-2.031-.84c-.28.615-.436 1.298-.436 2.019 0 .19.014.376.037.56l2.128-.881c-.156-.448-.25-.929-.25-1.436zm4.184-9.308c0-1.871 1.522-3.393 3.393-3.393 1.874 0 3.395 1.522 3.395 3.393 0 1.874-1.521 3.396-3.395 3.396-1.871 0-3.393-1.522-3.393-3.396zm3.393-2.262c-1.247 0-2.261 1.015-2.261 2.262 0 1.25 1.014 2.264 2.261 2.264 1.25 0 2.264-1.014 2.264-2.264 0-1.247-1.014-2.262-2.264-2.262zm-6.242 11.57c-1.247 0-2.262-1.014-2.262-2.261 0-.309.066-.602.18-.871l1.45.599c-.04.148-.063.304-.063.465 0 .83.676 1.506 1.506 1.506.495 0 .934-.242 1.21-.614l1.58.653c-.615.932-1.666 1.523-2.871 1.523z"/>
-            </svg>
-            <span>Wishlist on Steam</span>
-          </button>
-          <a href="game.html" class="btn-primary-hero">Play Web Demo</a>
-          <a href="#chapter-features" class="btn-ghost-hero">Game Features</a>
+          <a href="game.html" class="btn-primary-hero">Launch Game</a>
+          <a href="#steam-gallery" class="btn-ghost-hero">Inspect Sanctum</a>
         </div>
 
         <div class="platform-pill-strip">
-          <span>Steam Deck Verified Ready</span>
           <span>Windows & macOS</span>
           <span>Zero-Install WebGL Demo</span>
-          <span>Solo Developer: murderszn</span>
         </div>
       </div>
 
@@ -818,62 +644,13 @@
       <p class="cinematic-caption">GAMEPLAY FOOTAGE · 39 SECONDS · 60 FPS WEBGL</p>
     </section>
 
-    <!-- Steam Features Pillars Section -->
-    <section class="steam-features-section" id="chapter-features" aria-labelledby="features-title">
-      <div class="section-header-center">
-        <span class="chapter-num">CORE GAMEPLAY PILLARS</span>
-        <h2 class="chapter-title" id="features-title">PURITY IN <em>MAZING STRATEGY</em></h2>
-        <p class="chapter-prose" style="margin: 0 auto;">
-          Built for enthusiasts of classic pathing tower defense, refreshed with visceral Dota 2-tier kinetic feedback, physics debris, and Greco-Roman solarpunk aesthetics.
-        </p>
-      </div>
-
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon-box">🏛️</div>
-          <h3 class="feature-title">The Maze Is Your Weapon</h3>
-          <p class="feature-desc">
-            36×20 open marble grid. Place defense spires as physical barriers to shape intricate labyrinths. Real-time A* pathfinding forces ruthless automata into lethal detour choke points.
-          </p>
-          <span class="feature-tag">Tactical Freedom</span>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon-box">🌸</div>
-          <h3 class="feature-title">Branching Botanical Arsenal</h3>
-          <p class="feature-desc">
-            Evolve 4 base archetypes through 3 tiers of PBR specializations. Deploy Gatling Plinths, Bloom Mortars, Prism Beams, and Resonance Monoliths with armor-stripping harmonics.
-          </p>
-          <span class="feature-tag">Deep Synergy</span>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon-box">⚙️</div>
-          <h3 class="feature-title">50 Escalating Incursions</h3>
-          <p class="feature-desc">
-            Repel 5 distinct mecha archetypes: swift Skitter Scouts, fortified Tread Tanks, air-skipping Rotor Drones, and terrifying Decennial Goliath Colossi with multi-stage shield mechanics.
-          </p>
-          <span class="feature-tag">Epic Boss Encounters</span>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon-box">☀️</div>
-          <h3 class="feature-title">Verdant Glyphs & Sorcery</h3>
-          <p class="feature-desc">
-            Harvest automata scrap into meta-progression upgrades in the Sacred Vault. Unleash real-time battlefield miracles: root swarms in dense thorns or vaporize legions with Solar Flares.
-          </p>
-          <span class="feature-tag">Meta-Progression</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Steam Media & Screenshot Showcase Gallery -->
+    <!-- Visual Archive & Screenshot Showcase Gallery -->
     <section class="steam-gallery-section" id="steam-gallery" aria-labelledby="gallery-title">
       <div class="section-header-center">
-        <span class="chapter-num">STEAM ARCHIVE & IN-GAME VISUALS</span>
+        <span class="chapter-num">ARCHITECTURAL ARCHIVE</span>
         <h2 class="chapter-title" id="gallery-title">INSPECT THE <em>SANCTUM</em></h2>
         <p class="chapter-prose" style="margin: 0 auto;">
-          High-resolution 3D renders, architectural studies, and battlefield incursion captures. Click any image to view in full resolution.
+          High-resolution 3D renders, architectural studies, and battlefield incursion captures across the floating labyrinth. Click any image to view in full resolution.
         </p>
       </div>
 
@@ -944,82 +721,66 @@
       </div>
     </section>
 
-    <!-- Steam Capsule, Metadata & System Requirements Section -->
-    <section class="steam-specs-section" id="steam-specs" aria-labelledby="specs-title">
-      <div class="specs-layout">
+    <!-- Containerless Game Intel & System Specifications Section -->
+    <section class="containerless-intel-section" id="game-intel" aria-labelledby="intel-heading">
+      <div class="intel-layout">
         
-        <!-- Steam Store Widget Mockup Card -->
-        <div class="steam-widget-card">
-          <div class="steam-widget-header">
-            <img src="assets/aegis_flora_logo.jpg" alt="Aegis Flora Thumbnail" class="steam-widget-thumb">
-            <div>
-              <h3 class="steam-widget-game-title">AEGIS FLORA</h3>
-              <div class="steam-widget-game-sub">Solarpunk Mazing Tower Defense</div>
+        <!-- Left: Game Overview & Architecture -->
+        <div class="intel-column-left">
+          <span class="chapter-num">TACTICAL ARCHITECTURE</span>
+          <h3 class="intel-title" id="intel-heading">AEGIS <em>FLORA</em></h3>
+          <p class="intel-prose">
+            A luxury Solarpunk 3D Mazing Tower Defense chronicle. Sculpt living labyrinths across an open Greco-Roman ruins battlefield, deploy evolving botanical artillery, and repel fifty escalating waves of rogue automata war-machines.
+          </p>
+
+          <div class="intel-meta-list">
+            <div class="intel-row">
+              <span class="intel-label">Developer</span>
+              <span class="intel-val"><a href="https://github.com/murderszn" target="_blank" rel="noopener">murderszn</a></span>
+            </div>
+            <div class="intel-row">
+              <span class="intel-label">Publisher</span>
+              <span class="intel-val">murderszn</span>
+            </div>
+            <div class="intel-row">
+              <span class="intel-label">Release Window</span>
+              <span class="intel-val">2026 / In Active Development</span>
+            </div>
+            <div class="intel-row">
+              <span class="intel-label">Target Platforms</span>
+              <span class="intel-val">Windows · macOS · Linux · WebGL</span>
+            </div>
+            <div class="intel-row">
+              <span class="intel-label">Input Scheme</span>
+              <span class="intel-val">Full Gamepad & Keyboard / Mouse</span>
             </div>
           </div>
 
-          <div class="steam-metadata-list">
-            <div class="steam-meta-row">
-              <span class="steam-meta-label">Developer</span>
-              <span class="steam-meta-value"><a href="https://github.com/murderszn" target="_blank" rel="noopener">murderszn</a></span>
-            </div>
-            <div class="steam-meta-row">
-              <span class="steam-meta-label">Publisher</span>
-              <span class="steam-meta-value"><a href="https://github.com/murderszn" target="_blank" rel="noopener">murderszn</a></span>
-            </div>
-            <div class="steam-meta-row">
-              <span class="steam-meta-label">Release Window</span>
-              <span class="steam-meta-value">2026 / Coming Soon</span>
-            </div>
-            <div class="steam-meta-row">
-              <span class="steam-meta-label">Platforms</span>
-              <span class="steam-meta-value">Steam (PC / Mac / Linux / Deck) & WebGL</span>
-            </div>
-            <div class="steam-meta-row">
-              <span class="steam-meta-label">Controller</span>
-              <span class="steam-meta-value">Full Gamepad & Keyboard/Mouse</span>
-            </div>
-          </div>
-
-          <div class="steam-tag-row">
-            <span class="steam-tag">Tower Defense</span>
-            <span class="steam-tag">Mazing</span>
-            <span class="steam-tag">Strategy</span>
-            <span class="steam-tag">Solarpunk</span>
-            <span class="steam-tag">Singleplayer</span>
-            <span class="steam-tag">Indie</span>
-          </div>
-
-          <div class="steam-widget-actions">
-            <button type="button" class="btn-wishlist-large js-wishlist-trigger">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-                <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.811c0 .052.005.105.005.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 12-5.373 12-12S18.605 0 11.979 0zM7.54 18.217c0-.139.022-.273.057-.402l-2.031-.84c-.28.615-.436 1.298-.436 2.019 0 .19.014.376.037.56l2.128-.881c-.156-.448-.25-.929-.25-1.436zm4.184-9.308c0-1.871 1.522-3.393 3.393-3.393 1.874 0 3.395 1.522 3.395 3.393 0 1.874-1.521 3.396-3.395 3.396-1.871 0-3.393-1.522-3.393-3.396zm3.393-2.262c-1.247 0-2.261 1.015-2.261 2.262 0 1.25 1.014 2.264 2.261 2.264 1.25 0 2.264-1.014 2.264-2.264 0-1.247-1.014-2.262-2.264-2.262zm-6.242 11.57c-1.247 0-2.262-1.014-2.262-2.261 0-.309.066-.602.18-.871l1.45.599c-.04.148-.063.304-.063.465 0 .83.676 1.506 1.506 1.506.495 0 .934-.242 1.21-.614l1.58.653c-.615.932-1.666 1.523-2.871 1.523z"/>
-              </svg>
-              <span>Add to Steam Wishlist</span>
-            </button>
-            <a href="game.html" class="btn-ghost-hero" style="text-align: center; justify-content: center;">
-              Launch Instant WebGL Demo
-            </a>
+          <div class="intel-tag-strip">
+            <span class="intel-tag">Tower Defense</span>
+            <span class="intel-tag">Mazing</span>
+            <span class="intel-tag">Solarpunk</span>
+            <span class="intel-tag">Three.js</span>
+            <span class="intel-tag">WebGL2</span>
+            <span class="intel-tag">Indie</span>
           </div>
         </div>
 
-        <!-- System Requirements Box -->
-        <div class="specs-card">
-          <div class="specs-title">
-            <span>SYSTEM SPECIFICATIONS</span>
-            <span class="deck-badge">🎮 Steam Deck Verified Ready</span>
-          </div>
-
+        <!-- Right: System Specifications -->
+        <div class="intel-column-right">
+          <span class="chapter-num">HARDWARE TARGETS</span>
+          <h3 class="intel-title">SYSTEM <em>REQUIREMENTS</em></h3>
+          
           <div class="specs-columns">
             <div class="specs-col">
-              <h4>Minimum Requirements</h4>
+              <h4>Minimum Specifications</h4>
               <ul>
-                <li><strong>OS</strong><span>Windows 10 64-bit / macOS 12+ / Ubuntu 22.04 LTS</span></li>
+                <li><strong>OS</strong><span>Windows 10 64-bit / macOS 12+ / Ubuntu 22.04</span></li>
                 <li><strong>Processor</strong><span>Dual Core 2.4 GHz (Intel Core i3 / AMD Ryzen 3)</span></li>
                 <li><strong>Memory</strong><span>4 GB RAM</span></li>
                 <li><strong>Graphics</strong><span>WebGL 2.0 / Vulkan / DirectX 11 (Intel Iris Xe / GTX 750)</span></li>
                 <li><strong>Storage</strong><span>500 MB available space</span></li>
-                <li><strong>Sound</strong><span>DirectSound / Web Audio API compatible</span></li>
+                <li><strong>Audio</strong><span>Web Audio API / DirectSound compatible</span></li>
               </ul>
             </div>
 
@@ -1050,14 +811,8 @@
         </p>
 
         <div class="hero-btn-row">
-          <button type="button" class="btn-steam-hero js-wishlist-trigger" style="font-size: 15px; padding: 18px 46px;">
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-              <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.811c0 .052.005.105.005.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 12-5.373 12-12S18.605 0 11.979 0zM7.54 18.217c0-.139.022-.273.057-.402l-2.031-.84c-.28.615-.436 1.298-.436 2.019 0 .19.014.376.037.56l2.128-.881c-.156-.448-.25-.929-.25-1.436zm4.184-9.308c0-1.871 1.522-3.393 3.393-3.393 1.874 0 3.395 1.522 3.395 3.393 0 1.874-1.521 3.396-3.395 3.396-1.871 0-3.393-1.522-3.393-3.396zm3.393-2.262c-1.247 0-2.261 1.015-2.261 2.262 0 1.25 1.014 2.264 2.261 2.264 1.25 0 2.264-1.014 2.264-2.264 0-1.247-1.014-2.262-2.264-2.262zm-6.242 11.57c-1.247 0-2.262-1.014-2.262-2.261 0-.309.066-.602.18-.871l1.45.599c-.04.148-.063.304-.063.465 0 .83.676 1.506 1.506 1.506.495 0 .934-.242 1.21-.614l1.58.653c-.615.932-1.666 1.523-2.871 1.523z"/>
-            </svg>
-            <span>Wishlist on Steam</span>
-          </button>
-          <a href="game.html" class="btn-primary-hero" style="font-size: 15px; padding: 18px 46px;">
-            Launch Web Game
+          <a href="game.html" class="btn-primary-hero" style="font-size: 15px; padding: 18px 52px;">
+            Launch Game
           </a>
         </div>
       </div>
@@ -1074,17 +829,6 @@
     </div>
   </div>
 
-  <!-- Toast Notification -->
-  <div class="steam-toast" id="steamToast" role="alert">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="#66c0f4" aria-hidden="true">
-      <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.811c0 .052.005.105.005.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 12-5.373 12-12S18.605 0 11.979 0zM7.54 18.217c0-.139.022-.273.057-.402l-2.031-.84c-.28.615-.436 1.298-.436 2.019 0 .19.014.376.037.56l2.128-.881c-.156-.448-.25-.929-.25-1.436zm4.184-9.308c0-1.871 1.522-3.393 3.393-3.393 1.874 0 3.395 1.522 3.395 3.393 0 1.874-1.521 3.396-3.395 3.396-1.871 0-3.393-1.522-3.393-3.396zm3.393-2.262c-1.247 0-2.261 1.015-2.261 2.262 0 1.25 1.014 2.264 2.261 2.264 1.25 0 2.264-1.014 2.264-2.264 0-1.247-1.014-2.262-2.264-2.262zm-6.242 11.57c-1.247 0-2.262-1.014-2.262-2.261 0-.309.066-.602.18-.871l1.45.599c-.04.148-.063.304-.063.465 0 .83.676 1.506 1.506 1.506.495 0 .934-.242 1.21-.614l1.58.653c-.615.932-1.666 1.523-2.871 1.523z"/>
-    </svg>
-    <div>
-      <div style="font-weight: 600; color: #ffffff;">Aegis Flora on Steam</div>
-      <div style="font-size: 11px; color: #a4c9e1;">Wishlist registered! Follow <a href="https://github.com/murderszn" target="_blank" style="color: #66c0f4;">@murderszn</a> for release updates.</div>
-    </div>
-  </div>
-
   <!-- Minimalist Containerless Footer -->
   <footer class="containerless-footer">
     <div class="footer-left">
@@ -1098,8 +842,7 @@
     </div>
     <div class="footer-right">
       <a href="game.html">Play Game</a>
-      <a href="#steam-specs">Wishlist on Steam</a>
-      <a href="#steam-specs">System Specs</a>
+      <a href="#game-intel">System Specs</a>
       <a href="https://github.com/murderszn/aegis-flora" target="_blank" rel="noopener">GitHub</a>
       <a href="https://github.com/murderszn" target="_blank" rel="noopener">Developer @murderszn</a>
     </div>
@@ -1377,26 +1120,6 @@
         if(e.key === 'Escape' && lightbox && lightbox.classList.contains('active')){
           lightbox.classList.remove('active');
         }
-      });
-
-      // Steam Wishlist toast & smooth scroll to Steam Specs
-      var toast = document.getElementById('steamToast');
-      var toastTimer = null;
-      document.querySelectorAll('.js-wishlist-trigger').forEach(function(btn){
-        btn.addEventListener('click', function(e){
-          e.preventDefault();
-          var specsTarget = document.getElementById('steam-specs');
-          if(specsTarget){
-            specsTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-          if(toast){
-            toast.classList.add('visible');
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(function(){
-              toast.classList.remove('visible');
-            }, 4500);
-          }
-        });
       });
 
     })();
