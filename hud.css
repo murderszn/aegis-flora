@@ -577,7 +577,7 @@ body.director #letterbox-top, body.director #letterbox-bottom { height:7vh; }
 }
 .gta-skip {
   display:inline-flex; align-items:center; justify-content:center; gap:12px;
-  margin-top:17px; min-height:38px; padding:0 15px;
+  margin-bottom:14px; min-height:38px; padding:0 15px;
   border:1px solid #e4c78c; border-bottom-color:#795c32; border-radius:3px;
   background:linear-gradient(170deg,rgba(250,229,180,.26),rgba(15,38,42,.9) 50%,rgba(8,26,31,.96));
   box-shadow:inset 0 1px rgba(255,244,205,.32),0 3px 12px rgba(0,0,0,.48);
