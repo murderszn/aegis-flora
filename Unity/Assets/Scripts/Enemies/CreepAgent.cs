@@ -85,25 +85,56 @@ namespace AegisFlora.Enemies
 
         private void MoveAlongPath()
         {
+            if (GridManager.Instance == null) return;
+
             float speed = baseMoveSpeed * slowFactor;
-            Vector3 targetWorld;
 
-            if (isAirUnit || currentPath == null || currentWaypointIndex >= currentPath.Count)
+            // 1. Air Units: fly straight toward the Sanctum ignoring grid maze barriers
+            if (isAirUnit)
             {
-                // Move straight to sanctum
-                targetWorld = GridManager.Instance.GridToWorld(GridManager.Instance.sanctumCoords.x, GridManager.Instance.sanctumCoords.y, transform.position.y);
-            }
-            else
-            {
-                Vector2Int wp = currentPath[currentWaypointIndex];
-                targetWorld = GridManager.Instance.GridToWorld(wp.x, wp.y, transform.position.y);
+                Vector3 sanctumPos = GridManager.Instance.GridToWorld(GridManager.Instance.sanctumCoords.x, GridManager.Instance.sanctumCoords.y, transform.position.y);
+                Vector3 airDir = sanctumPos - transform.position;
+                airDir.y = 0f;
+                float airDist = airDir.magnitude;
+
+                if (airDist < 0.15f)
+                {
+                    ReachSanctum();
+                    return;
+                }
+
+                if (airDir.sqrMagnitude > 0.0001f)
+                {
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(airDir), Time.deltaTime * 10f);
+                    transform.position += airDir.normalized * (speed * Time.deltaTime);
+                }
+                return;
             }
 
+            // 2. Ground Units: require valid maze path
+            if (currentPath == null || currentPath.Count == 0)
+            {
+                RecalculatePath();
+                if (currentPath == null || currentPath.Count == 0)
+                {
+                    // No path available: wait safely instead of clipping through maze walls or throwing null references
+                    return;
+                }
+            }
+
+            if (currentWaypointIndex >= currentPath.Count)
+            {
+                ReachSanctum();
+                return;
+            }
+
+            Vector2Int currentWp = currentPath[currentWaypointIndex];
+            Vector3 targetWorld = GridManager.Instance.GridToWorld(currentWp.x, currentWp.y, transform.position.y);
             Vector3 moveDir = targetWorld - transform.position;
-            moveDir.y = 0;
+            moveDir.y = 0f;
             float dist = moveDir.magnitude;
 
-            if (dist < 0.1f)
+            if (dist < 0.15f)
             {
                 currentWaypointIndex++;
                 if (currentWaypointIndex >= currentPath.Count)
@@ -114,8 +145,11 @@ namespace AegisFlora.Enemies
             }
             else
             {
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), Time.deltaTime * 10f);
-                transform.position += moveDir.normalized * (speed * Time.deltaTime);
+                if (moveDir.sqrMagnitude > 0.0001f)
+                {
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(moveDir), Time.deltaTime * 10f);
+                    transform.position += moveDir.normalized * (speed * Time.deltaTime);
+                }
             }
         }
 
@@ -145,7 +179,23 @@ namespace AegisFlora.Enemies
 
         public float GetPathProgress()
         {
-            return currentWaypointIndex + (1f / (Vector3.Distance(transform.position, GridManager.Instance.GridToWorld(GridManager.Instance.sanctumCoords.x, GridManager.Instance.sanctumCoords.y)) + 1f));
+            if (GridManager.Instance == null) return 0f;
+
+            Vector3 sanctumPos = GridManager.Instance.GridToWorld(GridManager.Instance.sanctumCoords.x, GridManager.Instance.sanctumCoords.y, transform.position.y);
+            float distToSanctum = Vector3.Distance(transform.position, sanctumPos);
+
+            if (isAirUnit || currentPath == null || currentPath.Count == 0)
+            {
+                Vector3 spawnPos = GridManager.Instance.GridToWorld(GridManager.Instance.spawnCoords.x, GridManager.Instance.spawnCoords.y, transform.position.y);
+                float totalDist = Vector3.Distance(spawnPos, sanctumPos);
+                if (totalDist > 0.001f)
+                {
+                    return Mathf.Clamp01(1f - (distToSanctum / totalDist));
+                }
+                return 1f / (distToSanctum + 1f);
+            }
+
+            return currentWaypointIndex + (1f / (distToSanctum + 1f));
         }
 
         private void FlashWhite()
