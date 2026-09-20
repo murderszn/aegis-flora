@@ -498,6 +498,38 @@
   }
   .padmap-key.waiting { color: #fff; border-color: var(--teal-glow); animation: padblink 0.8s infinite; }
   @keyframes padblink { 50% { opacity: 0.4; } }
+
+  /* ---------- Guided Mazing Tutorial Styles ---------- */
+  #tutorial-modal {
+    position: fixed; inset: 0; z-index: 1200; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(4, 9, 8, 0.72); backdrop-filter: blur(5px);
+    pointer-events: auto;
+  }
+  #tutorial-modal.open { display: flex; }
+  #tutorial-card {
+    width: min(530px, 92vw);
+    background: linear-gradient(180deg, #18241f 0%, #0c1512 100%);
+    border: 2px solid var(--bronze-dk, #8c733e); outline: 1px solid rgba(0, 245, 212, 0.35); outline-offset: -4px;
+    border-radius: 10px; padding: 20px 24px; color: #efe6cf;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.8), 0 0 24px rgba(0, 245, 212, 0.15);
+    animation: tutAppear 0.22s ease-out;
+  }
+  @keyframes tutAppear { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .tut-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .tut-badge { font-size: 10.5px; font-weight: bold; letter-spacing: 1.5px; color: #00F5D4; font-family: var(--font-display, sans-serif); }
+  .tut-step-counter { font-size: 11px; color: #ffd873; font-weight: 600; font-family: var(--font-stats, monospace); }
+  .tut-close-btn { background: none; border: none; color: #8fa89b; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 4px; line-height: 1; }
+  .tut-close-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+  .tut-title { font-family: var(--font-display, serif); color: var(--gold, #FFD60A); font-size: 18px; margin: 0 0 8px 0; letter-spacing: 0.5px; }
+  .tut-desc { font-size: 13px; line-height: 1.55; color: #c4d6cc; margin: 0 0 14px 0; }
+  .tut-visual {
+    background: rgba(0,0,0,0.45); border: 1px solid rgba(201,162,39,0.25); border-radius: 6px;
+    padding: 10px 14px; margin-bottom: 16px; font-size: 11.5px; color: #9bb0a4; display: flex; gap: 12px; align-items: center;
+  }
+  .tut-visual-icon { font-size: 24px; color: #00F5D4; flex-shrink: 0; }
+  .tut-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(201,162,39,0.18); padding-top: 14px; }
+  .tut-nav { display: flex; gap: 8px; }
 </style>
 <link rel="stylesheet" href="hud.css?v=7">
 
@@ -553,6 +585,7 @@
     <div class="padmap-row"><div class="act">Damage numbers<small>Floating combat text</small></div><input type="checkbox" id="setDmgNums" class="switch" checked></div>
     <div class="padmap-row"><div class="act">Creep HP bars<small>Overhead health bars</small></div><input type="checkbox" id="setHpBars" class="switch" checked></div>
     <div class="padmap-row"><div class="act">Screen shake<small>Trauma kick on blasts</small></div><input type="checkbox" id="setShake" class="switch" checked></div>
+    <div class="padmap-row"><div class="act">Mazing tutorial<small>Replay the 8-step guided walkthrough</small></div><button class="btn" id="btnReplayTutorial">Replay…</button></div>
     <div class="padmap-row"><div class="act">Reset glyph progress<small>Clears meta upgrades</small></div><button class="btn" id="btnWipeGlyphs">Reset…</button></div>
   </div>
   <div style="display:flex;gap:10px;margin-top:14px;align-items:center;">
@@ -560,6 +593,27 @@
     <span style="flex:1"></span>
     <span style="font-size:11px;color:#9fb3a8;"><kbd>Esc</kbd> to close</span>
     <button class="btn primary" id="btnSettingsClose">Done</button>
+  </div>
+</div></div>
+
+<!-- Guided First-Run Mazing Tutorial Modal -->
+<div id="tutorial-modal"><div id="tutorial-card">
+  <div class="tut-header">
+    <div class="tut-badge">✦ MAZING ARCHITECT PROTOCOL</div>
+    <div class="tut-step-counter" id="tutStepCounter">Step 1 of 8</div>
+    <button type="button" class="tut-close-btn" id="btnTutSkip" title="Skip Tutorial (Esc)">✕</button>
+  </div>
+  <div class="tut-body">
+    <h3 id="tutTitle" class="tut-title">The Battlefield: Spawn & Sanctum</h3>
+    <p id="tutDesc" class="tut-desc"></p>
+    <div id="tutVisual" class="tut-visual"></div>
+  </div>
+  <div class="tut-footer">
+    <button class="btn" id="btnTutSkipText">Skip Tutorial</button>
+    <div class="tut-nav">
+      <button class="btn" id="btnTutPrev">← Back</button>
+      <button class="btn primary" id="btnTutNext">Next →</button>
+    </div>
   </div>
 </div></div>
 
@@ -641,6 +695,7 @@
   <button class="tp-btn square" id="btnSpeed" title="Cycle Game Speed (V)">1x</button>
   <button class="tp-btn square" id="btnFullscreen" title="Toggle Fullscreen (F11 / Shift+F)">⛶</button>
   <button class="tp-btn square" id="btnAudio" title="Toggle Mute (M)">🔊</button>
+  <button class="tp-btn square" id="btnTutorial" title="Tutorial & Mazing Guide (?)">?</button>
   <button class="tp-btn" id="btnCam" title="Toggle Camera View (C)"><span class="btn-icon">◈</span><span>View</span><kbd>C</kbd></button>
   <button class="tp-btn" id="btnPad" title="Controller Mapping"><span class="btn-icon">🎮</span><span id="btnPadLabel">Pad</span></button>
 </div>
@@ -2075,6 +2130,7 @@ function dismissGtaLoadingScreen(){
   sfx('wave');
   setTimeout(function(){
     if(screen.parentNode) screen.parentNode.removeChild(screen);
+    checkFirstRunTutorial();
   }, 850);
 }
 
@@ -5529,6 +5585,26 @@ function bindInput(){
     if(document.getElementById('loading-screen')) return;
     audio();
     var k = (ev.key || '').toLowerCase();
+    if(isTutorialActive()){
+      if(k === 'escape'){
+        skipTutorial();
+        return;
+      }
+      if(k === 'arrowright' || k === 'enter' || k === ' '){
+        ev.preventDefault();
+        nextTutorialStep();
+        return;
+      }
+      if(k === 'arrowleft'){
+        ev.preventDefault();
+        prevTutorialStep();
+        return;
+      }
+    }
+    if(k === '?' || (ev.shiftKey && (k === '/' || ev.key === '?'))){
+      startTutorial(0);
+      return;
+    }
     if(k === 'tab' || (k === 'y' && S && S.selTower)){
       if(S && S.selTower){
         ev.preventDefault();
@@ -5953,6 +6029,11 @@ function bindSettingsUI(){
     try { localStorage.removeItem('aegis_glyphs'); } catch(e){}
     try { if(S){ S.glyphs = {}; if(typeof saveGlyphs === 'function') saveGlyphs(); } } catch(e){}
     toast('Glyph progress cleared');
+  });
+  var bt = document.getElementById('btnReplayTutorial');
+  if(bt) bt.addEventListener('click', function(){
+    closeSettings();
+    startTutorial(0);
   });
   var sm = document.getElementById('settings-modal');
   if(sm) sm.addEventListener('click', function(ev){ if(ev.target === sm) closeSettings(); });
@@ -6533,6 +6614,161 @@ function animate(){
   stepFpsAndDrs(dt);
 }
 
+// ---------- Guided First-Run Mazing Tutorial ----------
+var TUTORIAL_STEPS = [
+  {
+    step: 1,
+    title: 'The Objective: Spawn Portal & Sanctum Core',
+    desc: 'Diesel automata march from the Spawn Portal (left edge, x=0) across the 36×20 grid to breach your Sanctum Core (right edge, x=35). If enemies reach the Sanctum, you lose lives. Creeps cannot walk through towers!',
+    icon: '✦',
+    visual: '<b>Objective:</b> Build a gauntlet of towers to defend Sanctum lives (HP) across 50 waves.'
+  },
+  {
+    step: 2,
+    title: 'Tower Placement & The Mazing Hook',
+    desc: 'Select a battery from the dock below (e.g. Petal Gatling [1]) and click an open grass tile to construct it. Towers serve double duty: lethal defensive weapons and physical maze walls!',
+    icon: '⚙',
+    visual: '<b>Controls:</b> Keys [1]-[5] or [Q]-[B] select towers · Left click places · Right click cancels.'
+  },
+  {
+    step: 3,
+    title: 'Real-Time Route Recalculation',
+    desc: 'Every tower placed forces creeps to recalculate their A* path in real-time. Notice the golden trajectory line shift! By placing towers in alternating rows, you create winding switchbacks that multiply enemy transit time.',
+    icon: '⚡',
+    visual: '<b>Golden Path Line:</b> Live shortest route creeps will follow through your constructed maze.'
+  },
+  {
+    step: 4,
+    title: 'The Mazing Law: No Complete Blocking',
+    desc: 'You cannot completely seal off the Sanctum. Creeps must always maintain an open, walkable path from Spawn to Sanctum. If a placement would isolate the Sanctum, the grid rejects the build with an error chime.',
+    icon: '⛔',
+    visual: '<b>Path Validation:</b> Built-in A* checker guarantees every wave can reach the Sanctum.'
+  },
+  {
+    step: 5,
+    title: 'Funneling & Lethal Choke Points',
+    desc: 'Stagger cheap Ruin Barrier walls [5] and towers to funnel swarms into tight single-file choke points. Concentrate heavy Bloom Mortars [2] and Prism Pillars [3] along choke points to maximize area splash.',
+    icon: '🏹',
+    visual: '<b>Pro Tip:</b> Tight choke points turn slow Bloom Mortars into catastrophic swarm sweepers.'
+  },
+  {
+    step: 6,
+    title: 'Launching the Wave & Earning Scrap',
+    desc: 'When your maze is prepared, hit [Start Wave] or press Space. Destroying enemy automata yields Scrap gold and score, allowing you to build additional batteries and upgrades mid-combat.',
+    icon: '⚔',
+    visual: '<b>Pacing:</b> Space calls waves · [P] pauses simulation · [V] cycles 1x / 2x / 4x speed.'
+  },
+  {
+    step: 7,
+    title: 'Tower Inspection & Elite Specialization',
+    desc: 'Click any placed tower to open the Inspector. Each tower can specialize into one of two Elite Branches (e.g. Gatling into Vulcan swarm-shredder or line-piercing Rail-Needler; Prism into ground-scorching Sol Invictus or 3-way Refraction).',
+    icon: '★',
+    visual: '<b>Target Priorities:</b> Cycle targeting modes (First, Last, Strongest, Weakest, Closest) with [Tab] or [Y].'
+  },
+  {
+    step: 8,
+    title: 'Threat Types & Sanctum Powers',
+    desc: 'Beware: Rotor Drones and Zeppelin Sky-Hulls fly over maze walls directly to the Sanctum! Armored walkers resist Kinetic rounds, requiring Energy lasers or Sonic armor-shred. In emergencies, trigger Solar Flare [F] or Bramble Root [D]!',
+    icon: '☼',
+    visual: '<b>Sanctum Abilities:</b> [D] Overgrowth Root (35 mana) · [F] Solar Flare screen wipe (75 mana).'
+  }
+];
+
+var curTutorialStep = 0;
+function isTutorialActive(){
+  var tm = document.getElementById('tutorial-modal');
+  return !!(tm && tm.classList.contains('open'));
+}
+
+function startTutorial(stepIdx){
+  curTutorialStep = typeof stepIdx === 'number' ? stepIdx : 0;
+  var tm = document.getElementById('tutorial-modal');
+  if(!tm) return;
+  renderTutorialStep();
+  tm.classList.add('open');
+  if(typeof sfx === 'function') sfx('click');
+}
+
+function renderTutorialStep(){
+  var tm = document.getElementById('tutorial-modal');
+  if(!tm) return;
+  var step = TUTORIAL_STEPS[curTutorialStep] || TUTORIAL_STEPS[0];
+  var total = TUTORIAL_STEPS.length;
+  var counter = document.getElementById('tutStepCounter');
+  if(counter) counter.textContent = 'Step ' + (curTutorialStep + 1) + ' of ' + total;
+  var title = document.getElementById('tutTitle');
+  if(title) title.textContent = step.title;
+  var desc = document.getElementById('tutDesc');
+  if(desc) desc.textContent = step.desc;
+  var vis = document.getElementById('tutVisual');
+  if(vis) vis.innerHTML = '<span class="tut-visual-icon">' + step.icon + '</span><div>' + step.visual + '</div>';
+  var btnPrev = document.getElementById('btnTutPrev');
+  if(btnPrev) btnPrev.style.display = curTutorialStep > 0 ? 'inline-block' : 'none';
+  var btnNext = document.getElementById('btnTutNext');
+  if(btnNext) btnNext.textContent = (curTutorialStep === total - 1) ? 'Finish & Play ✦' : 'Next →';
+}
+
+function nextTutorialStep(){
+  if(curTutorialStep < TUTORIAL_STEPS.length - 1){
+    curTutorialStep++;
+    renderTutorialStep();
+    if(typeof sfx === 'function') sfx('click');
+  } else {
+    completeTutorial();
+  }
+}
+
+function prevTutorialStep(){
+  if(curTutorialStep > 0){
+    curTutorialStep--;
+    renderTutorialStep();
+    if(typeof sfx === 'function') sfx('click');
+  }
+}
+
+function completeTutorial(){
+  try { localStorage.setItem('aegis_tutorial_completed', 'true'); } catch(e){}
+  var tm = document.getElementById('tutorial-modal');
+  if(tm) tm.classList.remove('open');
+  if(typeof toast === 'function') toast('Tutorial Complete — Good luck, Architect!');
+  if(typeof sfx === 'function') sfx('buy');
+}
+
+function skipTutorial(){
+  try { localStorage.setItem('aegis_tutorial_completed', 'true'); } catch(e){}
+  var tm = document.getElementById('tutorial-modal');
+  if(tm) tm.classList.remove('open');
+  if(typeof toast === 'function') toast('Tutorial skipped. Replay anytime in Settings or Help (?)');
+  if(typeof sfx === 'function') sfx('click');
+}
+
+function getTutorialStep(){
+  return curTutorialStep;
+}
+
+function checkFirstRunTutorial(){
+  try {
+    if(!localStorage.getItem('aegis_tutorial_completed')){
+      startTutorial(0);
+    }
+  } catch(e){}
+}
+
+function bindTutorialUI(){
+  var btnNext = document.getElementById('btnTutNext');
+  if(btnNext) btnNext.addEventListener('click', nextTutorialStep);
+  var btnPrev = document.getElementById('btnTutPrev');
+  if(btnPrev) btnPrev.addEventListener('click', prevTutorialStep);
+  var btnSkip = document.getElementById('btnTutSkip');
+  if(btnSkip) btnSkip.addEventListener('click', skipTutorial);
+  var btnSkipText = document.getElementById('btnTutSkipText');
+  if(btnSkipText) btnSkipText.addEventListener('click', skipTutorial);
+  var btnTut = document.getElementById('btnTutorial');
+  if(btnTut) btnTut.addEventListener('click', function(){ startTutorial(0); });
+  var tm = document.getElementById('tutorial-modal');
+  if(tm) tm.addEventListener('click', function(ev){ if(ev.target === tm) skipTutorial(); });
+}
+
 // ---------- Boot ----------
 function boot(){
   S = newState((Date.now() % 1e9) | 0);
@@ -6558,9 +6794,11 @@ function boot(){
   buildDrawer();
   bindInput();
   bindSettingsUI();
+  bindTutorialUI();
   applySettings();
   updatePathVisualizer();
   refreshHud();
+  if(!document.getElementById('loading-screen')) checkFirstRunTutorial();
   animate();
 }
 
@@ -6604,7 +6842,15 @@ var API = {
   GLYPH_DEFS: GLYPH_DEFS,
   TARGET_MODES: TARGET_MODES,
   setTowerTargetMode: setTowerTargetMode,
-  cycleTowerTargetMode: cycleTowerTargetMode
+  cycleTowerTargetMode: cycleTowerTargetMode,
+  TUTORIAL_STEPS: TUTORIAL_STEPS,
+  startTutorial: startTutorial,
+  nextTutorialStep: nextTutorialStep,
+  prevTutorialStep: prevTutorialStep,
+  skipTutorial: skipTutorial,
+  completeTutorial: completeTutorial,
+  getTutorialStep: getTutorialStep,
+  isTutorialActive: isTutorialActive
 };
 window.RoboFlora = API;
 window.AegisFlora = API;
