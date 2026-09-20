@@ -1845,14 +1845,80 @@ try { AUDIO_MUTED = localStorage.getItem('aegis_audio_muted') === 'true'; } catc
 var MAX_CONCURRENT_EXPLOSIONS = 3;
 var lastExplosionTimes = [];
 
+// Diagnostic audio error logger (active in dev/localhost or with AEGIS_DEBUG_AUDIO)
+function logAudioError(context, err){
+  if(typeof window !== 'undefined' && (window.AEGIS_DEBUG_AUDIO || (typeof location !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')))){
+    console.warn('[Audio ' + context + ' Error]:', err);
+  }
+}
+
+var audioUnlocked = false;
+var resumingAudioPromise = null;
+function resumeAudioContext(){
+  if(!AC){
+    try {
+      var Ctor = window.AudioContext || window.webkitAudioContext;
+      if(Ctor) AC = new Ctor();
+    } catch(e){
+      logAudioError('init', e);
+    }
+  }
+  if(!AC) return Promise.resolve(false);
+  if(AC.state === 'running'){
+    audioUnlocked = true;
+    removeAudioGestureListeners();
+    return Promise.resolve(true);
+  }
+  if(resumingAudioPromise) return resumingAudioPromise;
+  if(AC.state === 'suspended'){
+    resumingAudioPromise = AC.resume().then(function(){
+      audioUnlocked = true;
+      resumingAudioPromise = null;
+      removeAudioGestureListeners();
+      return true;
+    }).catch(function(err){
+      resumingAudioPromise = null;
+      logAudioError('resume', err);
+      return false;
+    });
+    return resumingAudioPromise;
+  }
+  return Promise.resolve(false);
+}
+
 function audio(){
-  if(AC) return AC;
-  try {
-    var Ctor = window.AudioContext || window.webkitAudioContext;
-    if(Ctor) AC = new Ctor();
-  } catch(e){}
+  if(!AC){
+    try {
+      var Ctor = window.AudioContext || window.webkitAudioContext;
+      if(Ctor) AC = new Ctor();
+    } catch(e){
+      logAudioError('init', e);
+    }
+  }
   return AC;
 }
+
+var GESTURE_EVENTS = ['pointerdown', 'keydown', 'touchstart'];
+function onUserAudioGesture(){
+  resumeAudioContext();
+}
+
+function attachAudioGestureListeners(){
+  if(typeof window === 'undefined') return;
+  for(var i = 0; i < GESTURE_EVENTS.length; i++){
+    window.addEventListener(GESTURE_EVENTS[i], onUserAudioGesture, { capture: true, passive: true });
+  }
+}
+
+function removeAudioGestureListeners(){
+  if(typeof window === 'undefined') return;
+  for(var i = 0; i < GESTURE_EVENTS.length; i++){
+    window.removeEventListener(GESTURE_EVENTS[i], onUserAudioGesture, { capture: true });
+  }
+}
+
+// Automatically register gesture listeners
+attachAudioGestureListeners();
 
 function masterOut(){
   var ac = audio(); if(!ac) return null;
@@ -1931,7 +1997,7 @@ function tone(freq, dur, type, vol, slideTo){
     g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
     o.connect(g); g.connect(out);
     o.start(); o.stop(ac.currentTime + dur + 0.02);
-  } catch(e){}
+  } catch(e){ logAudioError('tone', e); }
 }
 
 function noiseHit(dur, vol, low){
@@ -1945,7 +2011,7 @@ function noiseHit(dur, vol, low){
     var f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = low || 1200;
     var g = ac.createGain(); g.gain.value = vol || 0.15;
     src.connect(f); f.connect(g); g.connect(out); src.start();
-  } catch(e){}
+  } catch(e){ logAudioError('noiseHit', e); }
 }
 
 function playExplosionSFX(customVol){
@@ -2008,7 +2074,7 @@ function playExplosionSFX(customVol){
     oscGain.connect(outNode);
     osc.start(now);
     osc.stop(now + 0.35);
-  } catch(e){}
+  } catch(e){ logAudioError('explosion', e); }
 }
 
 var lastAlarmTime = 0;
@@ -2305,6 +2371,7 @@ function dismissGtaLoadingScreen(){
   if(GTA_LOADER.timer) clearInterval(GTA_LOADER.timer);
   if(GTA_LOADER.autoTimer) clearTimeout(GTA_LOADER.autoTimer);
   if(GTA_LOADER.fallbackTimer) clearTimeout(GTA_LOADER.fallbackTimer);
+  resumeAudioContext();
   sfx('wave');
   setTimeout(function(){
     if(screen.parentNode) screen.parentNode.removeChild(screen);
@@ -6562,7 +6629,10 @@ function pollGamepad(dt){
   var axes = gp.axes || [];
   var lx = dz(axes[0] || 0), ly = dz(axes[1] || 0);
   var rx = dz(axes[2] || 0), ry = dz(axes[3] || 0);
-  if(lx || ly || rx || ry) releaseDirector(); // stick input takes camera back instantly
+  if(lx || ly || rx || ry) {
+    if(!audioUnlocked) resumeAudioContext();
+    releaseDirector(); // stick input takes camera back instantly
+  }
 
   // march: left stick SLIDES the map smoothly
   if((lx || ly) && controls){
@@ -6618,6 +6688,7 @@ function pollGamepad(dt){
   for(var b = 0; b < btnCount; b++){
     var btnObj = btns[b];
     var down = !!(btnObj && (btnObj.pressed || (typeof btnObj.value === 'number' && btnObj.value > 0.4) || btnObj === true));
+    if(down && !audioUnlocked) resumeAudioContext();
     if(down && !PAD.prev[b]){
       padPress(b);
     }
@@ -7313,6 +7384,10 @@ var API = {
   playVictorySFX: playVictorySFX,
   sfx: sfx,
   getAudioContext: function(){ return audio(); },
+  resumeAudioContext: resumeAudioContext,
+  isAudioUnlocked: function(){ return audioUnlocked || (AC ? AC.state === 'running' : false); },
+  attachAudioGestureListeners: attachAudioGestureListeners,
+  removeAudioGestureListeners: removeAudioGestureListeners,
   getGlyphLevel: getGlyphLevel,
   purchaseGlyph: purchaseGlyph,
   canAffordGlyph: canAffordGlyph,
