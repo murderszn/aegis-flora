@@ -8,6 +8,7 @@
   <meta name="author" content="murderszn">
   <meta name="theme-color" content="#030706">
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0a1512">
+  <link rel="icon" type="image/png" href="assets/favicon.png" sizes="64x64">
 
   <!-- OpenGraph / Social Metadata -->
   <meta property="og:title" content="Aegis Flora — Solarpunk 3D Mazing Tower Defense">
@@ -24,6 +25,30 @@
   <meta name="twitter:title" content="Aegis Flora — Solarpunk 3D Mazing Tower Defense">
   <meta name="twitter:description" content="Tactical freeform mazing, botanical artillery, and dieselpunk automata incursions. Developed by murderszn.">
   <meta name="twitter:image" content="https://murderszn.github.io/aegis-flora/assets/aegis_master.jpg">
+
+  <!-- Structured data: VideoGame rich result -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Aegis Flora",
+    "description": "A luxury Solarpunk 3D Mazing Tower Defense game. Sculpt living labyrinths across an open Greco-Roman ruins battlefield and repel 50 waves of clockwork automata.",
+    "url": "https://murderszn.github.io/aegis-flora/",
+    "image": "https://murderszn.github.io/aegis-flora/assets/aegis_master.jpg",
+    "author": { "@type": "Person", "name": "murderszn" },
+    "genre": ["Tower Defense", "Strategy"],
+    "gamePlatform": ["Windows", "macOS", "Linux", "WebGL"],
+    "applicationCategory": "Game",
+    "operatingSystem": ["Windows", "macOS", "Linux"],
+    "trailer": {
+      "@type": "VideoObject",
+      "name": "Aegis Flora — Official Gameplay Trailer",
+      "thumbnailUrl": "https://murderszn.github.io/aegis-flora/assets/aegis_gameplay_poster.jpg",
+      "contentUrl": "https://murderszn.github.io/aegis-flora/assets/aegis_gameplay_cinematic.mp4"
+    },
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
 
 
   <style>
@@ -99,16 +124,6 @@
     .header-actions {
       display: flex; align-items: center; gap: 14px;
     }
-    /* Persistent meta-currency counter (reads game.html's localStorage ledger) */
-    .menu-glyphs {
-      display: inline-flex; align-items: center; gap: 7px;
-      color: #ffe19c; font-size: 12px; font-weight: 700; letter-spacing: 1.5px;
-      font-family: var(--font-sans); white-space: nowrap;
-      border: 1px solid rgba(223, 191, 120, 0.3); border-radius: 32px;
-      padding: 7px 14px; background: rgba(223, 191, 120, 0.07);
-    }
-    .menu-glyphs small { color: var(--text-dim); font-weight: 600; font-size: 10px; letter-spacing: 2px; }
-
     /* Unified CTA language: shared 32px pill radius, elevation + lift-on-hover.
        60-30-10 color hierarchy: ivory action (primary) on deep sanctum green. */
     .btn-launch {
@@ -238,6 +253,38 @@
       transform: translateY(-2px);
       border-color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.1);
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Act I trailer teaser: poster thumbnail with play affordance */
+    .hero-trailer-teaser {
+      display: inline-flex; align-items: center; gap: 14px; margin-top: 26px;
+      text-decoration: none; color: var(--text);
+      transition: transform 0.2s ease;
+    }
+    .hero-trailer-teaser:hover { transform: translateY(-2px); }
+    .hero-trailer-thumb {
+      position: relative; display: block; width: 132px; aspect-ratio: 16 / 9;
+      border-radius: 8px; overflow: hidden; flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hero-trailer-teaser:hover .hero-trailer-thumb {
+      border-color: var(--gold);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(226, 192, 130, 0.25);
+    }
+    .hero-trailer-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hero-trailer-play {
+      position: absolute; inset: 0; margin: auto;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(3, 7, 6, 0.7); border: 1px solid var(--gold);
+      color: var(--gold); font-size: 12px; line-height: 32px; text-align: center;
+    }
+    .hero-trailer-text {
+      font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+      text-align: left; line-height: 1.9;
+    }
+    .hero-trailer-text small {
+      display: block; color: var(--gold); font-size: 10px; letter-spacing: 2px; font-weight: 600;
     }
 
     /* Platform Pill Strip */
@@ -372,10 +419,27 @@
     .section-header-center {
       text-align: center; max-width: 780px; margin: 0 auto 54px;
     }
+    .gallery-filters {
+      display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+      max-width: 1280px; margin: 0 auto 30px;
+    }
+    .gallery-filter-btn {
+      background: transparent; border: 1px solid rgba(255, 255, 255, 0.22);
+      color: var(--text-dim); font-family: var(--font-sans); font-weight: 600;
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 9px 20px; border-radius: 32px; cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+    }
+    .gallery-filter-btn:hover {
+      transform: translateY(-2px); border-color: var(--gold); color: #ffffff;
+    }
+    .gallery-filter-btn.active { background: #ffffff; border-color: #ffffff; color: #080c0a; }
+    .gallery-filter-btn .count { opacity: 0.55; font-weight: 700; }
     .gallery-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px; max-width: 1280px; margin: 0 auto;
     }
+    .gallery-item.is-hidden { display: none; }
     .gallery-item {
       position: relative; aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden;
       border: 1px solid rgba(255, 255, 255, 0.12); cursor: pointer;
@@ -568,7 +632,6 @@
     </a>
 
     <div class="header-actions">
-      <span class="menu-glyphs" id="menu-glyphs" title="Verdant Glyphs — persistent meta-currency earned in game">✦ <b id="menu-glyphs-val">0</b> <small>GLYPHS</small></span>
       <a href="game.html" class="btn-launch">Play Game</a>
     </div>
   </header>
@@ -615,10 +678,13 @@
           Suspended above the clouds of Olympos floats the Verdant Sanctum—an eternal temple where ancient Greek stonework and clockwork mechanisms breathe with solar mana. Here, the Aegis shield guards the heart of botanical creation against the clockwork automata legions.
         </p>
 
-        <div class="hero-btn-row">
-          <a href="game.html" class="btn-primary-hero">Launch Game</a>
-          <a href="#steam-gallery" class="btn-ghost-hero">Inspect Sanctum</a>
-        </div>
+        <a class="hero-trailer-teaser" href="#gameplay-cinematic" aria-label="Watch the official gameplay trailer">
+          <span class="hero-trailer-thumb">
+            <img src="assets/aegis_gameplay_poster.jpg" alt="" loading="lazy">
+            <span class="hero-trailer-play" aria-hidden="true">▶</span>
+          </span>
+          <span class="hero-trailer-text">Watch the trailer<small>Official gameplay · 60 FPS</small></span>
+        </a>
       </div>
 
       <div class="scroll-hint">
@@ -743,6 +809,13 @@
         </p>
       </div>
 
+      <div class="gallery-filters" role="group" aria-label="Filter gallery by artwork type">
+        <button type="button" class="gallery-filter-btn active" data-filter="all" aria-pressed="true">All</button>
+        <button type="button" class="gallery-filter-btn" data-filter="render" aria-pressed="false">Renders</button>
+        <button type="button" class="gallery-filter-btn" data-filter="asset" aria-pressed="false">3D Assets</button>
+        <button type="button" class="gallery-filter-btn" data-filter="concept" aria-pressed="false">Concept Art</button>
+      </div>
+
       <div class="gallery-grid">
         <div class="gallery-item" data-img="assets/battlefield_map.jpg" data-title="Tactical Labyrinth Grid" data-sub="36x20 Floating Marble Battlefield">
           <img src="assets/battlefield_map.jpg" alt="Aegis Flora Battlefield Labyrinth Map" loading="lazy">
@@ -821,6 +894,38 @@
           <div class="gallery-overlay">
             <div class="gallery-overlay-title">The Sacred Relic Vault</div>
             <div class="gallery-overlay-sub">Permanent Run-to-Run Glyphs</div>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="assets/concepts/tower_heliostat_orchid.png" data-title="Heliostat Orchid" data-sub="Tower Concept Art">
+          <img src="assets/concepts/tower_heliostat_orchid.png" alt="Heliostat Orchid tower concept art" loading="lazy">
+          <div class="gallery-overlay">
+            <div class="gallery-overlay-title">Heliostat Orchid</div>
+            <div class="gallery-overlay-sub">Concept Art · Botanical Artillery</div>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="assets/concepts/tower_mycelium_bell.png" data-title="Mycelium Bell" data-sub="Tower Concept Art">
+          <img src="assets/concepts/tower_mycelium_bell.png" alt="Mycelium Bell tower concept art" loading="lazy">
+          <div class="gallery-overlay">
+            <div class="gallery-overlay-title">Mycelium Bell</div>
+            <div class="gallery-overlay-sub">Concept Art · Botanical Artillery</div>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="assets/concepts/enemy_sporewing_interceptor.png" data-title="Sporewing Interceptor" data-sub="Enemy Concept Art">
+          <img src="assets/concepts/enemy_sporewing_interceptor.png" alt="Sporewing Interceptor enemy concept art" loading="lazy">
+          <div class="gallery-overlay">
+            <div class="gallery-overlay-title">Sporewing Interceptor</div>
+            <div class="gallery-overlay-sub">Concept Art · Automata Incursion</div>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="assets/concepts/enemy_thornback_harvester.png" data-title="Thornback Harvester" data-sub="Enemy Concept Art">
+          <img src="assets/concepts/enemy_thornback_harvester.png" alt="Thornback Harvester enemy concept art" loading="lazy">
+          <div class="gallery-overlay">
+            <div class="gallery-overlay-title">Thornback Harvester</div>
+            <div class="gallery-overlay-sub">Concept Art · Automata Incursion</div>
           </div>
         </div>
       </div>
@@ -943,7 +1048,6 @@
     <div class="footer-right">
       <a href="game.html">Play Game</a>
       <a href="#game-intel">System Specs</a>
-      <a href="https://github.com/murderszn/aegis-flora" target="_blank" rel="noopener">GitHub</a>
       <a href="https://github.com/murderszn" target="_blank" rel="noopener">Developer @murderszn</a>
     </div>
   </footer>
@@ -954,10 +1058,11 @@
       var canvas = document.getElementById('storyCanvas');
       if(!canvas) return;
       var ctx = canvas.getContext('2d');
+      // Honored by the trailer autoplay, mouse parallax, and particle drift below
+      var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       var gameplayVideo = document.getElementById('gameplayVideo');
       if(gameplayVideo){
         var videoInView = false;
-        var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         var videoLoaded = false;
         function loadGameplayVideo(){
           if(videoLoaded) return;
@@ -1025,19 +1130,13 @@
         }
       ];
 
-      // Loading veil + meta-currency counter + WebP upgrade (progressive enhancement)
+      // Loading veil + WebP upgrade (progressive enhancement)
       (function(){
         function hideLoader(){
           var l = document.getElementById('story-loader');
           if(l && !l.classList.contains('done')) l.classList.add('done');
         }
         setTimeout(hideLoader, 4000); // safety: never trap the page behind the veil
-        try {
-          var gv = 0;
-          try { gv = parseInt(localStorage.getItem('aegis_meta_scrap') || '0', 10) || 0; } catch(e){}
-          var gel = document.getElementById('menu-glyphs-val');
-          if(gel) gel.textContent = gv.toLocaleString();
-        } catch(e){}
         try {
           var webpOK = (function(){
             try {
@@ -1089,6 +1188,7 @@
       // Mouse subtle tilt parallax
       var mouseX = 0, mouseY = 0, targetMouseX = 0, targetMouseY = 0;
       window.addEventListener('mousemove', function(e){
+        if(reducedMotion) return; // keep the backdrop static for reduced-motion users
         targetMouseX = (e.clientX / window.innerWidth - 0.5) * 35;
         targetMouseY = (e.clientY / window.innerHeight - 0.5) * 25;
       });
@@ -1210,15 +1310,18 @@
         // 4. Render Drifting Monochromatic Celestial Motes
         for(var j = 0; j < particles.length; j++){
           var p = particles[j];
-          p.x += p.vx;
-          p.y += p.vy;
-          p.phase += 0.02;
+          var a = p.alpha;
+          if(!reducedMotion){
+            p.x += p.vx;
+            p.y += p.vy;
+            p.phase += 0.02;
 
-          if(p.x > width + 10) p.x = -10;
-          if(p.y > height + 10) p.y = -10;
-          if(p.y < -10) p.y = height + 10;
+            if(p.x > width + 10) p.x = -10;
+            if(p.y > height + 10) p.y = -10;
+            if(p.y < -10) p.y = height + 10;
 
-          var a = p.alpha * (0.6 + Math.sin(p.phase) * 0.4);
+            a = p.alpha * (0.6 + Math.sin(p.phase) * 0.4);
+          }
 
           ctx.beginPath();
           ctx.arc(p.x + mouseX * 0.15, p.y + mouseY * 0.15, p.radius, 0, Math.PI * 2);
@@ -1232,38 +1335,102 @@
       }
       requestAnimationFrame(loop);
 
-      // Lightbox functionality for gallery
+      // Gallery category filters (Renders / 3D Assets / Concept Art)
+      function galleryCategory(item){
+        var src = item.getAttribute('data-img') || '';
+        if(src.indexOf('assets/concepts/') === 0) return 'concept';
+        if(/\/3d_[a-z_]+\.(jpg|webp|png)$/.test(src)) return 'asset';
+        return 'render';
+      }
+      var galleryItems = Array.prototype.slice.call(document.querySelectorAll('.gallery-item'));
+      var filterBtns = Array.prototype.slice.call(document.querySelectorAll('.gallery-filter-btn'));
+      if(filterBtns.length){
+        // Annotate each tile with its live count so labels never go stale
+        var counts = {all: galleryItems.length, render: 0, asset: 0, concept: 0};
+        galleryItems.forEach(function(item){ counts[galleryCategory(item)]++; });
+        filterBtns.forEach(function(btn){
+          var key = btn.getAttribute('data-filter');
+          btn.insertAdjacentHTML('beforeend', ' <span class="count">' + (counts[key] || 0) + '</span>');
+          btn.addEventListener('click', function(){
+            filterBtns.forEach(function(b){
+              var on = (b === btn);
+              b.classList.toggle('active', on);
+              b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+            galleryItems.forEach(function(item){
+              var show = (key === 'all') || (galleryCategory(item) === key);
+              item.classList.toggle('is-hidden', !show);
+            });
+          });
+        });
+      }
+
+      // Lightbox functionality for gallery (focus trap + focus restore)
       var lightbox = document.getElementById('galleryLightbox');
       var lightboxImg = document.getElementById('lightboxImg');
       var lightboxCaption = document.getElementById('lightboxCaption');
       var lightboxClose = document.getElementById('lightboxCloseBtn');
+      var lightboxOpener = null;
 
-      document.querySelectorAll('.gallery-item').forEach(function(item){
-        item.addEventListener('click', function(){
-          var src = item.getAttribute('data-img');
-          var title = item.getAttribute('data-title');
-          var sub = item.getAttribute('data-sub');
-          if(!lightbox || !lightboxImg) return;
-          lightboxImg.src = src;
-          lightboxImg.alt = title;
-          lightboxCaption.innerHTML = '<strong>' + title + '</strong> &bull; <span style="color:var(--gold);">' + sub + '</span>';
-          lightbox.classList.add('active');
+      function openLightbox(item, opener){
+        if(!lightbox || !lightboxImg) return;
+        var src = item.getAttribute('data-img');
+        var title = item.getAttribute('data-title');
+        var sub = item.getAttribute('data-sub');
+        lightboxImg.src = src;
+        lightboxImg.alt = title;
+        lightboxCaption.innerHTML = '<strong>' + title + '</strong> &bull; <span style="color:var(--gold);">' + sub + '</span>';
+        lightboxOpener = opener || document.activeElement;
+        lightbox.classList.add('active');
+        if(lightboxClose) lightboxClose.focus();
+      }
+      function closeLightbox(){
+        if(!lightbox) return;
+        lightbox.classList.remove('active');
+        if(lightboxOpener && lightboxOpener.focus) lightboxOpener.focus();
+        lightboxOpener = null;
+      }
+
+      galleryItems.forEach(function(item){
+        // Make tiles keyboard-operable so the lightbox is reachable without a mouse
+        if(!item.hasAttribute('tabindex')) item.setAttribute('tabindex', '0');
+        if(!item.hasAttribute('role')) item.setAttribute('role', 'button');
+        item.addEventListener('click', function(){ openLightbox(item, item); });
+        item.addEventListener('keydown', function(e){
+          if(e.key === 'Enter' || e.key === ' '){
+            e.preventDefault();
+            openLightbox(item, item);
+          }
         });
       });
 
       if(lightboxClose){
         lightboxClose.addEventListener('click', function(){
-          lightbox.classList.remove('active');
+          closeLightbox();
         });
       }
       if(lightbox){
         lightbox.addEventListener('click', function(e){
-          if(e.target === lightbox) lightbox.classList.remove('active');
+          if(e.target === lightbox) closeLightbox();
         });
       }
       window.addEventListener('keydown', function(e){
-        if(e.key === 'Escape' && lightbox && lightbox.classList.contains('active')){
-          lightbox.classList.remove('active');
+        if(!lightbox || !lightbox.classList.contains('active')) return;
+        if(e.key === 'Escape'){
+          closeLightbox();
+        } else if(e.key === 'Tab'){
+          // Keep focus cycling inside the dialog while it is open
+          var focusables = lightbox.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])');
+          if(!focusables.length) return;
+          var first = focusables[0];
+          var last = focusables[focusables.length - 1];
+          if(e.shiftKey && document.activeElement === first){
+            e.preventDefault();
+            last.focus();
+          } else if(!e.shiftKey && document.activeElement === last){
+            e.preventDefault();
+            first.focus();
+          }
         }
       });
 
