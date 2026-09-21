@@ -7,6 +7,7 @@
   <meta name="description" content="A luxury Solarpunk 3D Mazing Tower Defense game developed by murderszn. Sculpt living labyrinths across an open Greco-Roman ruins battlefield and repel the clockwork automata legion. Play the free web demo.">
   <meta name="author" content="murderszn">
   <meta name="theme-color" content="#030706">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0a1512">
   <link rel="icon" type="image/png" href="assets/favicon.png" sizes="64x64">
 
   <!-- OpenGraph / Social Metadata -->
@@ -53,6 +54,21 @@
       z-index: 1; pointer-events: none;
     }
 
+    /* Scene loading veil: covers first paint until the opening artwork is ready */
+    #story-loader {
+      position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px;
+      background: #030706; color: #d1dfd7;
+      font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+      transition: opacity 0.6s ease; pointer-events: all;
+    }
+    #story-loader.done { opacity: 0; pointer-events: none; }
+    #story-loader .loader-mark {
+      font-family: var(--font-serif); font-size: 22px; letter-spacing: 8px; color: #ffffff;
+      animation: loaderPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes loaderPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+
     /* Cinematic Film Vignette & Atmosphere Overlays */
     .vignette-overlay {
       position: fixed; inset: 0; z-index: 2; pointer-events: none;
@@ -84,16 +100,32 @@
     .header-actions {
       display: flex; align-items: center; gap: 14px;
     }
+    /* Persistent meta-currency counter (reads game.html's localStorage ledger) */
+    .menu-glyphs {
+      display: inline-flex; align-items: center; gap: 7px;
+      color: #ffe19c; font-size: 12px; font-weight: 700; letter-spacing: 1.5px;
+      font-family: var(--font-sans); white-space: nowrap;
+      border: 1px solid rgba(223, 191, 120, 0.3); border-radius: 32px;
+      padding: 7px 14px; background: rgba(223, 191, 120, 0.07);
+    }
+    .menu-glyphs small { color: var(--text-dim); font-weight: 600; font-size: 10px; letter-spacing: 2px; }
 
+    /* Unified CTA language: shared 32px pill radius, elevation + lift-on-hover.
+       60-30-10 color hierarchy: ivory action (primary) on deep sanctum green. */
     .btn-launch {
       display: inline-flex; align-items: center; gap: 8px;
       background: #ffffff; color: #080c0a; font-weight: 700; font-size: 12px;
-      letter-spacing: 2px; text-transform: uppercase; padding: 10px 24px; border-radius: 30px;
-      text-decoration: none; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-      transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+      letter-spacing: 2px; text-transform: uppercase; padding: 10px 24px; border-radius: 32px;
+      text-decoration: none; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+      transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
     }
     .btn-launch:hover {
-      transform: translateY(-2px); background: #e8e4da;
+      transform: translateY(-2px); background: #e8e4da; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+    }
+    .btn-launch:focus-visible,
+    .btn-primary-hero:focus-visible,
+    .btn-ghost-hero:focus-visible {
+      outline: 2px solid #00F5D4; outline-offset: 3px;
     }
 
     /* Fixed Chapter Index Rail (Right Edge) */
@@ -188,23 +220,25 @@
     .btn-primary-hero {
       display: inline-flex; align-items: center; gap: 10px;
       background: #ffffff; color: #080c0a; font-weight: 700; font-size: 14px;
-      letter-spacing: 2px; text-transform: uppercase; padding: 15px 38px; border-radius: 40px;
-      text-decoration: none; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-      transition: transform 0.2s, background 0.2s;
+      letter-spacing: 2px; text-transform: uppercase; padding: 15px 38px; border-radius: 32px;
+      text-decoration: none; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+      transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
     }
     .btn-primary-hero:hover {
-      transform: translateY(-2px); background: #e8e4da;
+      transform: translateY(-2px); background: #e8e4da; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
     }
     .btn-ghost-hero {
       display: inline-flex; align-items: center; gap: 10px;
       background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.25);
       color: #ffffff; font-weight: 600; font-size: 13px; letter-spacing: 2px;
-      text-transform: uppercase; padding: 14px 32px; border-radius: 40px;
+      text-transform: uppercase; padding: 14px 32px; border-radius: 32px;
       text-decoration: none; backdrop-filter: blur(8px);
-      transition: border-color 0.2s, background 0.2s;
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
     }
     .btn-ghost-hero:hover {
+      transform: translateY(-2px);
       border-color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
     }
 
     /* Platform Pill Strip */
@@ -441,15 +475,6 @@
     .intel-val a:hover {
       color: #ffffff; border-bottom-color: #ffffff;
     }
-    .intel-tag-strip {
-      display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px;
-    }
-    .intel-tag {
-      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-      color: var(--text-dim); border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 4px 12px; border-radius: 16px;
-    }
-
     /* Containerless Specifications Columns */
     .specs-columns {
       display: grid; grid-template-columns: 1fr 1fr; gap: 32px; font-size: 12px; line-height: 1.7;
@@ -530,6 +555,7 @@
 
   <!-- Fixed Fullscreen Background WebGL / Canvas Stage (Multi-Layer Cinematic Scrollytelling) -->
   <canvas id="storyCanvas"></canvas>
+  <div id="story-loader" role="status" aria-label="Loading artwork"><span class="loader-mark">✦ AEGIS FLORA ✦</span><span>growing the sanctum…</span></div>
   <div class="vignette-overlay"></div>
 
   <!-- Minimalist Floating Navigation Bar -->
@@ -543,6 +569,7 @@
     </a>
 
     <div class="header-actions">
+      <span class="menu-glyphs" id="menu-glyphs" title="Verdant Glyphs — persistent meta-currency earned in game">✦ <b id="menu-glyphs-val">0</b> <small>GLYPHS</small></span>
       <a href="game.html" class="btn-launch">Play Game</a>
     </div>
   </header>
@@ -835,14 +862,6 @@
             </div>
           </div>
 
-          <div class="intel-tag-strip">
-            <span class="intel-tag">Tower Defense</span>
-            <span class="intel-tag">Mazing</span>
-            <span class="intel-tag">Solarpunk</span>
-            <span class="intel-tag">Three.js</span>
-            <span class="intel-tag">WebGL2</span>
-            <span class="intel-tag">Indie</span>
-          </div>
         </div>
 
         <!-- Right: System Specifications -->
@@ -1007,10 +1026,55 @@
         }
       ];
 
+      // Loading veil + meta-currency counter + WebP upgrade (progressive enhancement)
+      (function(){
+        function hideLoader(){
+          var l = document.getElementById('story-loader');
+          if(l && !l.classList.contains('done')) l.classList.add('done');
+        }
+        setTimeout(hideLoader, 4000); // safety: never trap the page behind the veil
+        try {
+          var gv = 0;
+          try { gv = parseInt(localStorage.getItem('aegis_meta_scrap') || '0', 10) || 0; } catch(e){}
+          var gel = document.getElementById('menu-glyphs-val');
+          if(gel) gel.textContent = gv.toLocaleString();
+        } catch(e){}
+        try {
+          var webpOK = (function(){
+            try {
+              var c = document.createElement('canvas');
+              return !!(c.getContext && c.getContext('2d') &&
+                c.toDataURL('image/webp').indexOf('data:image/webp') === 0);
+            } catch(e){ return false; }
+          })();
+          if(webpOK){
+            SCENES.forEach(function(s){
+              if(/\.jpg$/.test(s.src)) s.src = s.src.replace(/\.jpg$/, '.webp');
+              if(s.altSrc && /\.jpg$/.test(s.altSrc)) s.altSrc = s.altSrc.replace(/\.jpg$/, '.webp');
+            });
+            document.querySelectorAll('img[src$=".jpg"]').forEach(function(img){
+              var w = img.getAttribute('src').replace(/\.jpg$/, '.webp');
+              var probe = new Image();
+              probe.onload = function(){ img.src = w; };
+              probe.src = w; // swap only if the .webp actually resolves
+            });
+          }
+        } catch(e){}
+      })();
+
       // Preload images into memory
       var images = [];
+      var firstPaintDone = false;
+      function markFirstPaint(){
+        if(firstPaintDone) return; firstPaintDone = true;
+        var l = document.getElementById('story-loader');
+        if(l) l.classList.add('done');
+      }
       SCENES.forEach(function(s, idx){
         var img = new Image();
+        if(idx === 0){
+          img.onload = markFirstPaint; img.onerror = markFirstPaint;
+        }
         img.src = s.src;
         images[idx] = img;
       });

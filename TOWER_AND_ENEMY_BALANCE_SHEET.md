@@ -111,8 +111,10 @@ original $1 + 0.18W + 0.012W^{1.65}$ design formula, so no late-game coefficient
 was needed — the bump lives entirely in $E(W)$ and base HP values are untouched, keeping
 the tuned late game neutral.
 
-New archetypes: **Phase Blink** (320 HP, teleport 3–5 tiles, wave 12+) and **Rift Dart**
-(70 HP, 5.4 speed phase-sprint, wave 18+).
+New archetypes: **Phase Blink** (320 HP, 0.5s gold-glow telegraph then teleport 3–5 tiles,
+waves 15+, ~1 per 15 regulars capped 3–6, killable mid-charge) and **Rift Dart**
+(12 HP ≈ 40% of a same-wave Scout, 5.4 speed phase-sprint with cyan afterimage trail,
+waves 25+ in pairs, trio from wave 30).
 
 $$\text{Kill Bounty}(W) = \text{Base Bounty} \times \left(1 + 0.04 \times W\right)$$
 

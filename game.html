@@ -357,7 +357,15 @@
     color: #dfbf78; margin-top: 5px; text-transform: uppercase;
   }
   #wavebanner.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  #wavebanner.danger {
+  /* Game-speed flash notification (V key): brief ×1 / ×2 / ×4 overlay */
+  #speed-flash {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9);
+    z-index: 1001; pointer-events: none; opacity: 0;
+    font-family: var(--font-stats); font-size: 44px; font-weight: 800; letter-spacing: 3px;
+    color: #fff5dc; text-shadow: 0 2px 18px rgba(0,0,0,0.9), 0 0 28px rgba(0,245,212,0.5);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  #speed-flash.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }  #wavebanner.danger {
     border-color: rgba(255, 80, 80, 0.6);
     background: linear-gradient(180deg, rgba(32, 10, 14, 0.96), rgba(18, 5, 8, 0.94));
     box-shadow: inset 0 1px 0 rgba(255, 120, 120, 0.3), 0 12px 36px rgba(0,0,0,0.75), 0 0 20px rgba(255,59,48,0.25);
@@ -469,6 +477,7 @@
 <div id="letterbox-bottom" class="letterbox"></div>
 <div id="filmgrain"></div>
 <div id="wavebanner"><div class="wb-title"></div><div class="wb-sub"></div></div>
+<div id="speed-flash" aria-live="polite"></div>
 <div id="bosshp">
   <div style="display:flex; justify-content:space-between; align-items:center;">
     <div class="boss-name">☠ GOLIATH COLOSSUS</div>
@@ -915,12 +924,12 @@ var WAVE_MAX = 50, START_CASH = 20, START_LIVES = 15, SELL_RATE = 0.75;
 
 var TOWERS = {
   gun: {
-    key: 'Q', numKey: '1', name: 'Petal Gatling', cost: 5, range: 2.8,
-    img: 'assets/3d_turret_pbr.jpg', glb: 'blender_pipeline/models/tower_prism_gatling.glb',
-    desc: 'Rapid kinetic fire. Fluted marble plinth with spinning rotary brass barrels.'
+    key: 'Q', numKey: '1', name: 'Petal Gatling', cost: 6, range: 2.8,
+    img: 'assets/3d_turret_pbr.jpg', glb: 'blender_pipeline/models/tower_petal_gatling.glb',
+    desc: 'Rapid rotary kinetic fire. Shreds unarmored swarms.'
   },
   rocket: {
-    key: 'W', numKey: '2', name: 'Bloom Mortar', cost: 10, range: 5.0,
+    key: 'W', numKey: '2', name: 'Bloom Mortar', cost: 12, range: 5.0,
     img: 'assets/3d_mortar_pbr.jpg', glb: 'blender_pipeline/models/tower_bloom_cannon.glb',
     desc: 'Mechanical lotus flak artillery. Arcing explosive spore shells with fiery splash.'
   },
@@ -975,7 +984,7 @@ var FOES = {
   drone:   { hp: 45, speed: 2.2, reward: 7, leak: 1, r: 0.25, kind: 'air', name: 'Rotor Drone', armor: 1, dmgMod: { Kinetic: 1.0, Blast: 1.0, Energy: 1.0, Sonic: 1.0 } },
   ship:    { hp: 980, speed: 0.8, reward: 50, leak: 6, r: 0.48, kind: 'air', armored: true, name: 'Zeppelin Sky-Hull', armor: 6, dmgMod: { Kinetic: 0.7, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
   blink:   { hp: 320, speed: 1.1, reward: 30, leak: 3, r: 0.3, kind: 'gnd', name: 'Phase Blink', armor: 4, dmgMod: { Kinetic: 0.8, Blast: 1.0, Energy: 1.1, Sonic: 1.2 } },
-  dart:    { hp: 70, speed: 5.4, reward: 12, leak: 2, r: 0.2, kind: 'gnd', name: 'Rift Dart', armor: 0, dodge: 0.10, dmgMod: { Kinetic: 1.1, Blast: 1.0, Energy: 1.0, Sonic: 1.35 } }
+  dart:    { hp: 12, speed: 5.4, reward: 12, leak: 2, r: 0.2, kind: 'gnd', name: 'Rift Dart', armor: 0, dodge: 0.10, dmgMod: { Kinetic: 1.1, Blast: 1.0, Energy: 1.0, Sonic: 1.35 } }
 };
 
 // Dota 2 armor formula: diminishing returns on effective HP
@@ -1110,6 +1119,7 @@ var GLYPH_DEFS = {
   foundry: { name: 'Foundry Engineering', desc: '+2% tower damage per level', maxLvl: 15, cost: 50, icon: '⚙' },
   vault: { name: 'Ancient Vault', desc: '+50 starting Scrap per level', maxLvl: 3, cost: 80, icon: '💰' },
   flora: { name: 'Flora Symbiosis', desc: '+15% Sanctum HP per level', maxLvl: 5, cost: 60, icon: '🌿' },
+  attune: { name: 'Solar Attunement', desc: '+8% Solar Mana regen per level', maxLvl: 5, cost: 70, icon: '☀' },
   mazing: { name: 'Mazing Mastery', desc: 'Unlock decorative blocker walls', maxLvl: 1, cost: 100, icon: '🧱' }
 };
 
@@ -1173,10 +1183,12 @@ function getGlyphBonus(glyphs){
   var vLvl = (g && g.vault) || 0;
   var flLvl = (g && g.flora) || 0;
   var mLvl = (g && g.mazing) || 0;
+  var aLvl = (g && g.attune) || 0;
   return {
     dmgMult: 1 + fLvl * 0.02,
     startCash: START_CASH + vLvl * 50,
     maxLives: START_LIVES + flLvl * Math.round(START_LIVES * 0.15),
+    manaRegen: 4 * (1 + aLvl * 0.08),
     hasMazingWall: mLvl >= 1
   };
 }
@@ -6001,15 +6013,19 @@ function hpScale(w){
   return base * early;
 }
 function waveComp(w){
-  var c = [{ type: 'spider', count: 5 + Math.floor(w * 1.6), gap: 0.45 }];
+  // Waves 1-5 run +2 bonus scouts so the opening forces tower placement decisions.
+  var c = [{ type: 'spider', count: 5 + Math.floor(w * 1.6) + (w <= 5 ? 2 : 0), gap: 0.45 }];
   if(w >= 2) c.push({ type: 'tank', count: 1 + Math.floor(w * 0.8), gap: 0.95 });
   if(w >= 3) c.push({ type: 'drone', count: 2 + Math.floor(w * 0.7), gap: 0.75 });
   if(w >= 4) c.push({ type: 'prowler', count: Math.max(1, Math.floor((w - 2) * 0.7)), gap: 0.8 });
   if(w >= 5) c.push({ type: 'walker', count: Math.floor((w - 1) * 0.55), gap: 1.25 });
   if(w >= 7) c.push({ type: 'ram', count: Math.max(1, Math.floor((w - 5) * 0.45)), gap: 2.2 });
   if(w >= 8) c.push({ type: 'ship', count: Math.floor((w - 4) * 0.3), gap: 2.1 });
-  if(w >= 12) c.push({ type: 'blink', count: Math.max(1, Math.floor((w - 10) * 0.35)), gap: 2.6 });
-  if(w >= 18) c.push({ type: 'dart', count: Math.max(2, Math.floor((w - 15) * 0.5)), gap: 0.5 });
+  // Phase Blink: waves 15+, roughly 1 per 15 regulars, capped (3 through wave 20, 6 after).
+  var regulars = c.reduce(function(s, g){ return s + g.count; }, 0);
+  if(w >= 15) c.push({ type: 'blink', count: Math.max(1, Math.min(w <= 20 ? 3 : 6, Math.floor(regulars / 15))), gap: 2.6 });
+  // Rift Dart: waves 25+, hunter-killer pairs (trio from wave 30).
+  if(w >= 25) c.push({ type: 'dart', count: w >= 30 ? 3 : 2, gap: 0.5 });
   if(w % 10 === 0) c.push({ type: 'boss', count: Math.floor(w / 10), gap: 4.0 });
   return c;
 }
@@ -6124,8 +6140,9 @@ function updateHpBar(f){
 }
 
 // ---------- Blink & Dart special locomotion ----------
-// Phase Blink ("jaunt"): every 5-7s it telegraphs 0.8s (ring strobe + rising tone)
+// Phase Blink ("jaunt"): every 5-7s it telegraphs 0.5s (gold ring strobe + rising tone)
 // then skips 3-5 tiles forward along its path. Landing is validated against towers.
+// It remains fully damageable during charge-up — focused fire is the counterplay.
 function updateBlinkMechanics(f, dt){
   if(f.blinkWarn > 0){
     f.blinkWarn -= dt;
@@ -6156,13 +6173,27 @@ function updateBlinkMechanics(f, dt){
   }
   f.blinkCD -= dt;
   if(f.blinkCD <= 0 && f.hp > 0 && !f.dead){
-    f.blinkWarn = 0.8;
+    f.blinkWarn = 0.5;
     sfx('zap'); // rising-tone telegraph so players can react
   }
 }
 // Rift Dart: fragile speedster that periodically phase-sprints straight through
 // maze walls for 0.8s (cyan streak + hiss), then rejoins the flow field.
+// Afterimage: drops short-lived cyan sparks while sprinting or phasing.
 function updateDartMechanics(f, dt){
+  if((f.phaseT > 0 || f.speed >= 5) && typeof scene !== 'undefined' && scene){
+    f.trailT = (f.trailT || 0) - dt;
+    if(f.trailT <= 0 && !(typeof GFX !== 'undefined' && GFX.profile === 'perf' && FX.sparks.length > 40)){
+      f.trailT = 0.12;
+      try {
+        var tp = gridToWorld3D(f.x, f.y, 0.5);
+        if(!FX_SHARED.sparkGeo) FX_SHARED.sparkGeo = new THREE.SphereGeometry(0.06, 6, 6);
+        var s = new THREE.Mesh(FX_SHARED.sparkGeo, MATS.cyanGlow);
+        s.position.copy(tp); s.visible = true; scene.add(s);
+        FX.sparks.push({ mesh: s, vx: (Math.random()-0.5)*1.5, vy: 0.8+Math.random(), vz: (Math.random()-0.5)*1.5, life: 0.3, grav: -3 });
+      } catch(e){}
+    }
+  }
   if(f.phaseT > 0){
     f.phaseT -= dt;
     if(f.phaseT <= 0){
@@ -6250,7 +6281,14 @@ function update(dt){
         if(f.type) S.leakedByType[f.type] = (S.leakedByType[f.type] || 0) + 1;
         sfx('alarm');
         sanctumFlash();
-        addTrauma(0.35);
+        if(f.type === 'boss'){
+          // Boss leak must feel catastrophic: banner + heavy shake + double rumble
+          waveBanner('☠ BOSS LEAK', 'COLOSSUS BREACHED THE SANCTUM · -' + f.leak + ' LIVES', true);
+          addTrauma(0.85);
+          padRumble(1.0, 1.2, 400);
+        } else {
+          addTrauma(0.35);
+        }
         padRumble(1.0, 0.6, 220);
         if(S.lives <= 0){ S.lives = 0; gameOver(false); return; }
         continue;
@@ -6300,12 +6338,19 @@ function update(dt){
       f.mesh.userData.ramHead.position.z = 1.25 + Math.sin(S.time * 4 + f.id * 3) * 0.1;
     }
     if(f.mesh.userData.shard){
-      // Phase Blink idle: slow shard spin; warning state strobes the ground ring
+      // Phase Blink idle: slow shard spin; 0.5s warning strobes a GOLD ring so the
+      // teleport is readable (and the blink stays killable throughout charge-up).
       f.mesh.userData.shard.rotation.y += dt * (f.blinkWarn > 0 ? 9 : 2);
       if(f.mesh.userData.warnRing){
         var wr = f.mesh.userData.warnRing;
         wr.rotation.z += dt * 2;
-        wr.material.opacity = f.blinkWarn > 0 ? (0.65 + Math.sin(S.time * 18) * 0.3) : 0.45;
+        if(f.blinkWarn > 0){
+          wr.material.color.setHex(0xFFB703);
+          wr.material.opacity = 0.65 + Math.sin(S.time * 18) * 0.3;
+        } else {
+          wr.material.color.setHex(0xC77DFF);
+          wr.material.opacity = 0.45;
+        }
         var ws = f.blinkWarn > 0 ? 1.35 : 1;
         wr.scale.set(ws, ws, 1);
       }
@@ -6748,9 +6793,10 @@ function update(dt){
     }
     posAttr.needsUpdate = true;
   }
-  // Mana recharge
+  // Mana recharge (Solar Attunement glyph raises the +4/sec base)
   if(S.mana !== undefined){
-    S.mana = Math.min(100, S.mana + 4 * dt);
+    var regen = (S && S.glyphs) ? getGlyphBonus(S.glyphs).manaRegen : 4;
+    S.mana = Math.min(100, S.mana + (regen || 4) * dt);
   }
   // Update ground zones (Sol Invictus scorch lines, magma trails)
   if(S && S.zones && S.zones.length){
@@ -8300,7 +8346,17 @@ function togglePause(explicitVal){
   }
   refreshHud();
 }
-function cycleSpeed(){ S.speed = S.speed === 1 ? 2 : (S.speed === 2 ? 4 : 1); el.btnSpeed.textContent = S.speed + 'x'; }
+function cycleSpeed(){
+  S.speed = S.speed === 1 ? 2 : (S.speed === 2 ? 4 : 1);
+  el.btnSpeed.textContent = S.speed + 'x';
+  var sf = document.getElementById('speed-flash');
+  if(sf){
+    sf.textContent = '×' + S.speed;
+    sf.className = 'show';
+    clearTimeout(sf._h);
+    sf._h = setTimeout(function(){ sf.className = ''; }, 700);
+  }
+}
 
 // ---------- Verdant Glyphs Shop UI ----------
 var GLYPH_SHOP_OPEN = false;
