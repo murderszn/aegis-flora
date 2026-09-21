@@ -100,9 +100,19 @@ $$\text{Damage Multiplier} = 2 - (1 - 0.06)^{|\text{Armor}|}$$
 ```
 
 ### 3.2 Wave Scaling Formula
-For any given wave $W \in [1, 100]$:
+For any given wave $W \in [1, 50]$ (implemented in `game.html` as `hpScale`):
 
-$$\text{Creep HP}(W) = \text{Base HP} \times \left(1 + 0.18 \times W + 0.012 \times W^{1.65}\right)$$
+$$\text{Creep HP}(W) = \text{Base HP} \times \left(1 + 0.22(W-1) + 0.012(W-1)^2\right) \times E(W)$$
+
+where $E(W) = 1 + 0.7(1 - W/25)$ for $W \le 25$ (early-game pacing bump: +67% at wave 1,
++42% at wave 10, +14% at wave 20, fading to 1.0 by wave 25) and $E(W) = 1$ after.
+Review note: the in-code quadratic curve is already ~2.3x more aggressive late than the
+original $1 + 0.18W + 0.012W^{1.65}$ design formula, so no late-game coefficient change
+was needed — the bump lives entirely in $E(W)$ and base HP values are untouched, keeping
+the tuned late game neutral.
+
+New archetypes: **Phase Blink** (320 HP, teleport 3–5 tiles, wave 12+) and **Rift Dart**
+(70 HP, 5.4 speed phase-sprint, wave 18+).
 
 $$\text{Kill Bounty}(W) = \text{Base Bounty} \times \left(1 + 0.04 \times W\right)$$
 

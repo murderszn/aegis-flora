@@ -402,16 +402,18 @@ body.director #letterbox-top, body.director #letterbox-bottom { height: 7vh; }
 #field-panel .field-score { margin-top: 2px; padding-top: 8px; border-top: 1px solid rgba(223, 191, 120, 0.18); color: #8faea4; font: 700 8.5px var(--font-stats); letter-spacing: 1px; }
 #field-panel .field-score b { float: right; color: #ffe19c; font: 700 12px var(--font-stats); letter-spacing: 0; }
 
-/* Incoming Threat Announcement (Top-Right Corner) */
+/* Incoming Threat Announcement (Top-Right Corner) — containerless text-only overlay.
+   Box removed per polish pass: no panel/border/shadow/blur so the battlefield
+   stays visible; kicker + body text carry the briefing with a legibility shadow. */
 #threat-announcement {
   position: fixed; top: 80px; right: 18px; z-index: 10; width: 250px; height: auto;
-  padding: 10px 14px; border: 1px solid rgba(223, 191, 120, 0.35); border-top: 2px solid #dfbf78;
-  border-radius: 6px; background: rgba(6, 25, 30, 0.88);
-  box-shadow: inset 0 1px rgba(255,255,255,0.08), 0 9px 28px rgba(0,0,0,0.3);
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #efe6cf;
+  padding: 0; border: 0; border-radius: 0; background: transparent;
+  box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; color: #efe6cf;
+  pointer-events: none; text-align: right;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.9);
 }
 #threat-announcement .threat-heading {
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+  display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 4px;
 }
 #threat-announcement .preview-kicker {
   color: #dfbf78; font: 700 8.5px var(--font-stats); letter-spacing: 1px; display: flex; align-items: center; gap: 5px;

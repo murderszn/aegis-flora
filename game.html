@@ -973,7 +973,9 @@ var FOES = {
   ram:     { hp: 920, speed: 0.72, reward: 36, leak: 5, r: 0.44, kind: 'gnd', armored: true, name: 'Dreadnought Ram', armor: 12, dmgMod: { Kinetic: 0.5, Blast: 0.8, Energy: 1.2, Sonic: 1.4 } },
   boss:    { hp: 4400, speed: 0.65, reward: 150, leak: 10, r: 0.58, kind: 'gnd', armored: true, name: 'Goliath Colossus', armor: 16, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
   drone:   { hp: 45, speed: 2.2, reward: 7, leak: 1, r: 0.25, kind: 'air', name: 'Rotor Drone', armor: 1, dmgMod: { Kinetic: 1.0, Blast: 1.0, Energy: 1.0, Sonic: 1.0 } },
-  ship:    { hp: 980, speed: 0.8, reward: 50, leak: 6, r: 0.48, kind: 'air', armored: true, name: 'Zeppelin Sky-Hull', armor: 6, dmgMod: { Kinetic: 0.7, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } }
+  ship:    { hp: 980, speed: 0.8, reward: 50, leak: 6, r: 0.48, kind: 'air', armored: true, name: 'Zeppelin Sky-Hull', armor: 6, dmgMod: { Kinetic: 0.7, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
+  blink:   { hp: 320, speed: 1.1, reward: 30, leak: 3, r: 0.3, kind: 'gnd', name: 'Phase Blink', armor: 4, dmgMod: { Kinetic: 0.8, Blast: 1.0, Energy: 1.1, Sonic: 1.2 } },
+  dart:    { hp: 70, speed: 5.4, reward: 12, leak: 2, r: 0.2, kind: 'gnd', name: 'Rift Dart', armor: 0, dodge: 0.10, dmgMod: { Kinetic: 1.1, Blast: 1.0, Energy: 1.0, Sonic: 1.35 } }
 };
 
 // Dota 2 armor formula: diminishing returns on effective HP
@@ -1097,7 +1099,7 @@ function newState(seed){
     towersBuilt: 0,
     upgradesPurchased: 0,
     peakCash: bonus.startCash,
-    killsByType: { spider: 0, prowler: 0, tank: 0, drone: 0, walker: 0, ram: 0, ship: 0, boss: 0 },
+    killsByType: { spider: 0, prowler: 0, tank: 0, drone: 0, walker: 0, ram: 0, ship: 0, boss: 0, blink: 0, dart: 0 },
     leakedByType: { spider: 0, prowler: 0, tank: 0, drone: 0, walker: 0, ram: 0, ship: 0, boss: 0 },
     abilitiesUsed: { flare: 0, root: 0 }
   };
@@ -2689,6 +2691,8 @@ function sfx(name){
     else if(name === 'boom'){ playExplosionSFX(); }
     else if(name === 'zap') tone(1400 + Math.random() * 500, 0.07, 'sawtooth', 0.035, 350);
     else if(name === 'slow') tone(260, 0.3, 'sine', 0.08, 100);
+    else if(name === 'warp'){ tone(880, 0.12, 'sine', 0.07, 220); setTimeout(function(){ tone(220, 0.14, 'sine', 0.06, 880); }, 90); }
+    else if(name === 'dash') noiseHit(0.15, 0.06, 3200);
     else if(name === 'wave'){ tone(280, 0.12, 'sawtooth', 0.1); setTimeout(function(){ tone(420, 0.18, 'sawtooth', 0.12); }, 110); }
   } catch(e){}
 }
@@ -4833,6 +4837,30 @@ function addTowerBasePlinth(root, type){
   return root;
 }
 
+// Enemy weathering & per-instance variation: breaks the "too clean" toy look without
+// re-authoring GLBs. Scale/heading jitter + 1-2 translucent grime patches per creep.
+// (Full dirt/wear texture re-author lives in blender_pipeline/ for a future art pass.)
+function applyCreepWeathering(root, type){
+  if(!root) return root;
+  root.userData = root.userData || {};
+  if(root.userData.weathered) return root;
+  var jr = Math.random;
+  root.scale.multiplyScalar(0.94 + jr() * 0.12); // ±6% size variation within type
+  root.rotation.y = jr() * Math.PI * 2;
+  var n = 1 + Math.floor(jr() * 2);
+  for(var i = 0; i < n; i++){
+    var s = 0.25 + jr() * 0.35;
+    var g = new THREE.Mesh(new THREE.PlaneGeometry(s, s * 0.7),
+      new THREE.MeshBasicMaterial({ color: 0x1a140e, transparent: true, opacity: 0.16 + jr() * 0.14, depthWrite: false }));
+    g.position.set((jr() - 0.5) * 0.9, 0.5 + jr() * 0.9, 0.35 + jr() * 0.2);
+    g.rotation.set(-0.4 + jr() * 0.5, (jr() - 0.5) * 1.2, jr() * 3);
+    root.add(g);
+  }
+  root.userData.weathered = true;
+  root.userData.bobPhase = jr() * Math.PI * 2;
+  return root;
+}
+
 function addCreepThreatRing(root, type){
   var foeSpec = (typeof FOES !== 'undefined' && FOES[type]) || { r: 0.3 };
   var rad = foeSpec.r || 0.3;
@@ -4846,6 +4874,7 @@ function addCreepThreatRing(root, type){
   root.add(ring);
   root.userData = root.userData || {};
   root.userData.contactRing = ring;
+  applyCreepWeathering(root, type);
   return root;
 }
 
@@ -5158,6 +5187,33 @@ function create3DCreepMesh(type){
     }
     addContactShadow(root, 2.2, 0.55);
     root.userData = { isRam: true, piston: piston, ramHead: ramHead };
+  }
+  else if(type === 'blink'){
+    // Phase Blink: hovering violet shard — telegraphs before each jump.
+    var bCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.5, 0), MATS.iron);
+    bCore.position.y = 0.9; bCore.castShadow = true; root.add(bCore);
+    var bShard = new THREE.Mesh(new THREE.OctahedronGeometry(0.28, 0),
+      new THREE.MeshStandardMaterial({ color: 0x7209B7, emissive: 0x7209B7, emissiveIntensity: 0.9, roughness: 0.35, metalness: 0.4 }));
+    bShard.position.y = 1.55; root.add(bShard);
+    var bRing = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.07, 8, 24),
+      new THREE.MeshBasicMaterial({ color: 0xC77DFF, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }));
+    bRing.rotation.x = Math.PI / 2; bRing.position.y = 0.5; root.add(bRing);
+    addContactShadow(root, 1.6, 0.4);
+    root.userData = { isBlink: true, shard: bShard, warnRing: bRing };
+  }
+  else if(type === 'dart'){
+    // Rift Dart: needle-fast skirmisher — slim hull, swept fins, cyan runner light.
+    var dHull = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.1, 8), MATS.brass);
+    dHull.rotation.x = Math.PI / 2; dHull.position.y = 0.4; dHull.castShadow = true; root.add(dHull);
+    for(var dx of [-1, 1]){
+      var dFin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.3, 0.4), MATS.iron);
+      dFin.position.set(dx * 0.2, 0.42, -0.35); dFin.rotation.z = dx * 0.4; root.add(dFin);
+    }
+    var dEye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), MATS.cyanGlow || MATS.hostileRed);
+    dEye.position.set(0, 0.42, 0.5); root.add(dEye);
+    addHalo(root, 0x00F5D4, 1.1, 0.35);
+    addContactShadow(root, 1.2, 0.3);
+    root.userData = { isDart: true, hull: dHull };
   }
   else {
     // tread tank: hull + side treads with wheels + turret + barrel + headlight
@@ -5525,19 +5581,19 @@ function spawnPrismBeam(from, to){
   }
 }
 function spawnResonanceRing(worldPos, range, violet){
-  for(var k=0;k<2;k++){
-    var ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.85, 48),
-      new THREE.MeshBasicMaterial({ color: violet ? 0x7209B7 : 0xC77DFF, transparent: true, opacity: 0.8, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
-    ring.rotation.x = -Math.PI/2; ring.position.copy(worldPos); ring.position.y = 0.12 + k*0.1;
-    scene.add(ring);
-    FX.rings.push({ mesh: ring, life: 0.8 - k*0.15, max: 0.8, grow: range*CELL_SIZE });
-  }
+  // POLISH: resonance flash toned down ~45% — was visually overloading (double ring
+  // at 0.8 opacity + 0.4 mist + 0.8s life). Single soft ring, shorter life.
+  var ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.85, 48),
+    new THREE.MeshBasicMaterial({ color: violet ? 0x7209B7 : 0xC77DFF, transparent: true, opacity: 0.45, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+  ring.rotation.x = -Math.PI/2; ring.position.copy(worldPos); ring.position.y = 0.12;
+  scene.add(ring);
+  FX.rings.push({ mesh: ring, life: 0.45, max: 0.45, grow: range*CELL_SIZE });
   // ground-hugging mist: flat halo sprite
   var mist = new THREE.Mesh(new THREE.PlaneGeometry(range*CELL_SIZE*1.2, range*CELL_SIZE*1.2),
-    new THREE.MeshBasicMaterial({ map: TEX.shadowBlob, color: 0x9d7bca, transparent: true, opacity: 0.4, depthWrite: false }));
+    new THREE.MeshBasicMaterial({ map: TEX.shadowBlob, color: 0x9d7bca, transparent: true, opacity: 0.2, depthWrite: false }));
   mist.rotation.x = -Math.PI/2; mist.position.copy(worldPos); mist.position.y = 0.1;
   scene.add(mist);
-  FX.flashes.push({ mesh: mist, life: 0.7 });
+  FX.flashes.push({ mesh: mist, life: 0.35 });
 }
 var combatCanvas = null;
 var combatCtx = null;
@@ -5787,7 +5843,7 @@ function killFoe(f){
   deathDisassembly(f);
   S.cash += f.reward; S.score += f.reward * 10; S.kills++;
   S.totalEarned = (S.totalEarned || 0) + f.reward;
-  if(!S.killsByType) S.killsByType = { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0 };
+  if(!S.killsByType) S.killsByType = { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0, blink: 0, dart: 0 };
   if(f.type) S.killsByType[f.type] = (S.killsByType[f.type] || 0) + 1;
   S.peakCash = Math.max(S.peakCash || 0, S.cash);
   if(f.type === 'boss'){
@@ -5936,7 +5992,14 @@ function sellTower(t){
 }
 
 // ---------- Creep Waves & Spawning ----------
-function hpScale(w){ return 1 + 0.22 * (w - 1) + 0.012 * (w - 1) * (w - 1); }
+// hpScale: base quadratic curve (already ~2.3x more aggressive late than the old
+// design-doc formula) plus an early-game pacing bump so waves 1-20 are not wiped
+// instantly: +70% at wave 1 fading linearly to +0% at wave 25. Late game untouched.
+function hpScale(w){
+  var base = 1 + 0.22 * (w - 1) + 0.012 * (w - 1) * (w - 1);
+  var early = (w <= 25) ? 1 + 0.7 * (1 - w / 25) : 1;
+  return base * early;
+}
 function waveComp(w){
   var c = [{ type: 'spider', count: 5 + Math.floor(w * 1.6), gap: 0.45 }];
   if(w >= 2) c.push({ type: 'tank', count: 1 + Math.floor(w * 0.8), gap: 0.95 });
@@ -5945,6 +6008,8 @@ function waveComp(w){
   if(w >= 5) c.push({ type: 'walker', count: Math.floor((w - 1) * 0.55), gap: 1.25 });
   if(w >= 7) c.push({ type: 'ram', count: Math.max(1, Math.floor((w - 5) * 0.45)), gap: 2.2 });
   if(w >= 8) c.push({ type: 'ship', count: Math.floor((w - 4) * 0.3), gap: 2.1 });
+  if(w >= 12) c.push({ type: 'blink', count: Math.max(1, Math.floor((w - 10) * 0.35)), gap: 2.6 });
+  if(w >= 18) c.push({ type: 'dart', count: Math.max(2, Math.floor((w - 15) * 0.5)), gap: 0.5 });
   if(w % 10 === 0) c.push({ type: 'boss', count: Math.floor(w / 10), gap: 4.0 });
   return c;
 }
@@ -6001,6 +6066,16 @@ function spawnEnemy(type){
   if(type === 'ram'){
     f.siegeTimer = 3.0;
   }
+  if(type === 'blink'){
+    // Phase Blink: telegraphed short-range teleport. Timers count down in update().
+    f.blinkCD = 2.5 + Math.random() * 2; // first blink shortly after spawn
+    f.blinkWarn = 0; // telegraph countdown; >0 = warning glow before jump
+  }
+  if(type === 'dart'){
+    // Rift Dart: fragile maze-dashing skirmisher, brief phase-sprint through walls.
+    f.dashCD = 3.0 + Math.random() * 2;
+    f.phaseT = 0; // >0 = currently phasing (ignores blocked tiles)
+  }
   if(!air){
     if(!S.flowField) S.flowField = computeFlowField(SANCTUM.x, SANCTUM.y, S.blocked);
     var path = (S.flowField ? getFlowPath(SPAWN.x, SPAWN.y, S.flowField) : null) || findPath(SPAWN.x, SPAWN.y, S.blocked);
@@ -6046,6 +6121,74 @@ function updateHpBar(f){
   var frac = Math.max(0, f.hp / f.maxhp);
   f.hpBar.fg.scale.x = Math.max(0.001, f.hpBar.w * frac);
   f.hpBar.fg.material.color.setHex(frac > 0.55 ? 0x7fe08a : (frac > 0.28 ? 0xffd15c : 0xFF3B30));
+}
+
+// ---------- Blink & Dart special locomotion ----------
+// Phase Blink ("jaunt"): every 5-7s it telegraphs 0.8s (ring strobe + rising tone)
+// then skips 3-5 tiles forward along its path. Landing is validated against towers.
+function updateBlinkMechanics(f, dt){
+  if(f.blinkWarn > 0){
+    f.blinkWarn -= dt;
+    if(f.blinkWarn > 0) return;
+    // execute the jump
+    var jumped = false;
+    if(f.path && f.wp < f.path.length){
+      var dists = [5, 4, 3];
+      for(var di = 0; di < dists.length && !jumped; di++){
+        var ni = Math.min(f.wp + dists[di], f.path.length - 1);
+        var cell = f.path[ni];
+        if(!cell || !inB(cell.x, cell.y)) continue;
+        if(S.blocked[idx(cell.x, cell.y)]) continue; // occupied by a tower — invalid
+        var oldW = gridToWorld3D(f.x, f.y, 0.5);
+        spawnResonanceRing(oldW, 1.1, true);
+        f.x = cell.x + 0.5; f.y = cell.y + 0.5; f.wp = ni + 1;
+        var newW = gridToWorld3D(f.x, f.y, 0.5);
+        spawnResonanceRing(newW, 1.1, true);
+        var L = fxLight(0x7209B7, 4, 10); if(L) L.position.copy(newW);
+        f.mesh.position.copy(gridToWorld3D(f.x, f.y, 0));
+        jumped = true;
+      }
+    }
+    sfx('warp');
+    f.blinkCD = 5 + Math.random() * 2.5;
+    if(!jumped) f.blinkCD = 2.0; // no valid landing — retry sooner
+    return;
+  }
+  f.blinkCD -= dt;
+  if(f.blinkCD <= 0 && f.hp > 0 && !f.dead){
+    f.blinkWarn = 0.8;
+    sfx('zap'); // rising-tone telegraph so players can react
+  }
+}
+// Rift Dart: fragile speedster that periodically phase-sprints straight through
+// maze walls for 0.8s (cyan streak + hiss), then rejoins the flow field.
+function updateDartMechanics(f, dt){
+  if(f.phaseT > 0){
+    f.phaseT -= dt;
+    if(f.phaseT <= 0){
+      f.direct = false;
+      try {
+        if(!S.flowField) S.flowField = computeFlowField(SANCTUM.x, SANCTUM.y, S.blocked);
+        var gx = clamp(Math.floor(f.x), 0, COLS - 1), gy = clamp(Math.floor(f.y), 0, ROWS - 1);
+        var p = getFlowPath(gx, gy, S.flowField) || findPath(gx, gy, S.blocked);
+        if(p && p.length > 1){ f.path = p; f.wp = 1; } else { f.direct = true; }
+      } catch(e){ f.direct = true; }
+    }
+    return;
+  }
+  f.dashCD -= dt;
+  if(f.dashCD <= 0 && f.hp > 0 && !f.dead){
+    f.phaseT = 0.8;
+    f.dashCD = 5 + Math.random() * 3;
+    f.direct = true; // beeline at 5.4 speed — bypasses maze complexity briefly
+    sfx('dash');
+    try {
+      var w = gridToWorld3D(f.x, f.y, 0.6);
+      spawnResonanceRing(w, 0.9, false);
+      var L2 = fxLight(0x00F5D4, 4, 10); if(L2) L2.position.copy(w);
+      damageNumber(w, 'DASH!', 'Energy');
+    } catch(e){}
+  }
 }
 
 function rerouteFoes(){
@@ -6103,7 +6246,7 @@ function update(dt){
         disposeSceneObject(f.mesh);
         S.foes.splice(i, 1);
         S.lives -= f.leak; S.leaked++;
-        if(!S.leakedByType) S.leakedByType = { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0 };
+        if(!S.leakedByType) S.leakedByType = { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0, blink: 0, dart: 0 };
         if(f.type) S.leakedByType[f.type] = (S.leakedByType[f.type] || 0) + 1;
         sfx('alarm');
         sanctumFlash();
@@ -6122,11 +6265,20 @@ function update(dt){
       f.mesh.rotation.y = Math.atan2(ddx, ddy) + Math.PI;
     }
 
-    // Locomotion animation per chassis
+    // Locomotion animation per chassis — speed-matched stride, pelvis bounce & sway
+    var strideFreq = 7 + f.speed * 2.2; // footfalls scale with actual move speed
     if(f.mesh.userData.leftLeg){
-      var legSwing = Math.sin(S.time * 12 + f.id * 8) * 0.45;
+      var legSwing = Math.sin(S.time * strideFreq + f.id * 8) * 0.45;
       f.mesh.userData.leftLeg.rotation.x = legSwing;
       f.mesh.userData.rightLeg.rotation.x = -legSwing;
+      // pelvis bounce + hip sway on top of the leg swing
+      f.mesh.position.y += Math.abs(Math.sin(S.time * strideFreq + f.id * 8)) * dt * 1.1;
+      f.mesh.rotation.z = Math.sin(S.time * strideFreq * 0.5 + f.id * 5) * 0.035;
+    } else if(!f.air){
+      // GLTF / tread / skid chassis: subtle whole-body bounce + roll so motion never looks stiff
+      var ph = f.mesh.userData.bobPhase || 0;
+      f.mesh.position.y += Math.abs(Math.sin(S.time * strideFreq * 0.7 + ph)) * dt * 0.8;
+      f.mesh.rotation.z = Math.sin(S.time * strideFreq * 0.35 + ph) * 0.03;
     }
     if(f.mesh.userData.rotor){
       f.mesh.userData.rotor.rotation.y += dt * 30;
@@ -6146,6 +6298,27 @@ function update(dt){
     }
     if(f.mesh.userData.ramHead){
       f.mesh.userData.ramHead.position.z = 1.25 + Math.sin(S.time * 4 + f.id * 3) * 0.1;
+    }
+    if(f.mesh.userData.shard){
+      // Phase Blink idle: slow shard spin; warning state strobes the ground ring
+      f.mesh.userData.shard.rotation.y += dt * (f.blinkWarn > 0 ? 9 : 2);
+      if(f.mesh.userData.warnRing){
+        var wr = f.mesh.userData.warnRing;
+        wr.rotation.z += dt * 2;
+        wr.material.opacity = f.blinkWarn > 0 ? (0.65 + Math.sin(S.time * 18) * 0.3) : 0.45;
+        var ws = f.blinkWarn > 0 ? 1.35 : 1;
+        wr.scale.set(ws, ws, 1);
+      }
+    }
+    if(f.mesh.userData.isDart){
+      // Rift Dart: leans into its sprint, shivers while phasing through walls
+      f.mesh.rotation.x = f.phaseT > 0 ? -0.12 + Math.sin(S.time * 40) * 0.03 : -0.04;
+    }
+    if(f.type === 'blink'){
+      updateBlinkMechanics(f, dt);
+    }
+    if(f.type === 'dart'){
+      updateDartMechanics(f, dt);
     }
     if(f.type === 'boss'){
       updateBossMechanics(f, dt);
@@ -6188,9 +6361,9 @@ function update(dt){
     }
     if(t.mesh.userData.pulseRing){
       t.mesh.userData.pulseRing.rotation.z += dt*0.8;
-      if(t.ringBurst > 0){ // obelisk thump: ring punches outward then settles
+      if(t.ringBurst > 0){ // obelisk thump: ring punches outward then settles (softened ~45%)
         t.ringBurst -= dt;
-        var rb = 1 + Math.max(0, t.ringBurst) * 3.2;
+        var rb = 1 + Math.max(0, t.ringBurst) * 1.8;
         t.mesh.userData.pulseRing.scale.set(rb, rb, 1);
       }
     }
@@ -6530,7 +6703,7 @@ function update(dt){
         }
         var tGround = gridToWorld3D(t.gx + 0.5, t.gy + 0.5, 0);
         spawnResonanceRing(tGround, range, !!shatter);
-        t.ringBurst = 0.35;
+        t.ringBurst = 0.2;
         sfx(isChronoStun ? 'zap' : 'slow');
       }
     } else { t.beamTgt = null; t.beamTime = 0; }
@@ -6684,6 +6857,8 @@ function gameOver(win){
     { key: 'walker',  name: 'Diesel Walker',  icon: '🦾' },
     { key: 'ram',     name: 'Dreadnought Ram',icon: '🔨' },
     { key: 'ship',    name: 'Zeppelin Hull',  icon: '⛵' },
+    { key: 'blink',   name: 'Phase Blink',    icon: '✦' },
+    { key: 'dart',    name: 'Rift Dart',      icon: '➤' },
     { key: 'boss',    name: 'Goliath Titan',  icon: '👑' }
   ];
   var rosterHtml = '';

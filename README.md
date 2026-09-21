@@ -319,7 +319,9 @@ $$\text{Damage Multiplier} = 1 - \frac{0.06 \times \text{Armor}}{1 + 0.06 \times
 
 ### Wave Scaling (50 Progressive Waves)
 
-$$\text{Creep HP}(W) = \text{Base HP} \times \left(1 + 0.18W + 0.012W^{1.65}\right)$$
+$$\text{Creep HP}(W) = \text{Base HP} \times \left(1 + 0.22(W-1) + 0.012(W-1)^2\right) \times E(W)$$
+
+where $E(W)$ is an early-game pacing bump (+67% at wave 1, fading to +0% by wave 25; late game untouched).
 
 Boss waves appear every 10 waves (Wave 10, 20, 30, 40, and 50), scaling in health, armor, and leak threat.
 
