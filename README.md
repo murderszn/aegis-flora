@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="blender_pipeline/renders/sanctum_core_rotunda_render.png" alt="Aegis Flora — The Verdant Sanctum" width="420" />
+  <img src="assets/aegis_master.jpg" alt="Aegis Flora — Solarpunk-Mecha Tower Defense" width="600" />
 </p>
 
 <h1 align="center">Aegis Flora</h1>

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aegis Flora 3D — Solarpunk-Mecha Mazing Tower Defense</title>
+<link rel="icon" type="image/png" href="assets/favicon.png" sizes="64x64">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Roboto+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -51,7 +52,7 @@
   }
   #game-container {
     position: fixed; inset: 0; width: 100vw; height: 100vh; display: block;
-    cursor: crosshair; overflow: hidden;
+    cursor: default; overflow: hidden;
   }
   #game-container canvas { width: 100% !important; height: 100% !important; display: block; }
 
@@ -65,6 +66,7 @@
   }
   #topbar { top: 0; height: 54px; }
   #topbar .logo-wrap { display: flex; align-items: center; cursor: pointer; }
+  #topbar .logo-mark { width: 22px; height: 27px; margin-right: 9px; color: #fff; flex: 0 0 auto; }
   #topbar .logo {
     font-family: var(--font-display); letter-spacing: 2px; color: #fff;
     font-size: 18px; font-weight: bold; text-shadow: 0 0 12px rgba(240,168,30,0.45);
@@ -173,21 +175,6 @@
     padding: 6px 14px; border-radius: 4px; max-width: 50vw; box-shadow: 0 4px 14px rgba(0,0,0,0.45);
   }
 
-  /* --- Camera Mode Pill --- */
-  #btnRoot, #btnFlare {
-    background: linear-gradient(180deg, #2d7246 0%, #1a4d2c 100%);
-    border-color: #4a8a5a;
-    color: #c8f0c8;
-    box-shadow: 0 0 10px rgba(45,114,70,0.3);
-  }
-  #btnRoot:hover, #btnFlare:hover {
-    border-color: #7fe08a;
-    box-shadow: 0 0 16px rgba(45,114,70,0.5);
-  }
-  #btnRoot:disabled, #btnFlare:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
   #cam-mode {
     position: fixed; left: 18px; top: 64px; z-index: 9; font-size: 11px; color: #e0f4ec;
     background: rgba(10, 24, 20, 0.85); border: 1px solid var(--bronze-dk);
@@ -345,18 +332,41 @@
     background: radial-gradient(ellipse at center, rgba(255,59,48,0) 45%, rgba(255,59,48,0.35) 100%);
     transition: opacity 0.12s ease;
   }
-  /* --- Wave announcement banner --- */
+  /* --- Wave announcement banner (Centered cinematic combat alert) --- */
   #wavebanner {
-    position: fixed; top: 22%; left: 0; right: 0; z-index: 14; pointer-events: none;
-    text-align: center; opacity: 0; transition: opacity 0.4s ease;
+    position: fixed; top: 120px; left: 50%; transform: translateX(-50%) translateY(-10px);
+    width: min(520px, calc(100vw - 40px)); z-index: 1000; pointer-events: none;
+    text-align: center; opacity: 0; transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    background: linear-gradient(180deg, rgba(8, 26, 30, 0.95), rgba(4, 16, 20, 0.92));
+    border: 1px solid rgba(223, 191, 120, 0.45); border-radius: 8px;
+    padding: 12px 24px 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.2), 0 12px 36px rgba(0,0,0,0.65);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  #wavebanner::before {
+    content: ""; position: absolute; top: 0; left: 20%; right: 20%; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(223, 191, 120, 0.8) 50%, transparent);
   }
   #wavebanner .wb-title {
-    font-family: var(--font-display); font-size: 42px; letter-spacing: 8px; color: var(--marble-ivory);
-    text-shadow: 0 0 24px rgba(0,245,212,0.5), 0 2px 6px #000;
+    font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: 4px; color: #fff5dc;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8), 0 0 16px rgba(223,191,120,0.4);
+    line-height: 1.15;
   }
-  #wavebanner .wb-sub { font-family: var(--font-stats); font-size: 14px; letter-spacing: 2px; color: var(--gold-glow); margin-top: 4px; }
-  #wavebanner.show { opacity: 1; }
-  #wavebanner.danger .wb-title { color: #ffb3ab; text-shadow: 0 0 24px rgba(255,59,48,0.7), 0 2px 6px #000; }
+  #wavebanner .wb-sub {
+    font-family: var(--font-stats); font-size: 11.5px; font-weight: 700; letter-spacing: 1.5px;
+    color: #dfbf78; margin-top: 5px; text-transform: uppercase;
+  }
+  #wavebanner.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #wavebanner.danger {
+    border-color: rgba(255, 80, 80, 0.6);
+    background: linear-gradient(180deg, rgba(32, 10, 14, 0.96), rgba(18, 5, 8, 0.94));
+    box-shadow: inset 0 1px 0 rgba(255, 120, 120, 0.3), 0 12px 36px rgba(0,0,0,0.75), 0 0 20px rgba(255,59,48,0.25);
+  }
+  #wavebanner.danger::before {
+    background: linear-gradient(90deg, transparent, rgba(255, 80, 80, 0.9) 50%, transparent);
+  }
+  #wavebanner.danger .wb-title { color: #ffb3ab; text-shadow: 0 0 20px rgba(255,59,48,0.7), 0 2px 8px #000; }
+  #wavebanner.danger .wb-sub { color: #ffa89c; }
   /* --- Boss HP bar --- */
   #bosshp {
     position: fixed; top: 104px; left: 50%; transform: translateX(-50%); z-index: 13;
@@ -378,112 +388,38 @@
     box-shadow: 0 0 8px rgba(0,245,212,0.7); transition: width 0.15s ease;
   }
   #bosshp .boss-sub { font-family: var(--font-stats); font-size: 10px; color: #8e9e94; margin-top: 4px; display: flex; justify-content: space-between; }
-  /* --- Gamepad crosshair + status --- */
-  #crosshair {
-    position: fixed; left: 50%; top: 50%; width: 26px; height: 26px; z-index: 9;
+  /* Compact, centered sight with four equal ticks and a clear aim point. */
+  #game-container canvas { cursor: none; }
+  #crosshair, #mouse-reticle {
+    --reticle-color: #f7efd8;
+    position: fixed; left: 50%; top: 50%; width: 18px; height: 18px; z-index: 9;
     transform: translate(-50%, -50%); pointer-events: none; display: none;
+    border: 1.5px solid var(--reticle-color); border-radius: 50%;
+    box-shadow: 0 0 0 1px #071416, 0 0 8px rgba(255,239,201,.55), inset 0 0 0 1px #071416;
+    filter: drop-shadow(0 1px 2px #061013);
   }
-  #crosshair::before, #crosshair::after {
-    content: ""; position: absolute; background: var(--teal-glow);
-    box-shadow: 0 0 6px var(--teal-glow);
+  #crosshair::before, #mouse-reticle::before {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    width: 3px; height: 3px; transform: translate(-50%, -50%);
+    background: var(--reticle-color); border-radius: 50%;
+    box-shadow: 0 0 0 1px #071416;
   }
-  #crosshair::before { left: 12px; top: 2px; width: 2px; height: 22px; }
-  #crosshair::after { top: 12px; left: 2px; height: 2px; width: 22px; }
-  #crosshair.bad::before, #crosshair.bad::after { background: var(--hostile-red); box-shadow: 0 0 6px var(--hostile-red); }
-  #crosshair.inspect-target::before, #crosshair.inspect-target::after { background: var(--gold); box-shadow: 0 0 8px var(--gold-glow); }
+  #crosshair::after, #mouse-reticle::after {
+    content: ""; position: absolute; inset: -6px;
+    background:
+      linear-gradient(var(--reticle-color), var(--reticle-color)) center top / 2px 4px no-repeat,
+      linear-gradient(var(--reticle-color), var(--reticle-color)) center bottom / 2px 4px no-repeat,
+      linear-gradient(var(--reticle-color), var(--reticle-color)) left center / 4px 2px no-repeat,
+      linear-gradient(var(--reticle-color), var(--reticle-color)) right center / 4px 2px no-repeat;
+    filter: drop-shadow(0 0 1px #071416);
+  }
+  #crosshair.bad, #mouse-reticle.bad { --reticle-color: #ff6960; }
+  #crosshair.inspect-target, #mouse-reticle.inspect-target { --reticle-color: #ffdc87; }
   /* --- Gamepad HUD chip (lives in the top bar — never floats over the HUD) --- */
   #btnPad .pad-dot { width: 8px; height: 8px; border-radius: 50%; background: #5a6a60; display: inline-block; margin-right: 6px; }
   #btnPad.connected { border-color: var(--teal-glow); color: #fff; box-shadow: 0 0 10px rgba(0,245,212,0.35); }
   #btnPad.connected .pad-dot { background: var(--teal-glow); box-shadow: 0 0 6px var(--teal-glow); }
 
-  /* --- Dock layout: radar + arsenal fit the drawer in one row --- */
-  #drawer { overflow: hidden; }
-  .dock-content { display: flex; gap: 10px; width: 100%; height: 100%; min-width: 0; align-items: stretch; }
-  .radar-panel { flex: 0 0 auto; display: flex; flex-direction: column; min-width: 0; }
-  .arsenal-panel { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
-  .dock-heading {
-    font-size: 9px; letter-spacing: 1.5px; color: #9fb3a8; font-weight: bold;
-    display: flex; align-items: center; gap: 6px; margin-bottom: 5px; white-space: nowrap;
-  }
-  .dock-heading .heading-mark { width: 8px; height: 8px; background: var(--bronze); display: inline-block; transform: rotate(45deg); flex-shrink: 0; }
-  .dock-heading .heading-end { margin-left: auto; color: #6d7f74; font-weight: 400; overflow: hidden; text-overflow: ellipsis; }
-  #build-grid { display: flex; gap: 10px; flex: 1; min-width: 0; min-height: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
-  #drawer .card { flex: 1 1 0; min-width: 168px; }
-  .preview-wrap { position: fixed; left: 18px; bottom: 158px; z-index: 9; max-width: 50vw; }
-  .preview-kicker { font-size: 9px; letter-spacing: 1.5px; color: var(--gold); font-weight: bold; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-  .preview-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--gold-glow); box-shadow: 0 0 6px var(--gold-glow); animation: padblink 1.6s infinite; }
-  #preview { position: static; max-width: 100%; }
-
-  /* --- Streamlined command bar: vitals + wave condensed into chips --- */
-  #topbar { height: 46px; gap: 10px; padding: 4px 12px; }
-  #topbar .logo { font-size: 15px; }
-  #topbar .resource-group { gap: 6px; }
-  #topbar .stat {
-    flex-direction: row; align-items: center; gap: 6px; font-size: 13px;
-    background: rgba(0,0,0,0.38); border: 1px solid rgba(201,162,39,0.28);
-    border-radius: 11px; padding: 3px 10px 5px; position: relative;
-  }
-  #topbar .stat small { font-size: 0; letter-spacing: 0; }
-  #topbar .stat small .resource-icon { font-size: 13px; }
-  #topbar .stat .stat-unit { font-size: 10px; opacity: 0.65; font-weight: 400; }
-  #topbar .stat-meter {
-    position: absolute; left: 9px; right: 9px; bottom: 2px; height: 2px;
-    background: rgba(0,0,0,0.65); border-radius: 1px; overflow: hidden;
-  }
-  #topbar .stat-meter i { display: block; height: 100%; }
-  #healthFill { background: #ff7676; box-shadow: 0 0 4px rgba(255,118,118,0.8); }
-  #manaFill { background: #5ce1e6; box-shadow: 0 0 4px rgba(92,225,230,0.8); }
-  #topbar .wave-group {
-    flex-direction: row; align-items: center; gap: 8px;
-    background: rgba(0,0,0,0.38); border: 1px solid rgba(201,162,39,0.28);
-    border-radius: 11px; padding: 3px 10px 5px; white-space: nowrap;
-  }
-  #phaseLabel { font-size: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); padding: 0; flex-shrink: 0; }
-  #topbar.is-combat #phaseLabel { background: var(--hostile-red); box-shadow: 0 0 6px var(--hostile-red); animation: padblink 1s infinite; }
-  #topbar .wave-value { font-size: 10px; letter-spacing: 1px; color: #9fb3a8; }
-  #topbar .wave-value b { font-size: 13px; color: #fff; letter-spacing: 0; }
-  #topbar .score-line { font-size: 0; }
-  #topbar .score-line::before { content: '★ '; font-size: 11px; color: var(--gold); }
-  #topbar .score-line b { font-size: 12px; color: var(--gold-glow); }
-  #topbar .btn { padding: 5px 10px; font-size: 12px; }
-  #topbar .wave-group { display: flex; }
-
-  /* --- Responsive HUD fit: everything stays inside the viewport --- */
-  #topbar, #topbar .resource-group, #topbar .wave-group, #topbar .command-group { min-width: 0; }
-  #topbar { overflow-x: auto; scrollbar-width: none; }
-  #topbar::-webkit-scrollbar { display: none; }
-  #topbar .stat, #topbar .wave-group { flex-shrink: 0; }
-  #topbar .stat-value { display: inline-flex; align-items: baseline; gap: 3px; line-height: 1; }
-  #topbar .stat small { letter-spacing: 0; }
-  #topbar .command-group { display: flex; align-items: center; gap: 8px; }
-  #topbar .resource-group { display: flex; align-items: center; gap: 14px; }
-  @media (max-width: 1320px){
-    .bar { gap: 10px; padding: 6px 10px; }
-    #topbar .logo { font-size: 15px; }
-    .stat { font-size: 13px; }
-    .btn { font-size: 12px; padding: 5px 10px; }
-    #drawer .card { min-width: 150px; }
-    .card .ds { display: none; }
-    .cam-hint, kbd { display: none; }
-    #minimap-wrap { width: 112px; }
-  }
-  @media (max-width: 980px){
-    .btn .btn-label { display: none; }
-    #btnWave { font-size: 12px; }
-    .dock-heading .heading-end { display: none; }
-    #drawer { height: 122px; padding: 8px 10px 10px; }
-    .preview-wrap { bottom: 132px; max-width: 70vw; }
-    #inspect { width: min(330px, 92vw); right: 8px; bottom: 132px; }
-    #toast { bottom: 170px; max-width: 92vw; }
-    #wavebanner .wb-title { font-size: 28px; letter-spacing: 4px; }
-    #banner h1 { font-size: 30px; }
-    #cam-mode { max-width: 60vw; }
-  }
-  @media (max-height: 720px){
-    #drawer { height: 118px; }
-    .preview-wrap { bottom: 128px; }
-    #inspect { bottom: 128px; }
-  }
   /* --- Controller mapping modal --- */
   #padmap-modal {
     position: fixed; inset: 0; z-index: 40; display: none;
@@ -510,38 +446,6 @@
   .padmap-key.waiting { color: #fff; border-color: var(--teal-glow); animation: padblink 0.8s infinite; }
   @keyframes padblink { 50% { opacity: 0.4; } }
 
-  /* ---------- Guided Mazing Tutorial Styles ---------- */
-  #tutorial-modal {
-    position: fixed; inset: 0; z-index: 1200; display: none;
-    align-items: center; justify-content: center;
-    background: rgba(4, 9, 8, 0.72); backdrop-filter: blur(5px);
-    pointer-events: auto;
-  }
-  #tutorial-modal.open { display: flex; }
-  #tutorial-card {
-    width: min(530px, 92vw);
-    background: linear-gradient(180deg, #18241f 0%, #0c1512 100%);
-    border: 2px solid var(--bronze-dk, #8c733e); outline: 1px solid rgba(0, 245, 212, 0.35); outline-offset: -4px;
-    border-radius: 10px; padding: 20px 24px; color: #efe6cf;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.8), 0 0 24px rgba(0, 245, 212, 0.15);
-    animation: tutAppear 0.22s ease-out;
-  }
-  @keyframes tutAppear { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-  .tut-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .tut-badge { font-size: 10.5px; font-weight: bold; letter-spacing: 1.5px; color: #00F5D4; font-family: var(--font-display, sans-serif); }
-  .tut-step-counter { font-size: 11px; color: #ffd873; font-weight: 600; font-family: var(--font-stats, monospace); }
-  .tut-close-btn { background: none; border: none; color: #8fa89b; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 4px; line-height: 1; }
-  .tut-close-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
-  .tut-title { font-family: var(--font-display, serif); color: var(--gold, #FFD60A); font-size: 18px; margin: 0 0 8px 0; letter-spacing: 0.5px; }
-  .tut-desc { font-size: 13px; line-height: 1.55; color: #c4d6cc; margin: 0 0 14px 0; }
-  .tut-visual {
-    background: rgba(0,0,0,0.45); border: 1px solid rgba(201,162,39,0.25); border-radius: 6px;
-    padding: 10px 14px; margin-bottom: 16px; font-size: 11.5px; color: #9bb0a4; display: flex; gap: 12px; align-items: center;
-  }
-  .tut-visual-icon { font-size: 24px; color: #00F5D4; flex-shrink: 0; }
-  .tut-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(201,162,39,0.18); padding-top: 14px; }
-  .tut-nav { display: flex; gap: 8px; }
-
   /* ---------- Tactical Clarity Mode ---------- */
   body.tactical-clarity #game-container { filter: contrast(1.15) saturate(0.92); }
   body.tactical-clarity .letterbox { display: none !important; }
@@ -549,7 +453,7 @@
   body.tactical-clarity #cam-mode { border-color: rgba(0,245,212,0.5); }
   .tp-btn#btnClarity.active { background: #00F5D4; color: #04120e; font-weight: bold; border-color: #00F5D4; box-shadow: 0 0 10px rgba(0,245,212,0.5); }
 </style>
-<link rel="stylesheet" href="hud.css?v=7">
+<link rel="stylesheet" href="hud.css?v=17">
 
 <!-- Self-contained local Three.js, OrbitControls & GLTFLoader -->
 <script src="js/three.min.js"></script>
@@ -580,6 +484,7 @@
   </div>
 </div>
 <div id="crosshair"></div>
+<div id="mouse-reticle"></div>
 <div id="padmap-modal"><div id="padmap-card">
   <h2>🎮 CONTROLLER MAPPING</h2>
   <div id="pad-live-status" style="margin: 8px 0 12px; padding: 8px 12px; background: rgba(0,0,0,0.45); border: 1px solid rgba(0,245,212,0.3); border-radius: 6px; font-size: 11.5px; display: flex; align-items: center; gap: 8px;">
@@ -630,20 +535,36 @@
   </div>
 </div></div>
 
-<!-- Guided First-Run Mazing Tutorial Modal -->
-<div id="tutorial-modal"><div id="tutorial-card">
+<!-- First-run field briefing and replayable mazing guide -->
+<div id="tutorial-modal" role="dialog" aria-modal="true" aria-labelledby="tutTitle"><div id="tutorial-card">
   <div class="tut-header">
-    <div class="tut-badge">✦ MAZING ARCHITECT PROTOCOL</div>
-    <div class="tut-step-counter" id="tutStepCounter">Step 1 of 8</div>
-    <button type="button" class="tut-close-btn" id="btnTutSkip" title="Skip Tutorial (Esc)">✕</button>
+    <div class="tut-badge">
+      <svg class="tut-badge-icon" viewBox="0 0 24 28" aria-hidden="true" focusable="false">
+        <path d="M12 1.5 21 5v7.4c0 6.2-3.8 11.1-9 14.1-5.2-3-9-7.9-9-14.1V5l9-3.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M12 6v14.5M12 10.5l4-2.2M12 14.2l-4.2-2.3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span>FIELD BRIEFING <span>·</span> MAZING 101</span>
+    </div>
+    <div class="tut-step-group">
+      <div class="tut-step-counter" id="tutStepCounter">Step 1 of 4</div>
+      <div class="tut-step-pills" id="tutPills" aria-hidden="true"></div>
+    </div>
+    <button type="button" class="tut-close-btn" id="btnTutSkip" title="Close guide (Esc)" aria-label="Close guide">✕</button>
   </div>
+  <div class="tut-progress" id="tutProgress" aria-hidden="true"></div>
   <div class="tut-body">
-    <h3 id="tutTitle" class="tut-title">The Battlefield: Spawn & Sanctum</h3>
+    <h3 id="tutTitle" class="tut-title">There is no fixed lane.</h3>
     <p id="tutDesc" class="tut-desc"></p>
     <div id="tutVisual" class="tut-visual"></div>
   </div>
   <div class="tut-footer">
-    <button class="btn" id="btnTutSkipText">Skip Tutorial</button>
+    <div class="tut-footer-secondary">
+      <button class="btn" id="btnTutSkipText">Skip briefing</button>
+      <button class="btn" id="btnTutFullGuide">All 8 steps</button>
+    </div>
+    <div class="tut-shortcuts-hint" aria-hidden="true">
+      <kbd>Space</kbd> / <kbd>→</kbd> Next &nbsp;·&nbsp; <kbd>Esc</kbd> Close
+    </div>
     <div class="tut-nav">
       <button class="btn" id="btnTutPrev">← Back</button>
       <button class="btn primary" id="btnTutNext">Next →</button>
@@ -663,6 +584,10 @@
   <!-- Top Watermark & Tactical Coordinates -->
   <div class="gta-hud-top">
     <div class="gta-logo-group">
+      <svg class="gta-logo-mark" viewBox="0 0 24 28" aria-hidden="true" focusable="false">
+        <path d="M12 1.5 21 5v7.4c0 6.2-3.8 11.1-9 14.1-5.2-3-9-7.9-9-14.1V5l9-3.5Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/>
+        <path d="M12 6v14.5M12 10.5l4-2.2M12 14.2l-4.2-2.3" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
+      </svg>
       <div class="gta-brand-text">
         <div class="gta-title-main">AEGIS FLORA</div>
         <div class="gta-title-sub">VERDANT OLYMPOS // 720-TILE BASTION SIEGE</div>
@@ -707,41 +632,96 @@
 
 <!-- Sanctum command bar (Clean, dedicated telemetry) -->
 <div class="bar" id="topbar">
-  <a class="logo-wrap" id="logoClick" href="landing.html" title="Open Aegis Flora Landing Page" style="text-decoration:none; color:inherit;">
-    <span class="logo">AEGIS FLORA</span>
-  </a>
+  <div class="topbar-left">
+    <a class="brand" id="logoClick" href="landing.html" title="Open Aegis Flora Landing Page">
+      <svg class="brand-mark" viewBox="0 0 24 28" aria-hidden="true" focusable="false">
+        <path d="M12 1.5 21 5v7.4c0 6.2-3.8 11.1-9 14.1-5.2-3-9-7.9-9-14.1V5l9-3.5Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/>
+        <path d="M12 6v14.5M12 10.5l4-2.2M12 14.2l-4.2-2.3" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
+      </svg>
+      <span class="brand-title">AEGIS FLORA</span>
+    </a>
+  </div>
   <div class="resource-group" aria-label="Sanctum resources">
-    <div class="stat lives" title="Sanctum HP"><small><i class="resource-icon">✦</i> Sanctum</small><span class="stat-value"><b id="lives">20</b><span class="stat-unit" id="maxLivesLabel"> / 20 HP</span></span><span class="stat-meter"><i id="healthFill"></i></span></div>
-    <div class="stat cash" title="Scrap gold"><small><i class="resource-icon">◇</i> Scrap</small><span class="stat-value"><span class="stat-unit">¤ </span><b id="cash">0</b></span></div>
-    <div class="stat mana" title="Solar energy"><small><i class="resource-icon">✧</i> Solar energy</small><span class="stat-value"><b id="mana">100</b><span class="stat-unit"> / 100</span></span><span class="stat-meter"><i id="manaFill"></i></span></div>
+    <div class="stat lives" title="Sanctum integrity">
+      <img class="stat-bg" src="assets/resource_life_pbr.jpg" alt="Life Sanctum Blossom" onerror="this.style.display='none'">
+      <div class="stat-content">
+        <small>
+          <svg class="resource-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/>
+          </svg>
+          Life
+        </small>
+        <span class="stat-value"><b id="lives">20</b><span class="stat-unit" id="maxLivesLabel"> / 20 HP</span></span>
+      </div>
+      <span class="stat-meter"><i id="healthFill"></i></span>
+    </div>
+    <div class="stat cash" title="Scrap available for construction">
+      <img class="stat-bg" src="assets/resource_scrap_pbr.jpg" alt="Scrap Metal Salvage" onerror="this.style.display='none'">
+      <div class="stat-content">
+        <small>
+          <svg class="resource-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 2L3 7l9 5 9-5-9-5zM3 17l9 5 9-5M3 12l9 5 9-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Scrap
+        </small>
+        <span class="stat-value"><span class="stat-unit">¤ </span><b id="cash">0</b></span>
+      </div>
+    </div>
+    <div class="stat mana" title="Solar energy for abilities">
+      <img class="stat-bg" src="assets/resource_aether_pbr.jpg" alt="Aether Mana Crystal" onerror="this.style.display='none'">
+      <div class="stat-content">
+        <small>
+          <svg class="resource-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 2l2.4 5.2 5.6.8-4 4.1 1 5.7-5-2.8-5 2.8 1-5.7-4-4.1 5.6-.8L12 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="12" cy="12" r="3.2" fill="currentColor"/>
+          </svg>
+          Aether
+        </small>
+        <span class="stat-value"><b id="mana">100</b><span class="stat-unit"> / 100</span></span>
+      </div>
+      <span class="stat-meter"><i id="manaFill"></i></span>
+    </div>
   </div>
-  <div class="wave-group"><small id="phaseLabel">PREPARE DEFENSES</small><span class="wave-value">WAVE <b id="wave">0 / 50</b></span><span class="score-line">SCORE <b id="score">0</b></span></div>
-  <div class="command-group">
-    <button class="btn primary" id="btnWave">Start Wave (Space)</button>
+  <div class="topbar-right">
+    <div id="transport-cluster" aria-label="Game controls">
+      <button class="tp-btn square" id="btnPause" title="Pause / Resume Game (P)" aria-label="Pause game">Ⅱ</button>
+      <button class="tp-btn square" id="btnSpeed" title="Cycle Game Speed (V)">1x</button>
+      <button class="tp-btn square" id="btnAudio" title="Toggle Mute (M)">🔊</button>
+      <button class="tp-btn square" id="btnMoreControls" type="button" title="More controls" aria-label="More controls" aria-expanded="false" aria-controls="more-controls-panel">•••</button>
+    </div>
+    <div class="command-group">
+      <button class="btn primary btn-wave-heroic" id="btnWave" aria-label="Start Wave">
+        <span class="btn-wave-glow"></span>
+        <span class="btn-wave-icon">▶</span>
+        <span class="btn-wave-label">Start Wave</span>
+        <kbd class="btn-kbd">SPACE</kbd>
+      </button>
+    </div>
   </div>
-</div>
-
-<!-- Floating Transport & Utility Bar (Top-Right) -->
-<div id="transport-cluster">
-  <button class="tp-btn square" id="btnPause" title="Pause / Resume Game (P)" aria-label="Pause game">Ⅱ</button>
-  <button class="tp-btn square" id="btnSpeed" title="Cycle Game Speed (V)">1x</button>
-  <button class="tp-btn square" id="btnFullscreen" title="Toggle Fullscreen (F11 / Shift+F)">⛶</button>
-  <button class="tp-btn square" id="btnAudio" title="Toggle Mute (M)">🔊</button>
-  <button class="tp-btn" id="btnClaudeRadio" title="Claude FM Radio — 24/7 Lo-Fi Stream (clau.de/radio)"><span class="btn-icon">📻</span><span>Claude FM</span><span class="live-dot" id="claudeFmDot" style="width:7px;height:7px;border-radius:50%;background:#00F5D4;display:inline-block;margin-left:4px;box-shadow:0 0 8px #00F5D4;"></span></button>
-  <button class="tp-btn square" id="btnClarity" title="Toggle Tactical Clarity Mode (K)">👁</button>
-  <button class="tp-btn square" id="btnTutorial" title="Tutorial & Mazing Guide (?)">?</button>
-  <button class="tp-btn" id="btnCam" title="Toggle Camera View (C)"><span class="btn-icon">◈</span><span>View</span><kbd>C</kbd></button>
-  <button class="tp-btn" id="btnPad" title="Controller Mapping"><span class="btn-icon">🎮</span><span id="btnPadLabel">Pad</span></button>
+  <div id="more-controls-panel" aria-label="More game controls" hidden>
+    <div class="more-controls-title">GAME CONTROLS</div>
+    <div class="more-controls-grid">
+    <button class="tp-btn square" id="btnFullscreen" title="Toggle Fullscreen (F11 / Shift+F)" aria-label="Fullscreen">⛶</button>
+    <button class="tp-btn square" id="btnSettings" title="Settings (Esc)" aria-label="Settings">⚙</button>
+    <button class="tp-btn" id="btnClaudeRadio" title="Claude FM Radio — 24/7 Lo-Fi Stream (clau.de/radio)"><span class="btn-icon">♫</span><span>Radio</span><span class="live-dot" id="claudeFmDot" style="width:6px;height:6px;border-radius:50%;background:#9fecb4;display:inline-block;margin-left:2px;"></span></button>
+    <button class="tp-btn square" id="btnClarity" title="Toggle Tactical Clarity Mode (K)">◈</button>
+    <button class="tp-btn square" id="btnTutorial" title="Field Briefing & Mazing Guide (?)">?</button>
+    <button class="tp-btn" id="btnCam" title="Toggle Camera View (C)"><span class="btn-icon">⌗</span><span>View</span><kbd>C</kbd></button>
+    <button class="tp-btn" id="btnPad" title="Controller Mapping"><span class="btn-icon">⌘</span><span id="btnPadLabel">Pad</span></button>
+    </div>
+    <div id="cam-mode"><div class="dot"></div><span>TACTICAL VIEW <span class="cam-hint">· Right drag to orbit · Scroll to zoom</span></span></div>
+    <div id="gfx-mode" title="Graphics & Resolution (Shift+G): Click to toggle Auto (DRS) · Performance · Balanced · Ultra"><div class="dot"></div><span>⚡ 60 FPS · AUTO</span></div>
+  </div>
 </div>
 
 <!-- Claude FM Radio Tuner Popover -->
-<div id="claude-fm-popover" style="display:none;position:fixed;top:62px;right:18px;z-index:1150;background:linear-gradient(180deg,#18241f 0%,#0c1512 100%);border:1px solid #8c733e;outline:1px solid rgba(0,245,212,0.35);outline-offset:-3px;border-radius:8px;padding:14px 18px;color:#efe6cf;box-shadow:0 12px 36px rgba(0,0,0,0.85);width:280px;backdrop-filter:blur(8px);">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-    <div style="font-family:var(--font-display,sans-serif);font-size:12px;font-weight:bold;color:var(--gold,#FFD60A);letter-spacing:1px;display:flex;align-items:center;gap:6px;">
+<div id="claude-fm-popover" style="display:none;">
+  <div class="claude-fm-header">
+    <div class="claude-fm-title">
       <span>📻 CLAUDE FM</span>
-      <span style="font-size:9.5px;color:#00F5D4;background:rgba(0,245,212,0.15);padding:2px 5px;border-radius:3px;font-weight:bold;">LIVE</span>
+      <span class="claude-fm-live-badge">LIVE</span>
     </div>
-    <button type="button" id="btnClaudeFmClose" style="background:none;border:none;color:#8fa89b;font-size:15px;cursor:pointer;line-height:1;padding:2px 6px;">✕</button>
+    <button type="button" id="btnClaudeFmClose" class="claude-fm-close" aria-label="Close radio tuner">✕</button>
   </div>
   <div style="font-size:11px;color:#9fb3a8;margin-bottom:12px;line-height:1.45;">24/7 Lo-Fi for Thinking & Building curated by Anthropic</div>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
@@ -762,46 +742,81 @@
     frameborder="0" allow="autoplay; encrypted-media"></iframe>
 </div>
 
-<!-- Floating Tactical Ability Cluster (Bottom-Right Overlays) -->
-<div id="ability-cluster" aria-label="Sanctum abilities and upgrades">
-  <button class="ability-card glyph-card" id="btnGlyph" title="Verdant Glyphs (G) — Meta Upgrades">
-    <span class="ab-cost">UPGRADES</span>
-    <span class="ab-icon">✧</span>
-    <span class="ab-name">Glyphs</span>
-    <span class="ab-key">G</span>
-  </button>
-  <button class="ability-card" id="btnRoot" title="Verdant Overgrowth (D) — 35 Mana">
-    <span class="ab-cost">35 ✧</span>
-    <span class="ab-icon">✿</span>
-    <span class="ab-name">Root</span>
-    <span class="ab-key">D</span>
-  </button>
-  <button class="ability-card" id="btnFlare" title="Solar Flare (F) — 75 Mana">
-    <span class="ab-cost">75 ✧</span>
-    <span class="ab-icon">☼</span>
-    <span class="ab-name">Flare</span>
-    <span class="ab-key">F</span>
-  </button>
-</div>
+<!-- Compact battlefield telemetry (Top Left Corner) -->
+<aside id="field-panel" aria-label="Battlefield telemetry">
+  <div class="field-heading"><span id="fieldStatus">FIELD ONLINE</span><i aria-hidden="true"></i></div>
+  <div class="field-readouts">
+    <div><span>PHASE</span><strong id="phaseLabel">PREPARING</strong></div>
+    <div><span>WAVE</span><strong id="wave">0 / 50</strong></div>
+    <div><span>KILLS</span><strong id="fieldKills">0</strong></div>
+    <div><span>SEED</span><strong id="fieldSeed">—</strong></div>
+  </div>
+  <div class="field-score">SCORE <b id="score">0</b></div>
+</aside>
 
-<div id="cam-mode"><div class="dot"></div><span>TACTICAL VIEW <span class="cam-hint">· Right drag to orbit · Scroll to zoom</span></span></div>
-<div id="gfx-mode" title="Graphics & Resolution (Shift+G): Click to toggle Auto (DRS) · Performance · Balanced · Ultra"><div class="dot"></div><span>⚡ 60 FPS · AUTO</span></div>
+<!-- Incoming Threat Announcement (Top Right Corner) -->
+<aside id="threat-announcement" class="threat-announcement" aria-label="Incoming threat announcement">
+  <div class="threat-heading">
+    <span class="preview-kicker">INCOMING THREAT <span class="preview-pulse"></span></span>
+    <span class="threat-badge">BRIEFING</span>
+  </div>
+  <div id="preview" class="threat-body"></div>
+</aside>
+
 <canvas id="combat-canvas"></canvas>
-<div class="preview-wrap"><span class="preview-kicker">NEXT THREAT <span class="preview-pulse"></span></span><div id="preview"></div></div>
 
-<!-- Defense arsenal -->
+<!-- Tactical Dock: Radar, Defense Arsenal, and Sanctum Forge Abilities -->
 <div id="drawer">
   <div class="dock-content">
     <div class="radar-panel">
-      <div class="dock-heading"><span class="heading-mark"></span> BATTLEFIELD <span class="heading-end">01 / RADAR</span></div>
-      <div id="minimap-wrap">
-        <canvas id="minimap" width="140" height="110"></canvas>
-        <div class="minimap-lbl">LIVE GRID</div>
-      </div>
+      <div class="dock-heading"><span class="heading-mark"></span> BATTLEFIELD RADAR</div>
+      <div id="minimap-wrap"><canvas id="minimap" width="288" height="160"></canvas></div>
+      <div class="radar-key"><span><i class="radar-pip entry"></i> ENTRY</span><span><i class="radar-pip core"></i> SANCTUM</span></div>
     </div>
     <div class="arsenal-panel">
-      <div class="dock-heading"><span class="heading-mark"></span> BUILD DEFENSES <span class="heading-end">SELECT Q — R · CLICK GRID TO DEPLOY</span></div>
+      <div class="dock-heading"><span class="heading-mark"></span> DEFENSE ARSENAL <span class="heading-end">SELECT Q — R · CLICK TO DEPLOY</span></div>
       <div id="build-grid"></div>
+    </div>
+    <div class="abilities-panel" id="ability-cluster" aria-label="Sanctum abilities and upgrades">
+      <div class="dock-heading"><span class="heading-mark"></span> SANCTUM FORGE <span class="heading-end">G · U · D · F</span></div>
+      <div class="abilities-grid">
+        <button class="ability-card glyph-card" id="btnGlyph" title="Verdant Glyphs (G) — Meta Upgrades">
+          <img src="assets/ability_glyphs_pbr.jpg" class="ab-bg" alt="Verdant Glyphs" />
+          <div class="ab-content">
+            <span class="ab-cost">UPGRADES</span>
+            <span class="ab-icon">✧</span>
+            <span class="ab-name">Glyphs</span>
+            <span class="ab-key">G</span>
+          </div>
+        </button>
+        <button class="ability-card upgrade-all-card" id="btnUpgradeAll" title="Upgrade all unupgraded batteries to branch A (U / controller D-Up)" aria-label="Upgrade all batteries" disabled>
+          <img src="assets/ability_allup_pbr.jpg" class="ab-bg" alt="All Up" />
+          <div class="ab-content">
+            <span class="ab-cost" id="upgradeAllCost">$0</span>
+            <span class="ab-icon">✦</span>
+            <span class="ab-name">All Up</span>
+            <span class="ab-key">U</span>
+          </div>
+        </button>
+        <button class="ability-card root-card" id="btnRoot" title="Verdant Overgrowth (D) — 35 Mana">
+          <img src="assets/ability_root_pbr.jpg" class="ab-bg" alt="Root" />
+          <div class="ab-content">
+            <span class="ab-cost">35 ✧</span>
+            <span class="ab-icon">✿</span>
+            <span class="ab-name">Root</span>
+            <span class="ab-key">D</span>
+          </div>
+        </button>
+        <button class="ability-card flare-card" id="btnFlare" title="Solar Flare (F) — 75 Mana">
+          <img src="assets/ability_flare_pbr.jpg" class="ab-bg" alt="Flare" />
+          <div class="ab-content">
+            <span class="ab-cost">75 ✧</span>
+            <span class="ab-icon">☼</span>
+            <span class="ab-name">Flare</span>
+            <span class="ab-key">F</span>
+          </div>
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -911,7 +926,7 @@ var TOWERS = {
   },
   beam: {
     key: 'E', numKey: '3', name: 'Prism Pillar', cost: 12, range: 3.6,
-    img: 'assets/3d_turret_pbr.jpg', glb: 'blender_pipeline/models/tower_prism_gatling.glb',
+    img: 'assets/3d_prism_pbr.jpg', glb: 'blender_pipeline/models/tower_prism_gatling.glb',
     desc: 'Hovering cyan crystal laser beam. Continuous ramping single-target DPS.'
   },
   slow: {
@@ -921,7 +936,7 @@ var TOWERS = {
   },
   blocker: {
     key: 'B', numKey: '5', name: 'Ruin Barrier', cost: 2, range: 0,
-    img: 'assets/3d_turret_pbr.jpg', glb: 'blender_pipeline/models/accent_masonry_blocks.glb',
+    img: 'assets/3d_barrier_pbr.jpg', glb: 'blender_pipeline/models/accent_masonry_blocks.glb',
     desc: 'Ancient Greco-Roman masonry wall. Cheap obstacle to route creeps into killzones.',
     isBlocker: true
   }
@@ -1204,7 +1219,8 @@ function purchaseGlyph(gid){
   S.glyphs[gid] = lvl + 1;
   saveGlyphs(S.glyphs);
   applyGlyphBonuses(S);
-  if(typeof initCards === 'function' && def === GLYPH_DEFS.mazing) initCards();
+  if(gid === 'mazing') buildDrawer();
+  refreshHud();
   return true;
 }
 
@@ -1454,12 +1470,13 @@ function ruinCluster(wp, seed){
   var R = mulberry(seed);
   var variant = (seed % 6);
 
-  // If high-fidelity GLTF models are available, use them!
+  // High-fidelity GLTF architectural props for obstacles (no flowers on the board!)
   if(variant === 0 && GLTF_CACHE.column){
     var clone = GLTF_CACHE.column.clone();
     clone.scale.set(0.65, 0.65, 0.65);
     clone.rotation.y = R() * Math.PI * 2;
     g.add(clone);
+    g.position.copy(wp);
     return g;
   }
   if(variant === 1 && GLTF_CACHE.masonry){
@@ -1467,74 +1484,87 @@ function ruinCluster(wp, seed){
     clone.scale.set(0.6, 0.6, 0.6);
     clone.rotation.y = R() * Math.PI * 2;
     g.add(clone);
+    g.position.copy(wp);
     return g;
   }
-  if(variant === 2 && GLTF_CACHE.wildflowers){
-    var clone = GLTF_CACHE.wildflowers.clone();
-    clone.scale.set(0.75, 0.75, 0.75);
-    clone.rotation.y = R() * Math.PI * 2;
-    g.add(clone);
-    return g;
-  }
-  if(variant === 3 && GLTF_CACHE.chest){
+  if(variant === 2 && GLTF_CACHE.chest){
     var clone = GLTF_CACHE.chest.clone();
     clone.scale.set(0.68, 0.68, 0.68);
     clone.rotation.y = R() * Math.PI * 2;
     g.add(clone);
+    g.position.copy(wp);
     return g;
   }
-  if(variant === 4 && GLTF_CACHE.urn){
+  if(variant === 3 && GLTF_CACHE.urn){
     var clone = GLTF_CACHE.urn.clone();
     clone.scale.set(0.65, 0.65, 0.65);
     clone.rotation.y = R() * Math.PI * 2;
     g.add(clone);
+    g.position.copy(wp);
     return g;
   }
-  if(variant === 5 && (GLTF_CACHE.lotus || GLTF_CACHE.chrysanthemum)){
-    var src = (seed % 2 === 0) ? (GLTF_CACHE.lotus || GLTF_CACHE.chrysanthemum) : (GLTF_CACHE.chrysanthemum || GLTF_CACHE.lotus);
-    var clone = src.clone();
+  if(variant === 4 && GLTF_CACHE.column){
+    var clone = GLTF_CACHE.column.clone();
+    clone.scale.set(0.58, 0.58, 0.58);
+    clone.rotation.y = R() * Math.PI * 2;
+    clone.rotation.z = 0.12;
+    g.add(clone);
+    g.position.copy(wp);
+    return g;
+  }
+  if(variant === 5 && GLTF_CACHE.masonry){
+    var clone = GLTF_CACHE.masonry.clone();
     clone.scale.set(0.65, 0.65, 0.65);
     clone.rotation.y = R() * Math.PI * 2;
     g.add(clone);
+    g.position.copy(wp);
     return g;
   }
 
-  var aged = MATS.stone; // weathered travertine, never pure white
-  if(variant === 0){
-    // broken fluted stump + tilted fallen capital
+  // Procedural stone ruin fallbacks (weathered travertine, marble, ashlar blocks)
+  var aged = MATS.stone;
+  if(variant === 0 || variant === 4){
+    // Broken fluted column stump + fallen drum
     var h = 1.0 + R() * 1.2;
-    var stump = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.68, h, 14), aged);
+    var stump = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.68, h, 16), aged);
     stump.position.y = h / 2; stump.castShadow = true; stump.receiveShadow = true; g.add(stump);
     var cap = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.3, 1.4), MATS.marble);
     cap.position.set(0.9, 0.25, 0.5); cap.rotation.set(0.15, R() * 1.2, 0.22); cap.castShadow = true; g.add(cap);
-    var drum = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.1, 12), aged);
+    var drum = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.1, 14), aged);
     drum.position.set(-0.9, 0.45, -0.4); drum.rotation.set(Math.PI / 2, 0, 0.5 + R()); drum.castShadow = true; g.add(drum);
-  } else if(variant === 1){
-    // cracked wall fragment with moss wash
+  } else if(variant === 1 || variant === 5){
+    // Cracked ashlar masonry wall fragment
     var wall = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.1 + R() * 0.7, 0.45), aged);
     wall.position.y = 0.6; wall.rotation.y = (R() - 0.5) * 0.9; wall.castShadow = true; wall.receiveShadow = true; g.add(wall);
     var lintel = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.28, 0.6), MATS.marble);
     lintel.position.set(0, 1.35, 0); lintel.rotation.y = wall.rotation.y + 0.12; lintel.rotation.z = 0.08; g.add(lintel);
+  } else if(variant === 2){
+    // Ancient stone plinth altar
+    var altarBase = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.45, 1.3), aged);
+    altarBase.position.y = 0.22; altarBase.castShadow = true; g.add(altarBase);
+    var altarTop = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.7, 1.0), MATS.marble);
+    altarTop.position.y = 0.75; altarTop.castShadow = true; g.add(altarTop);
+    var bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.25, 0.28, 14), MATS.brass);
+    bowl.position.y = 1.22; bowl.castShadow = true; g.add(bowl);
   } else {
-    // toppled pediment block half-buried
+    // Toppled pediment block half-buried
     var block = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.8, 1.2), aged);
     block.position.y = 0.35; block.rotation.set(0.1, R() * 3, 0.12); block.castShadow = true; block.receiveShadow = true; g.add(block);
-    var col = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.46, 1.5, 12), MATS.marble);
+    var col = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.46, 1.5, 14), MATS.marble);
     col.position.set(0.4, 1.0, -0.3); col.rotation.set(0.3, 0, 1.1); g.add(col);
   }
-  // jungle swallow: ivy + peony + chrysanthemum bursting from every crevice
-  var n = 6 + ((R() * 4) | 0);
-  for(var k = 0; k < n; k++){
-    var pick = R();
-    var fm = pick < 0.45 ? MATS.leaf : (pick < 0.7 ? MATS.peony : MATS.goldFlower);
-    var bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.28 + R() * 0.3, 0), fm);
-    bush.position.set((R() - 0.5) * 2.2, 0.25 + R() * 1.1, (R() - 0.5) * 2.2);
-    bush.scale.y = 0.75;
-    g.add(bush);
+
+  // Clinging ivy and moss creeping on the stone crevices (pure botanical leaves, no flowers on board!)
+  var nIvy = 4 + ((R() * 4) | 0);
+  for(var k = 0; k < nIvy; k++){
+    var ivy = new THREE.Mesh(new THREE.IcosahedronGeometry(0.22 + R() * 0.22, 1), MATS.leaf);
+    ivy.position.set((R() - 0.5) * 1.8, 0.2 + R() * 0.9, (R() - 0.5) * 1.8);
+    ivy.scale.y = 0.7;
+    g.add(ivy);
   }
-  // moss skirt ring so the base melts into the flagstones
+  // Moss skirt ring so the stone blends into the flagstones
   var skirt = new THREE.Mesh(new THREE.CircleGeometry(1.35, 18),
-    new THREE.MeshStandardMaterial({ color: 0x2D7246, roughness: 0.95, transparent: true, opacity: 0.55 }));
+    new THREE.MeshStandardMaterial({ color: 0x245536, roughness: 0.95, transparent: true, opacity: 0.55 }));
   skirt.rotation.x = -Math.PI / 2; skirt.position.y = 0.035;
   g.add(skirt);
   g.position.copy(wp);
@@ -1554,99 +1584,368 @@ function buildRuinVisuals(){
   }
 }
 
-// ---------- Background: jungle perimeter + ruined temple buildings (built once) ----------
-function jungleTree(x, z, s, R){
+// ---------- Background: High-Poly Jungle Perimeter + Botanical Gardens ----------
+function createBotanicalFlower(variety, scale, R){
   var g = new THREE.Group();
-  var barkMat = new THREE.MeshStandardMaterial({ color: 0x4A3B32, roughness: 0.95 });
-  var trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * s, 0.36 * s, 2.8 * s, 7), barkMat);
-  trunk.position.y = 1.4 * s; trunk.castShadow = true; g.add(trunk);
-  // buttress roots gripping the earth
-  for(var rt = 0; rt < 3; rt++){
-    var ra = rt / 3 * Math.PI * 2 + R() * 1.2;
-    var root = new THREE.Mesh(new THREE.CylinderGeometry(0.09 * s, 0.16 * s, 1.1 * s, 5), barkMat);
-    root.position.set(Math.cos(ra) * 0.5 * s, 0.35 * s, Math.sin(ra) * 0.5 * s);
-    root.rotation.set(Math.sin(ra) * 0.6, 0, -Math.cos(ra) * 0.6);
-    g.add(root);
+  scale = scale || 1;
+  R = R || Math.random;
+
+  var stemMat = new THREE.MeshStandardMaterial({ color: 0x245532, roughness: 0.8, metalness: 0.05 });
+  var sepalMat = new THREE.MeshStandardMaterial({ color: 0x1e492b, roughness: 0.72, metalness: 0.05 });
+
+  // Curving organic stem with joint node
+  var stemH = (0.9 + R() * 0.45) * scale;
+  var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.038 * scale, 0.062 * scale, stemH, 10), stemMat);
+  stem.position.y = stemH * 0.5;
+  stem.rotation.z = (R() - 0.5) * 0.22;
+  stem.rotation.x = (R() - 0.5) * 0.22;
+  stem.castShadow = true;
+  g.add(stem);
+
+  // Tiny leaves along stem
+  for(var li = 0; li < 2; li++){
+    var leaf = new THREE.Mesh(new THREE.ConeGeometry(0.08 * scale, 0.32 * scale, 5), sepalMat);
+    var lang = li * Math.PI + R() * 0.7;
+    leaf.position.set(Math.cos(lang) * 0.07 * scale, (0.32 + li * 0.3) * stemH, Math.sin(lang) * 0.07 * scale);
+    leaf.rotation.set(Math.sin(lang) * 0.85, 0, -Math.cos(lang) * 0.85);
+    g.add(leaf);
   }
-  var greens = [0x315f49, 0x477854, 0x4a8079, 0x284b3b, 0x668b61];
-  var lite = new THREE.MeshStandardMaterial({ color: 0x83a36a, roughness: 0.85, flatShading: true });
-  // lower skirt + mid mass + crown: 6 full organic blobs for a lush jungle silhouette
-  for(var c = 0; c < 6; c++){
-    var lower = c < 2;
-    var can = new THREE.Mesh(new THREE.IcosahedronGeometry((1.0 + R() * 0.9) * s, 1),
-      new THREE.MeshStandardMaterial({ color: greens[(R() * greens.length) | 0], roughness: 0.9, flatShading: true }));
-    var spread = lower ? 2.0 : 1.5;
-    can.position.set((R() - 0.5) * spread * s, (lower ? 2.0 + R() * 0.8 : 3.0 + R() * 1.6) * s, (R() - 0.5) * spread * s);
-    can.scale.y = 0.8;
-    can.castShadow = true;
-    g.add(can);
+
+  // Calyx sepals hugging the base of the bloom
+  for(var si = 0; si < 5; si++){
+    var sepal = new THREE.Mesh(new THREE.ConeGeometry(0.07 * scale, 0.2 * scale, 4), sepalMat);
+    var sang = (si / 5) * Math.PI * 2;
+    sepal.position.set(Math.cos(sang) * 0.1 * scale, stemH - 0.03 * scale, Math.sin(sang) * 0.1 * scale);
+    sepal.rotation.set(Math.sin(sang) * 0.75, 0, -Math.cos(sang) * 0.75);
+    g.add(sepal);
   }
-  // sun-kissed top highlight
-  var top = new THREE.Mesh(new THREE.IcosahedronGeometry(0.9 * s, 1), lite);
-  top.position.set((R() - 0.5) * s, (4.2 + R() * 0.8) * s, (R() - 0.5) * s);
-  g.add(top);
-  // flowering crown clusters
-  for(var f = 0; f < 7; f++){
-    var fl = new THREE.Mesh(new THREE.SphereGeometry(0.2 * s, 7, 7), f % 3 === 0 ? MATS.peony : (f % 3 === 1 ? MATS.goldFlower : MATS.wisteria));
-    fl.position.set((R() - 0.5) * 2.8 * s, (2.4 + R() * 2.0) * s, (R() - 0.5) * 2.8 * s);
-    g.add(fl);
+
+  if(variety === 'sunlily'){
+    // Golden Solar Lily: radiating starburst petals + bronze stamen
+    var petalColors = [0xffba1e, 0xffaa00, 0xffd043, 0xff8c00];
+    var petalMat = new THREE.MeshStandardMaterial({
+      color: petalColors[(R() * petalColors.length) | 0],
+      roughness: 0.42, metalness: 0.06, side: THREE.DoubleSide
+    });
+    var nPetals = 9 + ((R() * 4) | 0);
+    for(var pi = 0; pi < nPetals; pi++){
+      var pang = (pi / nPetals) * Math.PI * 2;
+      var petal = new THREE.Mesh(new THREE.ConeGeometry(0.11 * scale, 0.58 * scale, 6), petalMat);
+      petal.position.set(Math.cos(pang) * 0.25 * scale, stemH + 0.06 * scale, Math.sin(pang) * 0.25 * scale);
+      petal.rotation.set(Math.sin(pang) * 1.15, 0, -Math.cos(pang) * 1.15);
+      petal.scale.set(1.1, 0.4, 1.1);
+      g.add(petal);
+    }
+    // Bronze/gold core with glowing pollen
+    var core = new THREE.Mesh(new THREE.SphereGeometry(0.15 * scale, 10, 8),
+      new THREE.MeshStandardMaterial({ color: 0x8a4505, roughness: 0.8, emissive: 0x5a2d00, emissiveIntensity: 0.3 }));
+    core.position.y = stemH + 0.08 * scale;
+    g.add(core);
+    var pollen = new THREE.Mesh(new THREE.DodecahedronGeometry(0.085 * scale, 0),
+      new THREE.MeshStandardMaterial({ color: 0xffe066, roughness: 0.3, emissive: 0xffb703, emissiveIntensity: 0.75 }));
+    pollen.position.y = stemH + 0.14 * scale;
+    g.add(pollen);
+  } else if(variety === 'wisteria'){
+    // Violet Bellflower Spire
+    var wColors = [0x8c62ff, 0xad82ff, 0x6e40ea, 0xd4b8ff];
+    var wMat = new THREE.MeshStandardMaterial({
+      color: wColors[(R() * wColors.length) | 0],
+      roughness: 0.45, metalness: 0.04
+    });
+    for(var wi = 0; wi < 7; wi++){
+      var wbell = new THREE.Mesh(new THREE.ConeGeometry((0.13 - wi * 0.013) * scale, 0.24 * scale, 6), wMat);
+      var wba = wi * 1.25;
+      var wdist = (0.07 + wi * 0.018) * scale;
+      wbell.position.set(Math.cos(wba) * wdist, stemH + (0.1 + wi * 0.13) * scale, Math.sin(wba) * wdist);
+      wbell.rotation.set(Math.sin(wba) * 0.6, 0, -Math.cos(wba) * 0.6);
+      g.add(wbell);
+    }
+  } else {
+    // Botanical Peony / Garden Rose: 3-tier curved layered petals + stamen
+    var pColors = [0xe64a6d, 0xf76d8b, 0xd9385b, 0xffa4b6, 0xf5eedb];
+    var pMat = new THREE.MeshStandardMaterial({
+      color: pColors[(R() * pColors.length) | 0],
+      roughness: 0.42, metalness: 0.05, side: THREE.DoubleSide
+    });
+    // Outer tier (5 cupped petals)
+    for(var op = 0; op < 5; op++){
+      var oa = (op / 5) * Math.PI * 2;
+      var oPetal = new THREE.Mesh(new THREE.SphereGeometry(0.24 * scale, 8, 8), pMat);
+      oPetal.position.set(Math.cos(oa) * 0.2 * scale, stemH + 0.06 * scale, Math.sin(oa) * 0.2 * scale);
+      oPetal.scale.set(1.3, 0.45, 1.0);
+      oPetal.rotation.set(Math.sin(oa) * 0.8, 0, -Math.cos(oa) * 0.8);
+      g.add(oPetal);
+    }
+    // Mid tier (5 petals, offset angle)
+    for(var mp = 0; mp < 5; mp++){
+      var ma = (mp / 5) * Math.PI * 2 + 0.6;
+      var mPetal = new THREE.Mesh(new THREE.SphereGeometry(0.19 * scale, 8, 8), pMat);
+      mPetal.position.set(Math.cos(ma) * 0.13 * scale, stemH + 0.11 * scale, Math.sin(ma) * 0.13 * scale);
+      mPetal.scale.set(1.1, 0.5, 0.9);
+      mPetal.rotation.set(Math.sin(ma) * 0.5, 0, -Math.cos(ma) * 0.5);
+      g.add(mPetal);
+    }
+    // Inner tier (4 curled petals)
+    for(var ip = 0; ip < 4; ip++){
+      var ia = (ip / 4) * Math.PI * 2 + 0.3;
+      var iPetal = new THREE.Mesh(new THREE.SphereGeometry(0.13 * scale, 7, 7), pMat);
+      iPetal.position.set(Math.cos(ia) * 0.05 * scale, stemH + 0.15 * scale, Math.sin(ia) * 0.05 * scale);
+      iPetal.scale.set(0.9, 0.6, 0.8);
+      g.add(iPetal);
+    }
+    // Center pollen cluster
+    var centerCore = new THREE.Mesh(new THREE.SphereGeometry(0.095 * scale, 8, 8),
+      new THREE.MeshStandardMaterial({ color: 0xffd000, roughness: 0.35, emissive: 0xffaa00, emissiveIntensity: 0.4 }));
+    centerCore.position.y = stemH + 0.16 * scale;
+    g.add(centerCore);
   }
-  // hanging moss strands
-  for(var ms = 0; ms < 3; ms++){
-    var moss = new THREE.Mesh(new THREE.PlaneGeometry(0.35 * s, (1.2 + R() * 1.2) * s), MATS.wisteria);
-    moss.position.set((R() - 0.5) * 2.4 * s, (2.6 + R()) * s, (R() - 0.5) * 2.4 * s);
-    moss.rotation.y = R() * 3;
-    g.add(moss);
-    if(!scene.userData.vines) scene.userData.vines = [];
-    scene.userData.vines.push({ mesh: moss, phase: R() * 10 });
-  }
-  // climbing vine trunk wrap
-  var vine = new THREE.Mesh(new THREE.PlaneGeometry(0.5 * s, 2.4 * s), MATS.wisteria);
-  vine.position.set(0.32 * s, 1.7 * s, 0.2 * s); vine.rotation.y = R() * 3;
-  g.add(vine);
-  // fern ring at the base
-  for(var fn = 0; fn < 6; fn++){
-    var fa = fn / 6 * Math.PI * 2 + R() * 0.5;
-    var fern = new THREE.Mesh(new THREE.ConeGeometry(0.14 * s, (0.5 + R() * 0.4) * s, 5), MATS.leaf);
-    fern.position.set(Math.cos(fa) * 0.9 * s, 0.25 * s, Math.sin(fa) * 0.9 * s);
-    fern.rotation.set((R() - 0.5) * 0.5, 0, (R() - 0.5) * 0.9);
-    g.add(fern);
-  }
-  g.position.set(x, 0, z);
-  g.rotation.y = R() * 6.28;
+
   return g;
 }
+
+function jungleTree(x, z, s, R, treeType){
+  var g = new THREE.Group();
+  // Strictly broadleaf shade trees: NO conical trees!
+  treeType = treeType || (R() < 0.5 ? 'olive' : 'oak');
+
+  var barkMat = MATS.treeBark || new THREE.MeshStandardMaterial({ color: 0x3d3027, roughness: 0.88, metalness: 0.06 });
+
+  // Helper to build a leaf card cluster (interlocking quads that show individual leaves from any angle)
+  function makeLeafCluster(scale, leafMat){
+    var cl = new THREE.Group();
+    var pGeo = new THREE.PlaneGeometry(1.65 * scale, 1.65 * scale);
+
+    // Cross-quad planes at 0, 60, 120 degrees
+    var p1 = new THREE.Mesh(pGeo, leafMat);
+    p1.castShadow = true;
+    cl.add(p1);
+
+    var p2 = new THREE.Mesh(pGeo, leafMat);
+    p2.rotation.y = Math.PI / 3;
+    p2.castShadow = true;
+    cl.add(p2);
+
+    var p3 = new THREE.Mesh(pGeo, leafMat);
+    p3.rotation.y = (Math.PI * 2) / 3;
+    p3.castShadow = true;
+    cl.add(p3);
+
+    // Horizontal top-cap plane tilted slightly so canopy looks lush and full from isometric angles
+    var p4 = new THREE.Mesh(pGeo, leafMat);
+    p4.rotation.x = -Math.PI / 2 + (R() - 0.5) * 0.3;
+    p4.rotation.z = R() * Math.PI;
+    p4.position.y = 0.15 * scale;
+    p4.castShadow = true;
+    cl.add(p4);
+
+    return cl;
+  }
+
+  if(treeType === 'olive'){
+    // Ancient Mediterranean Olive Tree: twisting split trunk, spreading horizontal boughs, silvery-sage leaves
+    var trunkH = 2.4 * s;
+    var trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24 * s, 0.44 * s, trunkH, 12), barkMat);
+    trunk.position.y = trunkH * 0.5;
+    trunk.rotation.z = (R() - 0.5) * 0.25;
+    trunk.rotation.x = (R() - 0.5) * 0.15;
+    trunk.castShadow = true;
+    g.add(trunk);
+
+    // Gnarled buttress roots spreading into the turf
+    for(var ort = 0; ort < 4; ort++){
+      var ora = (ort / 4) * Math.PI * 2 + R() * 0.5;
+      var oRoot = new THREE.Mesh(new THREE.CylinderGeometry(0.09 * s, 0.19 * s, 1.4 * s, 8), barkMat);
+      oRoot.position.set(Math.cos(ora) * 0.42 * s, 0.28 * s, Math.sin(ora) * 0.42 * s);
+      oRoot.rotation.set(Math.sin(ora) * 0.65, 0, -Math.cos(ora) * 0.65);
+      g.add(oRoot);
+    }
+
+    // Spreading primary boughs
+    var boughTips = [];
+    var nBoughs = 4;
+    for(var ob = 0; ob < nBoughs; ob++){
+      var oba = (ob / nBoughs) * Math.PI * 2 + (R() - 0.5) * 0.4;
+      var bLen = (1.7 + R() * 0.5) * s;
+      var bough = new THREE.Mesh(new THREE.CylinderGeometry(0.11 * s, 0.20 * s, bLen, 8), barkMat);
+      var bPitch = 0.55 + R() * 0.25;
+      var bx = Math.cos(oba) * 0.42 * s;
+      var bz = Math.sin(oba) * 0.42 * s;
+      var by = (1.7 + R() * 0.4) * s;
+      bough.position.set(bx + Math.cos(oba) * bLen * 0.4, by + Math.cos(bPitch) * bLen * 0.4, bz + Math.sin(oba) * bLen * 0.4);
+      bough.rotation.set(Math.sin(oba) * bPitch, 0, -Math.cos(oba) * bPitch);
+      bough.castShadow = true;
+      g.add(bough);
+
+      var tipX = bx + Math.cos(oba) * bLen * 0.85;
+      var tipY = by + Math.cos(bPitch) * bLen * 0.85;
+      var tipZ = bz + Math.sin(oba) * bLen * 0.85;
+      boughTips.push([tipX, tipY, tipZ]);
+
+      // Secondary twig / branchlet reaching out
+      var subA = oba + (R() - 0.5) * 0.8;
+      var subBough = new THREE.Mesh(new THREE.CylinderGeometry(0.06 * s, 0.10 * s, 1.1 * s, 6), barkMat);
+      subBough.position.set(tipX * 0.85, tipY - 0.12 * s, tipZ * 0.85);
+      subBough.rotation.set(Math.sin(subA) * 0.65, 0, -Math.cos(subA) * 0.65);
+      g.add(subBough);
+      boughTips.push([tipX + Math.cos(subA) * 0.65 * s, tipY + (R() - 0.3) * 0.35 * s, tipZ + Math.sin(subA) * 0.65 * s]);
+    }
+
+    // Small interior core volume to give central depth
+    var innerCore = new THREE.Mesh(new THREE.SphereGeometry(0.7 * s, 8, 6), MATS.leaf);
+    innerCore.position.set(0, 2.2 * s, 0);
+    innerCore.scale.set(1.3, 0.55, 1.3);
+    g.add(innerCore);
+
+    // Multi-angle Leaf Card clusters with silvery olive leaves
+    var oliveLeafMat = MATS.leafClusterOlive || MATS.leaf;
+    boughTips.forEach(function(pos, idx){
+      var clMesh = makeLeafCluster((1.05 + R() * 0.35) * s, oliveLeafMat);
+      clMesh.position.set(pos[0], pos[1], pos[2]);
+      clMesh.rotation.set((R() - 0.5) * 0.5, R() * Math.PI * 2, (R() - 0.5) * 0.5);
+      g.add(clMesh);
+
+      if(idx % 2 === 0){
+        var sat = makeLeafCluster((0.8 + R() * 0.3) * s, oliveLeafMat);
+        sat.position.set(pos[0] * 1.1 + (R() - 0.5) * 0.35 * s, pos[1] + (R() - 0.2) * 0.4 * s, pos[2] * 1.1 + (R() - 0.5) * 0.35 * s);
+        sat.rotation.set((R() - 0.5) * 0.7, R() * Math.PI * 2, (R() - 0.5) * 0.7);
+        g.add(sat);
+      }
+    });
+
+    // Crown leaf cluster
+    var crown = makeLeafCluster(1.2 * s, oliveLeafMat);
+    crown.position.set(0, 2.9 * s, 0);
+    g.add(crown);
+
+  } else {
+    // Grand Sanctuary Broadleaf Oak: stately fluted trunk, spreading high limbs, layered emerald leaf cards
+    var trunkH = 3.2 * s;
+    var trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * s, 0.38 * s, trunkH, 12), barkMat);
+    trunk.position.y = trunkH * 0.5;
+    trunk.castShadow = true;
+    g.add(trunk);
+
+    // 4 buttress roots
+    for(var rt = 0; rt < 4; rt++){
+      var ra = (rt / 4) * Math.PI * 2 + R() * 0.4;
+      var root = new THREE.Mesh(new THREE.CylinderGeometry(0.08 * s, 0.17 * s, 1.3 * s, 8), barkMat);
+      root.position.set(Math.cos(ra) * 0.38 * s, 0.26 * s, Math.sin(ra) * 0.38 * s);
+      root.rotation.set(Math.sin(ra) * 0.60, 0, -Math.cos(ra) * 0.60);
+      g.add(root);
+    }
+
+    // 4 primary limbs branching into the upper canopy
+    var oakTips = [];
+    var nLimbs = 4;
+    for(var br = 0; br < nLimbs; br++){
+      var bra = (br / nLimbs) * Math.PI * 2 + (R() - 0.5) * 0.5;
+      var bLen = (2.0 + R() * 0.6) * s;
+      var branch = new THREE.Mesh(new THREE.CylinderGeometry(0.10 * s, 0.18 * s, bLen, 8), barkMat);
+      var bPitch = 0.6 + R() * 0.22;
+      var bx = Math.cos(bra) * 0.32 * s;
+      var bz = Math.sin(bra) * 0.32 * s;
+      var by = (2.2 + R() * 0.4) * s;
+      branch.position.set(bx + Math.cos(bra) * bLen * 0.45, by + Math.cos(bPitch) * bLen * 0.45, bz + Math.sin(bra) * bLen * 0.45);
+      branch.rotation.set(Math.sin(bra) * bPitch, 0, -Math.cos(bra) * bPitch);
+      branch.castShadow = true;
+      g.add(branch);
+
+      var tipX = bx + Math.cos(bra) * bLen * 0.88;
+      var tipY = by + Math.cos(bPitch) * bLen * 0.88;
+      var tipZ = bz + Math.sin(bra) * bLen * 0.88;
+      oakTips.push([tipX, tipY, tipZ]);
+
+      // Secondary twig reaching higher
+      var subA = bra + (R() - 0.5) * 0.85;
+      var subBranch = new THREE.Mesh(new THREE.CylinderGeometry(0.05 * s, 0.09 * s, 1.2 * s, 6), barkMat);
+      subBranch.position.set(tipX * 0.8, tipY + 0.18 * s, tipZ * 0.8);
+      subBranch.rotation.set(Math.sin(subA) * 0.5, 0, -Math.cos(subA) * 0.5);
+      g.add(subBranch);
+      oakTips.push([tipX + Math.cos(subA) * 0.7 * s, tipY + (0.35 + R() * 0.5) * s, tipZ + Math.sin(subA) * 0.7 * s]);
+    }
+
+    // Small interior core volume to give central depth
+    var innerCore2 = new THREE.Mesh(new THREE.SphereGeometry(0.75 * s, 8, 6), MATS.leaf);
+    innerCore2.position.set(0, 3.0 * s, 0);
+    innerCore2.scale.set(1.15, 0.65, 1.15);
+    g.add(innerCore2);
+
+    // Multi-angle Leaf Card clusters with rich emerald and sunlit gold leaves
+    var emeraldLeafMat = MATS.leafCluster || MATS.leaf;
+    var goldLeafMat = MATS.leafClusterGold || MATS.leafCluster || MATS.leaf;
+
+    oakTips.forEach(function(pos, idx){
+      var isHigh = pos[1] > 3.6 * s;
+      var clMat = isHigh ? goldLeafMat : emeraldLeafMat;
+      var clMesh = makeLeafCluster((1.1 + R() * 0.4) * s, clMat);
+      clMesh.position.set(pos[0], pos[1], pos[2]);
+      clMesh.rotation.set((R() - 0.5) * 0.45, R() * Math.PI * 2, (R() - 0.5) * 0.45);
+      g.add(clMesh);
+
+      // Secondary sub-cluster for full canopy volume
+      var subCl = makeLeafCluster((0.85 + R() * 0.3) * s, emeraldLeafMat);
+      subCl.position.set(pos[0] * 0.9 + (R() - 0.5) * 0.4 * s, pos[1] - 0.3 * s, pos[2] * 0.9 + (R() - 0.5) * 0.4 * s);
+      subCl.rotation.set((R() - 0.5) * 0.65, R() * Math.PI * 2, (R() - 0.5) * 0.65);
+      g.add(subCl);
+    });
+
+    // Sun-kissed golden crown dome clusters at the highest summit
+    for(var crn = 0; crn < 3; crn++){
+      var crnMesh = makeLeafCluster(1.15 * s, goldLeafMat);
+      var crnAng = (crn / 3) * Math.PI * 2 + R() * 0.5;
+      crnMesh.position.set(Math.cos(crnAng) * 0.4 * s, (4.4 + crn * 0.3) * s, Math.sin(crnAng) * 0.4 * s);
+      crnMesh.rotation.set((R() - 0.5) * 0.35, R() * Math.PI * 2, (R() - 0.5) * 0.35);
+      g.add(crnMesh);
+    }
+
+    // Delicate hanging wisteria/moss tendrils
+    for(var ms = 0; ms < 2; ms++){
+      var moss = new THREE.Mesh(new THREE.PlaneGeometry(0.32 * s, (1.1 + R() * 0.7) * s), MATS.wisteria);
+      moss.position.set((R() - 0.5) * 1.6 * s, (2.6 + R() * 0.7) * s, (R() - 0.5) * 1.6 * s);
+      moss.rotation.y = R() * Math.PI * 2;
+      g.add(moss);
+      if(!scene.userData.vines) scene.userData.vines = [];
+      scene.userData.vines.push({ mesh: moss, phase: R() * 10 });
+    }
+  }
+
+  g.position.set(x, 0, z);
+  g.rotation.y = R() * Math.PI * 2;
+  return g;
+}
+
 function ruinedFacade(x, z, rotY, seed){
   var g = new THREE.Group();
   var R = mulberry(seed);
   var aged = MATS.stone;
-  // pediment triangle (prism via cylinder 3-seg)
+  // pediment triangle
   var ped = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 3.4, 1.4, 3, 1), aged);
   ped.rotation.y = Math.PI; ped.position.y = 7.6; ped.castShadow = true; g.add(ped);
   var beam = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.7, 1.2), MATS.marble);
   beam.position.y = 6.4; beam.castShadow = true; g.add(beam);
-  // row of columns, some truncated / toppled, all flora-choked
+  // row of fluted columns, some truncated / toppled, flora-choked
   for(var ci = 0; ci < 5; ci++){
     var cx = -3.4 + ci * 1.7;
     var broken = R() < 0.45;
     var ch = broken ? 1.5 + R() * 2 : 6.0;
-    var colm = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, ch, 12), broken ? aged : MATS.marble);
+    var colm = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, ch, 16), broken ? aged : MATS.marble);
     colm.position.set(cx, ch / 2, 0); colm.castShadow = true; colm.receiveShadow = true; g.add(colm);
     if(broken){
-      var fallen = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 2.4, 10), aged);
+      var fallen = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 2.4, 14), aged);
       fallen.position.set(cx + 0.8, 0.45, 1.4 + R()); fallen.rotation.set(Math.PI / 2, 0, R() * 3);
       fallen.castShadow = true; g.add(fallen);
     }
     for(var b = 0; b < 3; b++){
-      var bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.35 + R() * 0.4, 0), b % 2 ? MATS.leaf : MATS.goldFlower);
+      var bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.35 + R() * 0.4, 1), MATS.leaf);
       bush.position.set(cx + (R() - 0.5) * 1.6, 0.3 + R() * Math.min(3, ch), (R() - 0.5) * 1.6);
       g.add(bush);
     }
   }
   g.position.set(x, 0, z); g.rotation.y = rotY;
-  g.scale.multiplyScalar(1.15); // chunky backdrop presence
+  g.scale.multiplyScalar(1.15);
   return g;
 }
+
 function buildJunglePerimeter(){
   if(scene.userData.jungleBuilt) return;
   scene.userData.jungleBuilt = true;
@@ -1658,140 +1957,152 @@ function buildJunglePerimeter(){
     if(r > maxR){ var k = maxR / r; return [x * k, z * k]; }
     return [x, z];
   }
-  // jungle tree ring
-  for(var ti = 0; ti < 46; ti++){
-    var side = ti % 4, t = R();
-    var x, z;
-    if(side === 0){ x = -W / 2 - 4 - R() * 14; z = -H / 2 + t * H; }
-    else if(side === 1){ x = W / 2 + 4 + R() * 14; z = -H / 2 + t * H; }
-    else if(side === 2){ z = -H / 2 - 6 - R() * 14; x = -W / 2 - 6 + t * (W + 12); }
-    else { z = H / 2 + 6 + R() * 14; x = -W / 2 - 6 + t * (W + 12); }
-    var c1 = clampToIsland(x, z, 3.5);
-    var tree = jungleTree(c1[0], c1[1], 0.9 + R() * 1.3, R);
+
+  // 1. Scenic 360-degree perimeter tree grove (32 high-resolution broadleaf trees framing the island)
+  var nPerimTrees = 32;
+  for(var ti = 0; ti < nPerimTrees; ti++){
+    var ang = (ti / nPerimTrees) * Math.PI * 2 + (R() - 0.5) * 0.12;
+    var baseDist = Math.max(W, H) * 0.60 + R() * 10;
+    var tx = Math.cos(ang) * (baseDist * 1.15);
+    var tz = Math.sin(ang) * (baseDist * 0.82);
+    // Keep clearance from the playing board
+    if(Math.abs(tx) < W / 2 + 2.8 && Math.abs(tz) < H / 2 + 2.8) continue;
+    var c1 = clampToIsland(tx, tz, 3.2);
+    var tree = jungleTree(c1[0], c1[1], 0.95 + R() * 0.45, R);
     tree.scale.multiplyScalar(CHUNK_TREE);
     scene.add(tree);
   }
-  // background ruined temple buildings beyond the colonnades
+
+  // 2. Scenic Corner Accents (2 well-spaced trees per corner)
+  var cornerCoords = [
+    [-W / 2 - 7, -H / 2 - 7],  // NW
+    [ W / 2 + 7, -H / 2 - 7],  // NE
+    [-W / 2 - 7,  H / 2 + 7],  // SW
+    [ W / 2 + 7,  H / 2 + 7]   // SE
+  ];
+  cornerCoords.forEach(function(cc){
+    for(var cti = 0; cti < 2; cti++){
+      var cx = cc[0] + (R() - 0.5) * 8;
+      var cz = cc[1] + (R() - 0.5) * 8;
+      if(Math.abs(cx) < W / 2 + 2.5 && Math.abs(cz) < H / 2 + 2.5) continue;
+      var cClamped = clampToIsland(cx, cz, 2.8);
+      var cTree = jungleTree(cClamped[0], cClamped[1], 0.95 + R() * 0.45, R);
+      cTree.scale.multiplyScalar(CHUNK_TREE);
+      scene.add(cTree);
+    }
+  });
+
+  // Background ruined temple buildings beyond the colonnades
   scene.add(ruinedFacade(-14, -H / 2 - 13, 0.15, 101));
   scene.add(ruinedFacade(16, -H / 2 - 15, -0.2, 202));
   scene.add(ruinedFacade(-10, H / 2 + 13, Math.PI - 0.15, 303));
   scene.add(ruinedFacade(20, H / 2 + 15, Math.PI + 0.2, 404));
   scene.add(ruinedFacade(-W / 2 - 8, 2, Math.PI / 2 + 0.2, 505));
-  // undergrowth bushes carpeting the perimeter
-  for(var bi = 0; bi < 150; bi++){
+
+  // Undergrowth bushes carpeting the perimeter
+  for(var bi = 0; bi < 160; bi++){
     var a = R() * Math.PI * 2, rad = Math.max(W, H) * 0.62 + R() * 16;
-    var bx = Math.cos(a) * rad, bz = Math.sin(a) * rad * 0.7;
-    if(Math.abs(bx) < W / 2 + 1 && Math.abs(bz) < H / 2 + 1) continue;
+    var bx = Math.cos(a) * rad, bz = Math.sin(a) * rad * 0.75;
+    if(Math.abs(bx) < W / 2 + 2.5 && Math.abs(bz) < H / 2 + 2.5) continue;
     var c2 = clampToIsland(bx, bz, 1.5);
     bx = c2[0]; bz = c2[1];
-    if(Math.abs(bx) < W / 2 + 1 && Math.abs(bz) < H / 2 + 1) continue;
+    if(Math.abs(bx) < W / 2 + 2.5 && Math.abs(bz) < H / 2 + 2.5) continue;
     var pick = R();
-    var bm = pick < 0.45 ? MATS.leaf : (pick < 0.65 ? MATS.goldFlower : (pick < 0.85 ? MATS.peony : MATS.wisteria));
-    var bigr = R() < 0.25; // occasional hero bush
+    var bm = pick < 0.65 ? MATS.leaf : (pick < 0.85 ? MATS.goldFlower : MATS.peony);
+    var bigr = R() < 0.25;
     var bush = new THREE.Mesh(new THREE.IcosahedronGeometry((bigr ? 1.0 : 0.5) + R() * 0.8, 1), bm);
     bush.position.set(bx, bigr ? 0.6 : 0.35, bz); bush.scale.y = 0.72; bush.rotation.y = R() * 3;
     bush.castShadow = bigr;
     scene.add(bush);
-    if(bigr){ // flower crown on hero bushes
-      for(var hb = 0; hb < 4; hb++){
-        var hbf = new THREE.Mesh(new THREE.SphereGeometry(0.16, 7, 7), hb % 2 ? MATS.peony : MATS.goldFlower);
-        hbf.position.set(bx + (R() - 0.5) * 2.2, 0.9 + R() * 0.6, bz + (R() - 0.5) * 2.2);
-        scene.add(hbf);
-      }
-    }
   }
-  // wild ruins scattered through the jungle ring: drums, beams, stairs, obelisks
+
+  // Wild ruins scattered through the jungle ring
   scatterWildRuins(R, W, H, clampToIsland);
-  // in-grid ground flora: grass tufts + tiny blooms tucked at tile corners (visual only)
-  var tuftG = new THREE.ConeGeometry(0.09, 0.42, 5);
-  var fernG = new THREE.ConeGeometry(0.13, 0.55, 5);
-  for(var fi = 0; fi < 430; fi++){
-    var gx = (R() * COLS) | 0, gy = (R() * ROWS) | 0;
-    if(S && (S.blocked[idx(gx, gy)] || S.ruin[idx(gx, gy)])) continue;
-    if(gx === SPAWN.x && gy === SPAWN.y) continue;
-    if(gx === SANCTUM.x && gy === SANCTUM.y) continue;
-    var wp = gridToWorld3D(gx, gy, 0);
-    var off = (R() - 0.5) * 1.5;
-    var isFern = R() < 0.25;
-    var tuft = new THREE.Mesh(isFern ? fernG : tuftG, R() < 0.55 ? MATS.leaf : (R() < 0.5 ? MATS.goldFlower : (R() < 0.7 ? MATS.peony : MATS.wisteria)));
-    tuft.position.set(wp.x + off, 0.2, wp.z + (R() - 0.5) * 1.5);
-    tuft.rotation.set((R() - 0.5) * 0.4, R() * 3, (R() - 0.5) * 0.4);
-    var tsc = 0.8 + R() * 0.9; tuft.scale.set(tsc, tsc, tsc);
-    scene.add(tuft);
-    if(!scene.userData.groundFlora) scene.userData.groundFlora = [];
-    scene.userData.groundFlora.push(tuft);
-  }
+
+  // Notice: In-grid board cells are kept completely clean and pristine for tactical clarity.
+  // NO flowers on the board!
   buildMeadows(R, W, H, clampToIsland);
 }
 
-// ---------- Meadows: flower fields, titan blooms, mana flowers, rim hedges ----------
+// ---------- Meadows: Realistic Botanical Flowers Off the Board in the Grass ----------
 function buildMeadows(R, W, H, clampToIsland){
-  var stemG = new THREE.CylinderGeometry(0.035, 0.055, 0.8, 5);
-  var bloomG = new THREE.SphereGeometry(0.16, 8, 7);
-  var stemM = new THREE.MeshStandardMaterial({ color: 0x2D7246, roughness: 1 });
-  var petalMs = [MATS.peony, MATS.goldFlower, MATS.wisteria,
-    new THREE.MeshStandardMaterial({ color: 0xf5f0e0, roughness: 0.6, side: THREE.DoubleSide, emissive: 0x555550, emissiveIntensity: 0.15 })];
-  var placed = 0, guard = 0;
-  while(placed < 120 && guard++ < 900){ // wildflower meadow on the grass ring
-    var mx = (R() - 0.5) * (W + 20), mz = (R() - 0.5) * (H + 26);
-    if(Math.abs(mx) < W / 2 + 2 && Math.abs(mz) < H / 2 + 2) continue;
-    if(Math.hypot(mx, mz) > 48) continue;
-    var stem = new THREE.Mesh(stemG, stemM);
-    stem.position.set(mx, 0.4, mz);
-    stem.rotation.set((R() - 0.5) * 0.3, 0, (R() - 0.5) * 0.3);
-    scene.add(stem);
-    var bloom = new THREE.Mesh(bloomG, petalMs[(R() * petalMs.length) | 0]);
-    bloom.position.set(mx, 0.85, mz);
-    var bs = 0.8 + R() * 0.9; bloom.scale.set(bs, bs * 0.85, bs);
-    scene.add(bloom);
-    placed++;
+  // Realistic botanical flower drift colonies in the perimeter grass (OFF THE BOARD)
+  var nDrifts = 28;
+  for(var d = 0; d < nDrifts; d++){
+    var da = (d / nDrifts) * Math.PI * 2 + (R() - 0.5) * 0.3;
+    var drad = Math.max(W, H) * 0.56 + R() * 15;
+    var dx = Math.cos(da) * (drad * 1.12);
+    var dz = Math.sin(da) * (drad * 0.78);
+    // Keep strictly outside the game board
+    if(Math.abs(dx) < W / 2 + 2.5 && Math.abs(dz) < H / 2 + 2.5) continue;
+    var c = clampToIsland(dx, dz, 2.5);
+    var driftType = (d % 3 === 0) ? 'peony' : ((d % 3 === 1) ? 'sunlily' : 'wisteria');
+    var clusterCount = 3 + ((R() * 4) | 0);
+    for(var ci = 0; ci < clusterCount; ci++){
+      var fx = c[0] + (R() - 0.5) * 2.8;
+      var fz = c[1] + (R() - 0.5) * 2.8;
+      if(Math.abs(fx) < W / 2 + 2.2 && Math.abs(fz) < H / 2 + 2.2) continue;
+      var flower = createBotanicalFlower(driftType, 0.75 + R() * 0.55, R);
+      flower.position.set(fx, 0.05, fz);
+      flower.rotation.y = R() * Math.PI * 2;
+      scene.add(flower);
+    }
   }
-  // titan blooms: five giant statement flowers ringing the courtyard
+
+  // Titan Blooms: five giant botanical statement flowers in the courtyard grass corners
   [[-34, -12], [30, -16], [-28, 15], [34, 10], [0, 25]].forEach(function(p, ti){
     var g = new THREE.Group();
-    var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.34, 4.4, 7), stemM);
-    stem.position.y = 2.2; stem.castShadow = true; g.add(stem);
+    var stemM = new THREE.MeshStandardMaterial({ color: 0x245532, roughness: 0.8 });
+    var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.36, 4.6, 12), stemM);
+    stem.position.y = 2.3; stem.castShadow = true; g.add(stem);
     for(var lf = 0; lf < 4; lf++){
-      var leaf = new THREE.Mesh(new THREE.ConeGeometry(0.3, 1.2, 5), MATS.leaf);
+      var leaf = new THREE.Mesh(new THREE.ConeGeometry(0.35, 1.4, 6), MATS.leaf);
       var la = lf / 4 * Math.PI * 2;
-      leaf.position.set(Math.cos(la) * 0.55, 1.4 + (lf % 2), Math.sin(la) * 0.55);
+      leaf.position.set(Math.cos(la) * 0.6, 1.5 + (lf % 2), Math.sin(la) * 0.6);
       leaf.rotation.set(Math.sin(la) * 0.9, 0, -Math.cos(la) * 0.9);
       g.add(leaf);
     }
     var headM = [MATS.peony, MATS.goldFlower][ti % 2];
-    var head = new THREE.Mesh(new THREE.IcosahedronGeometry(1.15, 1), headM);
-    head.position.y = 4.9; head.castShadow = true; g.add(head);
-    for(var pt = 0; pt < 7; pt++){
-      var pa = pt / 7 * Math.PI * 2;
-      var petal = new THREE.Mesh(new THREE.SphereGeometry(0.5, 7, 6), headM);
-      petal.position.set(Math.cos(pa) * 1.25, 4.7, Math.sin(pa) * 1.25);
-      petal.scale.set(1, 0.55, 1);
+    // Realistic multi-tier cupped blossom head
+    for(var pt = 0; pt < 8; pt++){
+      var pa = pt / 8 * Math.PI * 2;
+      var petal = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), headM);
+      petal.position.set(Math.cos(pa) * 1.35, 4.8, Math.sin(pa) * 1.35);
+      petal.scale.set(1.2, 0.5, 1.0);
+      petal.rotation.set(Math.sin(pa) * 0.7, 0, -Math.cos(pa) * 0.7);
       g.add(petal);
     }
+    var headCenter = new THREE.Mesh(new THREE.SphereGeometry(0.9, 12, 10),
+      new THREE.MeshStandardMaterial({ color: 0x8a4505, roughness: 0.7, emissive: 0x4a2500, emissiveIntensity: 0.4 }));
+    headCenter.position.y = 5.0; headCenter.castShadow = true; g.add(headCenter);
+
     g.position.set(p[0], 0, p[1]);
     g.rotation.y = R() * 6.28;
     scene.add(g);
   });
-  // mana blooms: cyan soul-flowers glowing against the gloom
-  for(var mb = 0; mb < 14; mb++){
-    var ma = R() * Math.PI * 2, mr = 24 + R() * 20;
+
+  // Mana Blooms: cyan soul-flowers glowing in the outer perimeter grass
+  for(var mb = 0; mb < 16; mb++){
+    var ma = R() * Math.PI * 2, mr = 25 + R() * 18;
     var bx = Math.cos(ma) * mr, bz = Math.sin(ma) * mr * 0.75;
-    if(Math.abs(bx) < W / 2 + 2 && Math.abs(bz) < H / 2 + 2) continue;
+    if(Math.abs(bx) < W / 2 + 2.5 && Math.abs(bz) < H / 2 + 2.5) continue;
     if(Math.hypot(bx, bz) > 48) continue;
-    var mbloom = new THREE.Mesh(new THREE.OctahedronGeometry(0.3, 0), MATS.cyanGlow);
-    mbloom.position.set(bx, 0.55, bz);
+    var mbloom = new THREE.Mesh(new THREE.OctahedronGeometry(0.32, 0), MATS.cyanGlow);
+    mbloom.position.set(bx, 0.6, bz);
     scene.add(mbloom);
-    var mstem = new THREE.Mesh(stemG, stemM);
-    mstem.position.set(bx, 0.25, bz); mstem.scale.y = 0.6;
+    var mstem = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.6, 6),
+      new THREE.MeshStandardMaterial({ color: 0x245532, roughness: 0.9 }));
+    mstem.position.set(bx, 0.28, bz);
     scene.add(mstem);
   }
-  // rim hedge: a lush flowering wall tracing the island edge
-  for(var hg = 0; hg < 40; hg++){
-    var ha = hg / 40 * Math.PI * 2;
+
+  // Rim Hedge: lush flowering wall tracing the island edge
+  for(var hg = 0; hg < 42; hg++){
+    var ha = hg / 42 * Math.PI * 2;
     var hx = Math.cos(ha) * 46.5, hz = Math.sin(ha) * 46.5 * 0.8;
     if(Math.hypot(hx, hz) > 50) continue;
     var hm = hg % 3 === 0 ? MATS.peony : (hg % 3 === 1 ? MATS.leaf : MATS.goldFlower);
-    var hedge = new THREE.Mesh(new THREE.IcosahedronGeometry(0.9 + R() * 0.7, 1), hm);
+    var hedge = new THREE.Mesh(new THREE.IcosahedronGeometry(0.95 + R() * 0.75, 1), hm);
     hedge.position.set(hx, 0.55, hz);
     hedge.scale.y = 0.8; hedge.rotation.y = R() * 3;
     hedge.castShadow = true;
@@ -1878,7 +2189,8 @@ function scatterWildRuins(R, W, H, clampToIsland){
 function buildWaterAndFire(){
   if(scene.userData.waterFireBuilt) return;
   scene.userData.waterFireBuilt = true;
-  scene.userData.water = []; scene.userData.braziers = [];
+  if(!scene.userData.water) scene.userData.water = [];
+  if(!scene.userData.braziers) scene.userData.braziers = [];
   var W = COLS * CELL_SIZE, H = ROWS * CELL_SIZE;
   // reflecting pools in the strips between grid edge and colonnades
   var poolMat = new THREE.MeshStandardMaterial({ color: 0x0e4a5a, roughness: 0.08, metalness: 0.65, transparent: true, opacity: 0.6, emissive: 0x00BBF9, emissiveIntensity: 0.18 });
@@ -2706,7 +3018,7 @@ function mountSanctumRotunda(root){
 
 function populatePerimeterFloraAndRuins(){
   if(scene.getObjectByName('perimeterDecorations')) return;
-  if(!GLTF_CACHE.cypress && !GLTF_CACHE.colonnade && !GLTF_CACHE.olive) return;
+  if(!GLTF_CACHE.colonnade && !GLTF_CACHE.olive) return;
 
   var decorGroup = new THREE.Group();
   decorGroup.name = 'perimeterDecorations';
@@ -2718,49 +3030,28 @@ function populatePerimeterFloraAndRuins(){
 
   // 1. Grand Colonnades overlooking Northern Ridge
   if(GLTF_CACHE.colonnade){
-    for(var colX of [-halfW * 0.62, 0, halfW * 0.62]){
+    for(var colX of [-halfW * 0.65, 0, halfW * 0.65]){
       var colClone = GLTF_CACHE.colonnade.clone();
-      colClone.position.set(colX, 0, -halfH - 3.8);
+      colClone.position.set(colX, 0, -halfH - 4.2);
       colClone.rotation.y = (colX === 0) ? 0 : (colX < 0 ? 0.18 : -0.18);
       colClone.scale.set(0.95, 0.95, 0.95);
       decorGroup.add(colClone);
     }
   }
 
-  // 2. Cypress Trees flanking Western Spawn Gate and Southern Border
-  if(GLTF_CACHE.cypress){
-    var cypPositions = [
-      [-halfW - 3.8, 0, -halfH * 0.45],
-      [-halfW - 3.8, 0, halfH * 0.45],
-      [-halfW - 5.5, 0, 0],
-      [halfW + 4.8, 0, -halfH * 0.55],
-      [halfW + 4.8, 0, halfH * 0.55],
-      [-halfW * 0.4, 0, halfH + 3.8],
-      [halfW * 0.4, 0, halfH + 3.8],
-      [0, 0, halfH + 4.2]
-    ];
-    for(var cp of cypPositions){
-      var cTree = GLTF_CACHE.cypress.clone();
-      cTree.position.set(cp[0], 0, cp[2]);
-      var sc = 0.85 + Math.random() * 0.28;
-      cTree.scale.set(sc, sc, sc);
-      cTree.rotation.y = Math.random() * Math.PI * 2;
-      decorGroup.add(cTree);
-    }
-  }
-
-  // 3. Ancient Gnarled Olive Trees at Island Corners
+  // 2. Ancient Gnarled Olive Trees at Island Overlooks (NO conical cypress)
   if(GLTF_CACHE.olive){
     var oPositions = [
-      [-halfW - 4.2, 0, -halfH - 2.8],
-      [-halfW - 4.2, 0, halfH + 2.8],
-      [halfW + 4.2, 0, -halfH - 2.8],
-      [halfW + 4.2, 0, halfH + 2.8]
+      [-halfW - 5.8, 0, -halfH - 4.8],
+      [-halfW - 5.8, 0,  halfH + 4.8],
+      [ halfW + 5.8, 0, -halfH - 4.8],
+      [ halfW + 5.8, 0,  halfH + 4.8],
+      [-halfW - 7.5, 0, 0]
     ];
     for(var op of oPositions){
       var oTree = GLTF_CACHE.olive.clone();
       oTree.position.set(op[0], 0, op[2]);
-      var osc = 0.82 + Math.random() * 0.25;
+      var osc = 0.85 + Math.random() * 0.25;
       oTree.scale.set(osc, osc, osc);
       oTree.rotation.y = Math.random() * Math.PI * 2;
       decorGroup.add(oTree);
@@ -2770,21 +3061,22 @@ function populatePerimeterFloraAndRuins(){
   // 4. Statue of Athena Automata guarding Eastern Sanctum Overlook
   if(GLTF_CACHE.statue){
     var statue = GLTF_CACHE.statue.clone();
-    statue.position.set(halfW + 5.8, 0, 0);
+    statue.position.set(halfW + 6.8, 0, 0);
     statue.rotation.y = -Math.PI / 2;
     statue.scale.set(1.15, 1.15, 1.15);
     decorGroup.add(statue);
   }
 
-  // 5. Wildflower Meadow Clusters along Grassy Borders
+  // 5. Wildflower Meadow Clusters in the Grass Perimeter (OFF THE BOARD)
   if(GLTF_CACHE.wildflowers){
-    for(var wf = 0; wf < 10; wf++){
+    for(var wf = 0; wf < 14; wf++){
       var wfClone = GLTF_CACHE.wildflowers.clone();
       var side = wf % 4;
-      var wx = (side === 0) ? -halfW - 1.4 : ((side === 1) ? halfW + 1.4 : (Math.random() - 0.5) * (w + 4));
-      var wz = (side === 2) ? -halfH - 1.4 : ((side === 3) ? halfH + 1.4 : (Math.random() - 0.5) * (h + 4));
+      var wx = (side === 0) ? -halfW - 4.2 - Math.random() * 6 : ((side === 1) ? halfW + 4.2 + Math.random() * 6 : (Math.random() - 0.5) * (w + 12));
+      var wz = (side === 2) ? -halfH - 4.5 - Math.random() * 6 : ((side === 3) ? halfH + 4.5 + Math.random() * 6 : (Math.random() - 0.5) * (h + 12));
+      if(Math.abs(wx) < halfW + 2.8 && Math.abs(wz) < halfH + 2.8) continue;
       wfClone.position.set(wx, 0.05, wz);
-      var wsc = 0.65 + Math.random() * 0.35;
+      var wsc = 0.7 + Math.random() * 0.35;
       wfClone.scale.set(wsc, wsc, wsc);
       decorGroup.add(wfClone);
     }
@@ -2793,7 +3085,7 @@ function populatePerimeterFloraAndRuins(){
   // 6. Ancient Treasure Chest near Western Gate Outpost
   if(GLTF_CACHE.chest){
     var chest = GLTF_CACHE.chest.clone();
-    chest.position.set(-halfW - 2.8, 0.05, 3.2);
+    chest.position.set(-halfW - 3.8, 0.05, 3.8);
     chest.rotation.y = Math.PI * 0.25;
     chest.scale.set(0.85, 0.85, 0.85);
     decorGroup.add(chest);
@@ -2801,31 +3093,41 @@ function populatePerimeterFloraAndRuins(){
 
   // 7. Relic Amphora Urns flanking the Eastern Sanctum
   if(GLTF_CACHE.urn){
-    for(var uz of [-2.8, 2.8]){
+    for(var uz of [-3.6, 3.6]){
       var urn = GLTF_CACHE.urn.clone();
-      urn.position.set(halfW + 3.2, 0.05, uz);
+      urn.position.set(halfW + 4.2, 0.05, uz);
       urn.scale.set(0.78, 0.78, 0.78);
       decorGroup.add(urn);
     }
   }
 
-  // 8. Hero Clockwork Lotus Water Basins flanking Sanctum Portal
+  // 8. Hero Clockwork Lotus Water Basins in Eastern Sanctum Gardens (in the grass, off the board!)
   if(GLTF_CACHE.lotus){
-    for(var lz of [-5.2, 5.2]){
+    for(var lz of [-6.2, 6.2]){
       var lotus = GLTF_CACHE.lotus.clone();
-      lotus.position.set(halfW + 3.8, 0.05, lz);
-      lotus.scale.set(0.85, 0.85, 0.85);
+      lotus.position.set(halfW + 4.8, 0.05, lz);
+      lotus.scale.set(0.88, 0.88, 0.88);
       decorGroup.add(lotus);
     }
   }
 
-  // 9. Hero Golden Chrysanthemum Planters along Colonnade Walk
+  // 9. Hero Golden Chrysanthemum Planters along Colonnade Walk (in the grass, off the board!)
   if(GLTF_CACHE.chrysanthemum){
-    for(var cx of [-halfW * 0.35, halfW * 0.35]){
+    for(var cx of [-halfW * 0.4, halfW * 0.4]){
       var chry = GLTF_CACHE.chrysanthemum.clone();
-      chry.position.set(cx, 0.05, -halfH - 2.2);
-      chry.scale.set(0.8, 0.8, 0.8);
+      chry.position.set(cx, 0.05, -halfH - 3.5);
+      chry.scale.set(0.85, 0.85, 0.85);
       decorGroup.add(chry);
+    }
+  }
+
+  // 10. Accent Masonry Blocks along perimeter garden paths
+  if(GLTF_CACHE.masonry){
+    for(var mbp of [[-halfW - 4.5, -halfH * 0.2], [halfW + 4.5, -halfH * 0.2], [0, halfH + 4.5]]){
+      var mas = GLTF_CACHE.masonry.clone();
+      mas.position.set(mbp[0], 0.05, mbp[1]);
+      mas.scale.set(0.7, 0.7, 0.7);
+      decorGroup.add(mas);
     }
   }
 
@@ -3015,6 +3317,193 @@ function initMaterials(){
     }
   }, 1.8);
 
+  // --- 5. High-Resolution Botanical Leaf Spray Generator (Alpha-Tested Leaf Cards) ---
+  function drawBotanicalLeaf(ctx, x, y, angle, length, width, colorA, colorB, veinColor){
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    // Woody petiole (short stem)
+    ctx.strokeStyle = '#3e3022';
+    ctx.lineWidth = Math.max(1, length * 0.05);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(length * 0.16, 0);
+    ctx.stroke();
+
+    var startX = length * 0.14;
+    var tipX = length;
+    var halfW = width * 0.5;
+    var cpX = length * 0.44;
+
+    // Leaf blade with natural gradient
+    var grad = ctx.createLinearGradient(startX, 0, tipX, 0);
+    grad.addColorStop(0, colorA);
+    grad.addColorStop(0.65, colorB);
+    grad.addColorStop(1, colorA);
+    ctx.fillStyle = grad;
+
+    ctx.beginPath();
+    ctx.moveTo(startX, 0);
+    // Upper margin with gentle natural curvature
+    ctx.bezierCurveTo(cpX, -halfW * 1.15, length * 0.8, -halfW * 0.65, tipX, 0);
+    // Lower margin
+    ctx.bezierCurveTo(length * 0.8, halfW * 0.65, cpX, halfW * 1.15, startX, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Leaf border highlight
+    ctx.strokeStyle = colorB;
+    ctx.lineWidth = Math.max(0.6, length * 0.015);
+    ctx.stroke();
+
+    // Central midrib vein
+    ctx.strokeStyle = veinColor;
+    ctx.lineWidth = Math.max(0.8, length * 0.026);
+    ctx.beginPath();
+    ctx.moveTo(startX, 0);
+    ctx.lineTo(tipX * 0.94, 0);
+    ctx.stroke();
+
+    // Lateral secondary veins
+    var nVeins = Math.max(3, (length / 10) | 0);
+    ctx.lineWidth = Math.max(0.5, length * 0.014);
+    for(var v = 1; v < nVeins; v++){
+      var vx = startX + (tipX - startX) * (v / (nVeins + 0.6));
+      var vySpan = halfW * Math.sin((v / nVeins) * Math.PI) * 0.72;
+      ctx.beginPath();
+      ctx.moveTo(vx, 0);
+      ctx.quadraticCurveTo(vx + length * 0.06, -vySpan * 0.5, vx + length * 0.1, -vySpan);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(vx, 0);
+      ctx.quadraticCurveTo(vx + length * 0.06, vySpan * 0.5, vx + length * 0.1, vySpan);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function makeLeafSprayTex(seed, colA, colB, colV, isOlive){
+    return canvasTex(512, function(ctx, S2){
+      ctx.clearRect(0, 0, S2, S2);
+      var r = mulberry(seed);
+
+      // Central woody twig skeleton
+      var startX = S2 * 0.5, startY = S2 * 0.94;
+      ctx.strokeStyle = '#382a1c';
+      ctx.lineWidth = 4.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.bezierCurveTo(startX - 15, S2 * 0.65, startX + 20, S2 * 0.35, startX, S2 * 0.12);
+      ctx.stroke();
+
+      // Radiating secondary twigs
+      var branchNodes = [
+        [startX - 8, S2 * 0.75, -0.65, 120],
+        [startX + 10, S2 * 0.62, 0.60, 130],
+        [startX - 12, S2 * 0.48, -0.75, 110],
+        [startX + 14, S2 * 0.36, 0.70, 100],
+        [startX - 4, S2 * 0.22, -0.40, 85],
+        [startX + 6, S2 * 0.18, 0.45, 80]
+      ];
+      branchNodes.forEach(function(bn){
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(bn[0], bn[1]);
+        var bEndX = bn[0] + Math.cos(bn[2] - Math.PI / 2) * bn[3];
+        var bEndY = bn[1] + Math.sin(bn[2] - Math.PI / 2) * bn[3];
+        ctx.lineTo(bEndX, bEndY);
+        ctx.stroke();
+      });
+
+      // Abundant botanical leaves with clear individual shapes, veins, and silhouettes
+      var leaves = [
+        // Main stem leaves
+        [startX - 5, S2 * 0.82, -2.2, 58, isOlive ? 16 : 28],
+        [startX + 6, S2 * 0.78, -0.9, 62, isOlive ? 17 : 30],
+        [startX - 6, S2 * 0.68, -2.4, 66, isOlive ? 18 : 32],
+        [startX + 8, S2 * 0.56, -0.7, 68, isOlive ? 19 : 33],
+        [startX - 8, S2 * 0.42, -2.3, 70, isOlive ? 18 : 32],
+        [startX + 8, S2 * 0.30, -0.8, 64, isOlive ? 17 : 30],
+        [startX - 4, S2 * 0.18, -2.1, 55, isOlive ? 15 : 26],
+        [startX + 2, S2 * 0.10, -1.5, 52, isOlive ? 14 : 24],
+        // Left lower branch
+        [startX - 35, S2 * 0.68, -2.6, 55, isOlive ? 15 : 26],
+        [startX - 65, S2 * 0.62, -2.8, 60, isOlive ? 16 : 28],
+        [startX - 95, S2 * 0.56, -2.4, 56, isOlive ? 15 : 26],
+        [startX - 50, S2 * 0.75, -2.1, 50, isOlive ? 14 : 24],
+        // Right lower branch
+        [startX + 40, S2 * 0.56, -0.5, 58, isOlive ? 16 : 28],
+        [startX + 75, S2 * 0.50, -0.3, 62, isOlive ? 17 : 29],
+        [startX + 105, S2 * 0.44, -0.6, 56, isOlive ? 15 : 26],
+        [startX + 55, S2 * 0.64, -0.9, 52, isOlive ? 14 : 24],
+        // Left mid branch
+        [startX - 40, S2 * 0.44, -2.5, 56, isOlive ? 15 : 27],
+        [startX - 75, S2 * 0.38, -2.7, 58, isOlive ? 16 : 28],
+        [startX - 105, S2 * 0.32, -2.4, 52, isOlive ? 14 : 25],
+        // Right mid branch
+        [startX + 45, S2 * 0.34, -0.5, 54, isOlive ? 15 : 26],
+        [startX + 80, S2 * 0.28, -0.4, 56, isOlive ? 16 : 27],
+        // Terminal crowns
+        [startX - 25, S2 * 0.16, -2.0, 48, isOlive ? 13 : 23],
+        [startX + 28, S2 * 0.14, -1.0, 50, isOlive ? 14 : 24],
+        [startX, S2 * 0.05, -1.57, 54, isOlive ? 14 : 24]
+      ];
+
+      leaves.forEach(function(lf, li){
+        var jitterA = (r() - 0.5) * 0.2;
+        var jitterLen = lf[3] * (0.9 + r() * 0.2);
+        var jitterW = lf[4] * (0.9 + r() * 0.2);
+        var useColA = (li % 2 === 0) ? colA : colB;
+        var useColB = (li % 2 === 0) ? colB : colA;
+        drawBotanicalLeaf(ctx, lf[0], lf[1], lf[2] + jitterA, jitterLen, jitterW, useColA, useColB, colV);
+      });
+    });
+  }
+
+  TEX.leafCluster = makeLeafSprayTex(101, '#1b4d2b', '#3d824d', 'rgba(155, 235, 165, 0.75)', false);
+  TEX.leafClusterOlive = makeLeafSprayTex(202, '#284635', '#4d7559', 'rgba(175, 210, 190, 0.70)', true);
+  TEX.leafClusterGold = makeLeafSprayTex(303, '#3c6e2b', '#7ebc4c', 'rgba(215, 255, 160, 0.80)', false);
+
+  // High-Resolution Furrowed Tree Bark Texture
+  TEX.treeBark = canvasTex(512, function(ctx, S2){
+    ctx.fillStyle = '#2c221a'; ctx.fillRect(0, 0, S2, S2);
+    var r = mulberry(4321);
+    for(var x = 0; x < S2; x += 3 + ((r() * 4)|0)){
+      var ridgeW = 2 + r() * 5;
+      var cVal = 46 + ((r() * 30)|0);
+      ctx.fillStyle = 'rgb(' + cVal + ',' + ((cVal * 0.82)|0) + ',' + ((cVal * 0.65)|0) + ')';
+      ctx.beginPath();
+      var curX = x;
+      ctx.moveTo(curX, 0);
+      for(var y = 0; y < S2; y += 16){
+        curX += (r() - 0.5) * 4;
+        ctx.lineTo(curX, y);
+      }
+      ctx.lineTo(curX + ridgeW, S2);
+      for(var y2 = S2; y2 >= 0; y2 -= 16){
+        curX += (r() - 0.5) * 4;
+        ctx.lineTo(curX + ridgeW, y2);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    for(var cr = 0; cr < 35; cr++){
+      ctx.strokeStyle = 'rgba(16, 11, 7, ' + (0.4 + r() * 0.4) + ')';
+      ctx.lineWidth = 1.5 + r() * 2;
+      ctx.beginPath();
+      var fx = r() * S2, fy = r() * S2 * 0.2;
+      ctx.moveTo(fx, fy);
+      for(var fs = 0; fs < 8; fs++){
+        fx += (r() - 0.5) * 8;
+        fy += 20 + r() * 40;
+        ctx.lineTo(fx, fy);
+      }
+      ctx.stroke();
+    }
+  }, 1, 3);
+
   TEX.groundDetail = null; // built in build3DGrid (needs COLS/ROWS)
 
   // --- AAA PBR Materials instantiation ---
@@ -3037,6 +3526,21 @@ function initMaterials(){
   MATS.stone = new THREE.MeshStandardMaterial({
     normalMap: TEX.marbleNormal, normalScale: new THREE.Vector2(0.5, 0.5),
     color: 0x8a8272, roughness: 0.72, metalness: 0.02
+  });
+  MATS.treeBark = new THREE.MeshStandardMaterial({
+    map: TEX.treeBark, roughness: 0.85, metalness: 0.05
+  });
+  MATS.leafCluster = new THREE.MeshStandardMaterial({
+    map: TEX.leafCluster, alphaTest: 0.38, transparent: true, side: THREE.DoubleSide,
+    roughness: 0.44, metalness: 0.04
+  });
+  MATS.leafClusterOlive = new THREE.MeshStandardMaterial({
+    map: TEX.leafClusterOlive, alphaTest: 0.38, transparent: true, side: THREE.DoubleSide,
+    roughness: 0.46, metalness: 0.04
+  });
+  MATS.leafClusterGold = new THREE.MeshStandardMaterial({
+    map: TEX.leafClusterGold, alphaTest: 0.38, transparent: true, side: THREE.DoubleSide,
+    roughness: 0.42, metalness: 0.04
   });
 
   // Foliage: double-sided with calibrated forward SSS transmission
@@ -3349,6 +3853,7 @@ function stepFpsAndDrs(dt){
 function initThreeJS(){
   var container = document.getElementById('game-container');
   scene = new THREE.Scene();
+  scene.userData = { water: [], braziers: [], orbiters: [], vines: [] };
   scene.background = new THREE.Color(0x102c38);
   scene.fog = new THREE.FogExp2(0x183744, 0.003);
 
@@ -3528,21 +4033,8 @@ function build3DLighting(){
   scene.add(bolt);
   scene.userData.boltLight = bolt;
 
-  // Crepuscular god-ray shafts through colonnade gaps (additive volumetric fakes)
-  var shaftMat = new THREE.MeshBasicMaterial({
-    color: 0xffe4ac, transparent: true, opacity: 0.05,
-    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false
-  });
+  // Shafts array initialized empty so animation loops run safely without overlapping columns
   scene.userData.shafts = [];
-  for(var sgi=0; sgi<7; sgi++){
-    var sg = new THREE.PlaneGeometry(3.6, 28);
-    var shaft = new THREE.Mesh(sg, shaftMat.clone());
-    shaft.position.set(-18 + sgi * 6.2, 9, -14 + (sgi % 2) * 2);
-    shaft.rotation.set(0.35, 0.5, 0.62);
-    shaft.material.opacity = 0.032 + Math.random() * 0.02;
-    scene.add(shaft);
-    scene.userData.shafts.push(shaft);
-  }
 }
 
 function build3DEnvironment(){
@@ -3623,29 +4115,31 @@ function build3DEnvironment(){
   var templeColumnMat = new THREE.MeshStandardMaterial({ color: 0xd9d1be, roughness: 0.4, metalness: 0.1 });
   var waterStreamMat = new THREE.MeshBasicMaterial({ color: 0x5ccbc6, transparent: true, opacity: 0.65, depthWrite: false });
 
-  // 12 Majestic Floating Sister Islands in 2 cinematic depth tiers (replacing old pyramids)
+  // 12 Majestic Floating Sister Islands in 2 cinematic depth tiers with temple ruins, trees, rubble & activity
   var islandConfigs = [
     // [radius, distance, angle, baseY, underDepth, hasTemple, hasWaterfall, hasCypress]
     // Tier 1: Mid-distance panoramic islands
     [22, 145, 0.45, 12, 38, true, true, true],
-    [18, 160, 1.25, -6, 32, false, true, true],
+    [18, 160, 1.25, -6, 32, true, true, true],
     [26, 175, 2.10, 18, 44, true, false, true],
-    [16, 150, 3.20, -12, 28, false, true, false],
+    [16, 150, 3.20, -12, 28, true, true, true],
     [24, 165, 4.15, 8, 40, true, true, true],
-    [20, 155, 5.25, -4, 34, false, false, true],
+    [20, 155, 5.25, -4, 34, true, false, true],
     // Tier 2: Far horizon celestial sanctuaries
-    [38, 260, 0.85, 28, 60, true, true, false],
-    [32, 280, 1.80, -18, 52, false, true, false],
-    [42, 310, 2.75, 34, 68, true, false, false],
-    [30, 270, 3.80, -22, 48, false, true, false],
-    [36, 295, 4.70, 22, 58, true, true, false],
-    [28, 250, 5.80, -14, 46, false, false, false]
+    [38, 260, 0.85, 28, 60, true, true, true],
+    [32, 280, 1.80, -18, 52, true, true, true],
+    [42, 310, 2.75, 34, 68, true, false, true],
+    [30, 270, 3.80, -22, 48, true, true, true],
+    [36, 295, 4.70, 22, 58, true, true, true],
+    [28, 250, 5.80, -14, 46, true, false, true]
   ];
 
   islandConfigs.forEach(function(cfg, idx){
     var iRad = cfg[0], iDist = cfg[1], iAng = cfg[2], iBaseY = cfg[3], iDepth = cfg[4];
     var hasTemple = cfg[5], hasWater = cfg[6], hasCyp = cfg[7];
     var isFar = iDist > 200;
+    var iSeed = (idx * 137 + 733) >>> 0;
+    var iR = mulberry(iSeed);
 
     var ig = new THREE.Group();
     var ix = Math.cos(iAng) * iDist;
@@ -3653,64 +4147,206 @@ function build3DEnvironment(){
     ig.position.set(ix, iBaseY, iz);
     ig.rotation.y = iAng + Math.PI * 0.5;
 
-    // Plateau Grass Top
-    var topMesh = new THREE.Mesh(new THREE.CylinderGeometry(iRad, iRad * 0.88, 3.5, 14), islandGrassMat);
+    // Plateau Grass Top (smooth 18-seg cylinder)
+    var topMesh = new THREE.Mesh(new THREE.CylinderGeometry(iRad, iRad * 0.9, 3.5, 18), islandGrassMat);
     topMesh.position.y = 1.75;
     ig.add(topMesh);
 
-    // Inverted Organic Rock Underbelly (rugged multi-facet cone, not a 4-sided pyramid)
+    // Inverted Organic Rock Underbelly (rugged multi-facet cone)
     var rMat = isFar ? islandFarRockMat : islandRockMat;
-    var botMesh = new THREE.Mesh(new THREE.ConeGeometry(iRad * 0.88, iDepth, 14, 3), rMat);
+    var botMesh = new THREE.Mesh(new THREE.ConeGeometry(iRad * 0.9, iDepth, 18, 4), rMat);
     botMesh.rotation.x = Math.PI;
     botMesh.position.y = -iDepth * 0.5;
     ig.add(botMesh);
 
     // Glowing Mana Crystal hanging at the bottom tip
-    var crys = new THREE.Mesh(new THREE.OctahedronGeometry(Math.max(1.2, iRad * 0.12), 0),
+    var crys = new THREE.Mesh(new THREE.OctahedronGeometry(Math.max(1.4, iRad * 0.13), 0),
       idx % 2 === 0 ? MATS.cyanGlow : MATS.amberGlow);
-    crys.position.y = -iDepth - 0.5;
+    crys.position.y = -iDepth - 0.6;
     ig.add(crys);
 
-    // Miniature Ancient Temple Ruins on top
-    if(hasTemple){
-      var tGroup = new THREE.Group();
-      tGroup.position.set(0, 3.5, 0);
-      var nCols = 6;
+    // 1. Classical Temple Ruins on EVERY island (varied layouts: tholos rotunda, colonnade arcade, broken altar shrine)
+    var ruinType = idx % 3;
+    var tGroup = new THREE.Group();
+    tGroup.position.set(0, 3.5, 0);
+
+    if(ruinType === 0){
+      // Circular Tholos Rotunda: fluted columns with partial entablature & sacrificial altar
+      var nCols = 8;
+      var cRadius = iRad * 0.38;
       for(var tc = 0; tc < nCols; tc++){
         var tAng = (tc / nCols) * Math.PI * 2;
-        var tCol = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 3.2, 10), templeColumnMat);
-        tCol.position.set(Math.cos(tAng) * (iRad * 0.35), 1.6, Math.sin(tAng) * (iRad * 0.35));
+        var isBroken = (tc === 2 || tc === 5);
+        var colH = isBroken ? 1.6 + iR() * 1.5 : 4.5;
+        var tCol = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.45, colH, 12), templeColumnMat);
+        tCol.position.set(Math.cos(tAng) * cRadius, colH * 0.5, Math.sin(tAng) * cRadius);
         tGroup.add(tCol);
+        if(isBroken){
+          var drum = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 1.8, 10), templeColumnMat);
+          drum.position.set(Math.cos(tAng) * (cRadius + 1.6), 0.4, Math.sin(tAng) * (cRadius + 1.6));
+          drum.rotation.set(Math.PI / 2, 0, iR() * 3);
+          tGroup.add(drum);
+        }
       }
-      var tRoof = new THREE.Mesh(new THREE.CylinderGeometry(iRad * 0.4, iRad * 0.42, 0.6, 12), templeColumnMat);
-      tRoof.position.y = 3.5;
+      var tRoof = new THREE.Mesh(new THREE.CylinderGeometry(cRadius * 1.15, cRadius * 1.18, 0.7, 16), templeColumnMat);
+      tRoof.position.y = 4.85;
       tGroup.add(tRoof);
-      ig.add(tGroup);
+
+      // Central altar with sacred flame brazier
+      var altar = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.9, 1.6), MATS.marble);
+      altar.position.y = 0.45;
+      tGroup.add(altar);
+      var brazier = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.25, 0.5, 10), MATS.brass);
+      brazier.position.y = 1.1;
+      tGroup.add(brazier);
+      var flame = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.6, 8), MATS.amberGlow);
+      flame.position.y = 1.55;
+      tGroup.add(flame);
+      var bLight = new THREE.PointLight(0xffa233, 1.5, 24);
+      bLight.position.y = 1.8;
+      tGroup.add(bLight);
+      scene.userData.braziers.push({ light: bLight, flame: flame, base: 1.5 });
+    } else if(ruinType === 1){
+      // Grand Grecian Colonnade Arcade with stepped dais
+      var dais = new THREE.Mesh(new THREE.BoxGeometry(iRad * 0.75, 0.6, iRad * 0.45), MATS.stone);
+      dais.position.y = 0.3;
+      tGroup.add(dais);
+      var nArchCols = 6;
+      for(var ac = 0; ac < nArchCols; ac++){
+        var acX = (ac - (nArchCols - 1) * 0.5) * (iRad * 0.12);
+        var brokenArch = (ac === 1 || ac === 4);
+        var aColH = brokenArch ? 1.8 + iR() * 1.2 : 5.0;
+        var aCol = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, aColH, 12), templeColumnMat);
+        aCol.position.set(acX, 0.6 + aColH * 0.5, 0);
+        tGroup.add(aCol);
+      }
+      var aBeam = new THREE.Mesh(new THREE.BoxGeometry(iRad * 0.68, 0.65, 1.2), templeColumnMat);
+      aBeam.position.set(0, 5.9, 0);
+      tGroup.add(aBeam);
+    } else {
+      // Ancient Broken Archway & Altar Platform
+      var archBaseL = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4.8, 1.2), templeColumnMat);
+      archBaseL.position.set(-iRad * 0.22, 2.4, 0);
+      tGroup.add(archBaseL);
+      var archBaseR = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4.8, 1.2), templeColumnMat);
+      archBaseR.position.set(iRad * 0.22, 2.4, 0);
+      tGroup.add(archBaseR);
+      var archBeam = new THREE.Mesh(new THREE.BoxGeometry(iRad * 0.55, 0.8, 1.4), templeColumnMat);
+      archBeam.position.set(0, 5.1, 0); archBeam.rotation.z = 0.08;
+      tGroup.add(archBeam);
+
+      // Cyan Soul Brazier
+      var brazier2 = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.25, 0.5, 10), MATS.brass);
+      brazier2.position.set(0, 0.4, iRad * 0.25);
+      tGroup.add(brazier2);
+      var flame2 = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.6, 8), MATS.cyanGlow);
+      flame2.position.set(0, 0.85, iRad * 0.25);
+      tGroup.add(flame2);
+      var bLight2 = new THREE.PointLight(0x5ccbc6, 1.5, 24);
+      bLight2.position.set(0, 1.1, iRad * 0.25);
+      tGroup.add(bLight2);
+      scene.userData.braziers.push({ light: bLight2, flame: flame2, base: 1.5 });
+    }
+    ig.add(tGroup);
+
+    // 2. Scenic Tree Accents (2 to 3 broadleaf olive trees per island, NO conical trees)
+    var nTrees = 2 + ((iR() * 2) | 0);
+    for(var tr = 0; tr < nTrees; tr++){
+      var trAng = (tr / nTrees) * Math.PI * 2 + iR() * 0.5;
+      var trDist = (0.35 + (tr % 2) * 0.25) * iRad;
+      if(trDist > iRad * 0.82) trDist = iRad * 0.80;
+      var treeGroup = new THREE.Group();
+      treeGroup.position.set(Math.cos(trAng) * trDist, 3.5, Math.sin(trAng) * trDist);
+
+      // Ancient Broadleaf Olive Tree (twisted trunk + leafy canopy)
+      var trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.35, 2.0, 10), MATS.treeBark || MATS.wood);
+      trunk.position.y = 1.0; trunk.rotation.z = (iR() - 0.5) * 0.25;
+      treeGroup.add(trunk);
+
+      // Leaf clusters showing individual leaves
+      var clMat = MATS.leafClusterOlive || MATS.leaf;
+      for(var oc = 0; oc < 3; oc++){
+        var oca = (oc / 3) * Math.PI * 2 + iR() * 0.3;
+        var pGeo = new THREE.PlaneGeometry(1.5, 1.5);
+        var p1 = new THREE.Mesh(pGeo, clMat);
+        p1.position.set(Math.cos(oca) * 0.55, 2.0 + oc * 0.3, Math.sin(oca) * 0.55);
+        p1.rotation.y = oca;
+        treeGroup.add(p1);
+        var p2 = new THREE.Mesh(pGeo, clMat);
+        p2.position.set(Math.cos(oca) * 0.55, 2.0 + oc * 0.3, Math.sin(oca) * 0.55);
+        p2.rotation.y = oca + Math.PI / 2;
+        treeGroup.add(p2);
+      }
+      var tSc = 0.75 + iR() * 0.35;
+      treeGroup.scale.set(tSc, tSc, tSc);
+      ig.add(treeGroup);
     }
 
-    // Mediterranean Cypress Trees on the plateau
-    if(hasCyp){
-      var nTrees = 2 + (idx % 3);
-      for(var tr = 0; tr < nTrees; tr++){
-        var trAng = (tr / nTrees) * Math.PI * 2 + 0.4;
-        var trDist = (0.2 + (tr % 2) * 0.35) * iRad;
-        var treeGroup = new THREE.Group();
-        treeGroup.position.set(Math.cos(trAng) * trDist, 3.5, Math.sin(trAng) * trDist);
-        var trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, 1.8, 6), MATS.wood);
-        trunk.position.y = 0.9;
-        treeGroup.add(trunk);
-        var crown = new THREE.Mesh(new THREE.ConeGeometry(0.85, 4.2, 7), MATS.leaf);
-        crown.position.y = 3.5;
-        treeGroup.add(crown);
-        ig.add(treeGroup);
+    // 3. Scattered Rubble Piles & Masonry Blocks on Island Turf
+    var nRubble = 8 + ((iR() * 7) | 0);
+    for(var rb = 0; rb < nRubble; rb++){
+      var rbAng = (rb / nRubble) * Math.PI * 2 + iR() * 0.6;
+      var rbDist = (0.2 + iR() * 0.65) * iRad;
+      var rType = rb % 3;
+      var rMesh;
+      if(rType === 0){
+        rMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8 + iR() * 0.5, 0.5 + iR() * 0.4, 0.7 + iR() * 0.5), MATS.stone);
+        rMesh.position.set(Math.cos(rbAng) * rbDist, 3.75, Math.sin(rbAng) * rbDist);
+        rMesh.rotation.set(iR() * 0.4, iR() * Math.PI * 2, iR() * 0.4);
+      } else if(rType === 1){
+        rMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.9, 10), templeColumnMat);
+        rMesh.position.set(Math.cos(rbAng) * rbDist, 3.8, Math.sin(rbAng) * rbDist);
+        rMesh.rotation.set(Math.PI / 2, 0, iR() * Math.PI * 2);
+      } else {
+        rMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.45 + iR() * 0.3, 0), MATS.stone);
+        rMesh.position.set(Math.cos(rbAng) * rbDist, 3.7, Math.sin(rbAng) * rbDist);
+        rMesh.rotation.set(iR() * 3, iR() * 3, iR() * 3);
       }
+      rMesh.castShadow = true;
+      ig.add(rMesh);
+    }
+
+    // Hanging cliff ivy vines draping over the rim
+    for(var vi = 0; vi < 6; vi++){
+      var va = (vi / 6) * Math.PI * 2 + iR() * 0.5;
+      var vine = new THREE.Mesh(new THREE.PlaneGeometry(0.8 + iR() * 0.6, 2.8 + iR() * 2.2), MATS.leaf);
+      vine.position.set(Math.cos(va) * (iRad * 0.96), 1.8 - iR() * 1.5, Math.sin(va) * (iRad * 0.96));
+      vine.rotation.y = va + Math.PI * 0.5;
+      ig.add(vine);
+    }
+
+    // 4. Dynamic Orbiting Rubble & Debris Shards (4 to 6 floating shards per island!)
+    var islandDebrisList = [];
+    var nDebris = 4 + ((iR() * 3) | 0);
+    for(var debI = 0; debI < nDebris; debI++){
+      var debRad = iRad * (1.15 + debI * 0.14);
+      var debMesh;
+      if(debI % 2 === 0){
+        debMesh = new THREE.Mesh(new THREE.BoxGeometry(0.9 + iR() * 0.6, 0.6 + iR() * 0.5, 0.8 + iR() * 0.5), MATS.stone);
+      } else {
+        debMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.7 + iR() * 0.4, 0),
+          debI === 1 ? (idx % 2 === 0 ? MATS.cyanGlow : MATS.amberGlow) : MATS.stone);
+      }
+      var debBaseY = (iR() - 0.5) * (iDepth * 0.6);
+      debMesh.position.set(debRad, debBaseY, 0);
+      ig.add(debMesh);
+      islandDebrisList.push({
+        mesh: debMesh,
+        rad: debRad,
+        baseY: debBaseY,
+        ang: (debI / nDebris) * Math.PI * 2,
+        speed: (0.18 + (debI % 3) * 0.08) * (debI % 2 === 0 ? 1 : -1),
+        phase: iR() * 10,
+        spinX: (iR() - 0.5) * 0.8,
+        spinY: (iR() - 0.5) * 0.8
+      });
     }
 
     // Cascading Sky Waterfall spilling off the rim into mist
     if(hasWater){
-      var wHeight = Math.min(35, iDepth * 0.85);
-      var fallMesh = new THREE.Mesh(new THREE.PlaneGeometry(iRad * 0.22, wHeight), waterStreamMat);
-      fallMesh.position.set(iRad * 0.75, -wHeight * 0.5 + 2, 0);
+      var wHeight = Math.min(36, iDepth * 0.85);
+      var fallMesh = new THREE.Mesh(new THREE.PlaneGeometry(iRad * 0.25, wHeight), waterStreamMat);
+      fallMesh.position.set(iRad * 0.82, -wHeight * 0.5 + 2, 0);
       fallMesh.rotation.y = Math.PI * 0.5;
       ig.add(fallMesh);
     }
@@ -3720,9 +4356,10 @@ function build3DEnvironment(){
       group: ig,
       baseY: iBaseY,
       phase: idx * 0.85,
-      speed: 0.4 + (idx % 3) * 0.15,
+      speed: 0.35 + (idx % 3) * 0.12,
       amp: 1.2 + (idx % 2) * 0.8,
-      spin: (idx % 2 === 0 ? 1 : -1) * (0.012 + (idx % 3) * 0.006)
+      spin: (idx % 2 === 0 ? 1 : -1) * (0.01 + (idx % 3) * 0.005),
+      debris: islandDebrisList
     });
   });
 
@@ -5001,17 +5638,10 @@ function renderCombatFX(dt){
 }
 
 function hitFlashCreep(f){
-  f.flashT = 0.06;
   if(f.dirX !== undefined && f.dirY !== undefined){
     // Directional mechanical knockback / stagger impulse
     f.x -= f.dirX * 0.035;
     f.y -= f.dirY * 0.035;
-  }
-  if(f.mesh && f.mesh.traverse){
-    f.mesh.traverse(function(ch){ if(ch.isMesh && ch.material && ch.material.emissive){ ch.userData._e = ch.material.emissive.getHex(); ch.material.emissive.setHex(0xffffff); } });
-    setTimeout(function(){
-      f.mesh.traverse(function(ch){ if(ch.isMesh && ch.userData._e !== undefined && ch.material.emissive) ch.material.emissive.setHex(ch.userData._e); });
-    }, 18);
   }
 }
 function deathDisassembly(f){
@@ -5171,6 +5801,7 @@ function killFoe(f){
 // Centralized Gameplay Mutation Guard: blocks state mutations when paused, game over, or victory
 function canMutateGameplay(actionName, silent){
   if(!S) return false;
+  if(isTutorialActive()) return false;
   if(S.paused){
     if(!silent){
       toast('Game is paused — press P to resume');
@@ -5235,7 +5866,7 @@ function towerRange(t){
   return (b && b.range) || TOWERS[t.type].range;
 }
 
-function upgradeTo(t, branch){
+function upgradeTo(t, branch, quiet){
   if(!canMutateGameplay('upgrade')) return { ok: false, why: 'Game is paused.' };
   if(!t || t.branch) return { ok: false, why: 'Already upgraded.' };
   var spec = BRANCH[t.type][branch];
@@ -5258,9 +5889,33 @@ function upgradeTo(t, branch){
   t.mesh.userData.tierPip = pip;
   t.mesh.scale.multiplyScalar(1.07);
   var up = gridToWorld3D(t.gx + 0.5, t.gy + 0.5, 0);
-  spawnResonanceRing(up, 1.2, branch !== 'A');
-  refreshHud(); if(S.selTower === t) showInspect(); sfx('upgrade');
+  if(!quiet){
+    spawnResonanceRing(up, 1.2, branch !== 'A');
+    refreshHud(); if(S.selTower === t) showInspect(); sfx('upgrade');
+  }
   return { ok: true };
+}
+
+function upgradeAllQuote(){
+  var towers = [], cost = 0;
+  for(var t of S.towers){
+    if(t.isBlocker || t.branch || !BRANCH[t.type] || !BRANCH[t.type].A) continue;
+    towers.push(t);
+    cost += BRANCH[t.type].A.cost;
+  }
+  return { towers: towers, cost: cost };
+}
+function upgradeAllTowers(){
+  if(!canMutateGameplay('upgrade')) return false;
+  var quote = upgradeAllQuote();
+  if(!quote.towers.length){ toast('No batteries need an upgrade'); sfx('error'); return false; }
+  if(S.cash < quote.cost){ toast('Need $' + quote.cost.toLocaleString() + ' Scrap to upgrade all batteries'); sfx('error'); return false; }
+  for(var t of quote.towers) upgradeTo(t, 'A', true);
+  refreshHud();
+  if(S.selTower) showInspect();
+  sfx('upgrade');
+  toast('Upgraded ' + quote.towers.length + ' batteries for $' + quote.cost.toLocaleString());
+  return true;
 }
 
 function sellTower(t){
@@ -6166,6 +6821,7 @@ function drawMinimap(){
   mctx.strokeStyle = '#c9a227'; mctx.lineWidth = 1.5; mctx.strokeRect(2, 2, mw - 4, mh - 4);
   mctx.strokeStyle = '#2d3f37'; mctx.lineWidth = 0.5;
   for(var gx=0; gx<=COLS; gx+=2){ mctx.beginPath(); mctx.moveTo(6+gx/COLS*(mw-12), 4); mctx.lineTo(6+gx/COLS*(mw-12), mh-4); mctx.stroke(); }
+  for(var gy=0; gy<=ROWS; gy+=2){ mctx.beginPath(); mctx.moveTo(4, 6+gy/ROWS*(mh-12)); mctx.lineTo(mw-4, 6+gy/ROWS*(mh-12)); mctx.stroke(); }
 
   // Green glowing A* trajectory line
   var p = findPath(SPAWN.x, SPAWN.y, S.blocked);
@@ -6184,6 +6840,16 @@ function drawMinimap(){
     mctx.stroke();
     mctx.restore();
   }
+
+  // Mark the route endpoints so the scaled map reads as a battlefield.
+  var routeY = (SPAWN.y / ROWS) * (mh - 12) + 6;
+  mctx.fillStyle = '#eacb80';
+  mctx.beginPath(); mctx.arc(7, routeY, 4, 0, Math.PI * 2); mctx.fill();
+  mctx.fillStyle = '#9ce7c6';
+  mctx.beginPath(); mctx.arc(mw - 12, routeY, 5, 0, Math.PI * 2); mctx.fill();
+  mctx.fillStyle = '#d3dfce'; mctx.font = '9px monospace';
+  mctx.fillText('ENTRY', 12, 17);
+  mctx.fillText('SANCTUM', mw - 54, 17);
 
   // Tower silhouettes (brass blocks)
   mctx.fillStyle = '#c59b27';
@@ -6253,18 +6919,22 @@ function buildDrawer(){
     d.type = 'button';
     d.className = 'card'; d.id = 'card_' + key;
     d.title = c.desc;
+    var index = String(Object.keys(TOWERS).indexOf(key) + 1).padStart(2, '0');
     d.innerHTML =
       '<div class="tip">' + (tips[key] || '') + '</div>' +
+      '<span class="card-index">' + index + '</span>' +
       '<img class="card-thumb" src="' + c.img + '" alt="' + c.name + '" onerror="this.style.display=\'none\'">' +
       '<div class="card-body">' +
-        '<span class="card-category">' + category[key] + ' / TOWER 0' + (Object.keys(TOWERS).indexOf(key) + 1) + '</span>' +
         '<span class="nm">' + c.name + '</span>' +
+        '<span class="card-category">' + category[key] + '</span>' +
         '<span class="ds">' + (shortDesc[key] || '') + '</span>' +
+        '<span class="card-spec">RANGE ' + c.range.toFixed(1) + ' · ' + (c.isBlocker ? 'PATH CONTROL' : 'DEFENSE') + '</span>' +
         '<span class="card-foot"><span class="cost">¤ ' + c.cost + ' <small>SCRAP</small></span><span class="key">' + c.key + '</span></span>' +
       '</div>';
     d.addEventListener('click', function(){ audio(); selectBuild(key); sfx('click'); });
     el.buildGrid.appendChild(d);
   });
+  el.buildGrid.classList.toggle('five-cards', el.buildGrid.children.length > 4);
 }
 
 function selectBuild(key){
@@ -6297,6 +6967,7 @@ function showInspect(){
     var A = BRANCH[t.type].A, B = BRANCH[t.type].B;
     html += '<button class="btn up" id="btnUpA" title="' + (A.desc || '') + '">▲ ' + A.name + ' ($' + A.cost + ')' + (A.desc ? '<br><small style="font-size:9.5px;color:#a0b8aa;font-weight:normal;display:block;margin-top:2px;">' + A.desc + '</small>' : '') + '</button>';
     html += '<button class="btn up" id="btnUpB" title="' + (B.desc || '') + '">▲ ' + B.name + ' ($' + B.cost + ')' + (B.desc ? '<br><small style="font-size:9.5px;color:#a0b8aa;font-weight:normal;display:block;margin-top:2px;">' + B.desc + '</small>' : '') + '</button>';
+    html += '<div class="row" style="font-size:10px;color:#c6ab75;">Controller: LB = A · RB = B</div>';
   } else {
     var branchSpec = BRANCH[t.type][t.branch];
     html += '<div class="row" style="color:var(--gold-glow)">★ Elite: ' + branchSpec.name + (branchSpec.desc ? '<br><small style="font-size:10px;color:#9bb0a4;font-weight:normal;">' + branchSpec.desc + '</small>' : '') + '</div>';
@@ -6320,6 +6991,7 @@ function showInspect(){
   }
 
   html += '<button class="btn up btn-sell" id="btnSellTower">Sell Tower (+$' + Math.round(t.invested * SELL_RATE) + ')</button>';
+  html += '<div class="row" style="font-size:10px;color:#c6ab75;">Controller: D-Down twice to sell</div>';
   box.innerHTML = html;
   var a = document.getElementById('btnUpA'), b = document.getElementById('btnUpB');
   if(a) a.addEventListener('click', function(){ var r = upgradeTo(t, 'A'); if(!r.ok){ toast(r.why); sfx('error'); } else showInspect(); });
@@ -6370,8 +7042,14 @@ function refreshHud(){
   document.getElementById('maxLivesLabel').textContent = ' / ' + maxLives + ' HP';
   document.getElementById('healthFill').style.width = Math.max(0, Math.min(100, S.lives / maxLives * 100)) + '%';
   document.getElementById('manaFill').style.width = Math.max(0, Math.min(100, S.mana)) + '%';
-  document.getElementById('phaseLabel').textContent = S.phase === 'combat' ? 'ENGAGEMENT ACTIVE' : (S.phase === 'build' ? 'PREPARE DEFENSES' : 'BATTLE COMPLETE');
+  document.getElementById('phaseLabel').textContent = S.phase === 'combat' ? 'ENGAGED' : (S.phase === 'build' ? 'PREPARING' : 'COMPLETE');
   document.getElementById('topbar').classList.toggle('is-combat', S.phase === 'combat');
+  var fieldStatus = document.getElementById('fieldStatus');
+  if(fieldStatus) fieldStatus.textContent = S.phase === 'over' ? 'SANCTUM BREACHED' : (S.phase === 'win' ? 'FIELD SECURED' : (S.paused ? 'FIELD PAUSED' : 'FIELD ONLINE'));
+  var fieldKills = document.getElementById('fieldKills');
+  if(fieldKills) fieldKills.textContent = S.kills;
+  var fieldSeed = document.getElementById('fieldSeed');
+  if(fieldSeed && fieldSeed.textContent === '—') fieldSeed.textContent = '#' + (S.seed >>> 0).toString(16).toUpperCase().slice(-6);
   el.preview.textContent = (S.phase === 'combat')
     ? previewText(S.wave) + ' — in combat'
     : (S.wave >= WAVE_MAX ? 'Sanctum secured. Victory!'
@@ -6387,20 +7065,69 @@ function refreshHud(){
   el.btnPause.setAttribute('aria-label', S.paused ? 'Resume game' : 'Pause game');
   if(el.btnRoot) el.btnRoot.disabled = !S.sanctum || S.sanctum.rootCD > 0 || S.mana < 35;
   if(el.btnFlare) el.btnFlare.disabled = !S.sanctum || S.sanctum.abilityCD > 0 || S.mana < 75;
+  if(el.btnUpgradeAll){
+    var quote = upgradeAllQuote();
+    el.btnUpgradeAll.disabled = !quote.towers.length || S.cash < quote.cost || S.paused || S.phase === 'over' || S.phase === 'win';
+    document.getElementById('upgradeAllCost').textContent = '$' + quote.cost.toLocaleString();
+    el.btnUpgradeAll.title = quote.towers.length ? 'Upgrade ' + quote.towers.length + ' batteries to branch A for $' + quote.cost.toLocaleString() + ' Scrap (U / controller D-Up)' : 'All batteries upgraded (U / controller D-Up)';
+    el.btnUpgradeAll.setAttribute('aria-label', 'Upgrade ' + quote.towers.length + ' batteries for $' + quote.cost.toLocaleString() + ' Scrap');
+  }
   if(el.btnSpeed) el.btnSpeed.title = 'Cycle Game Speed (V)';
 }
 
 // ---------- 3D Interaction & Input Handling ----------
-function onMouseMove(ev){
-  mouse.x = (ev.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(ev.clientY / window.innerHeight) * 2 + 1;
-
+function aimAtScreen(clientX, clientY){
+  var rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(mouse, camera);
+}
+function towerAtScreen(clientX, clientY, rayOnly){
+  if(!S.towers.length) return null;
+  aimAtScreen(clientX, clientY);
+  var hits = raycaster.intersectObjects(S.towers.map(function(t){ return t.mesh; }), true);
+  for(var hit of hits){
+    var obj = hit.object;
+    while(obj && obj !== scene){
+      for(var t of S.towers) if(t.mesh === obj) return t;
+      obj = obj.parent;
+    }
+  }
+  if(rayOnly) return null;
+  // Project each model's visible center. This catches slim barrels and trim
+  // without relying on whichever ground tile sits behind the model.
+  var nearest = null, best = 42 * 42;
+  for(var t of S.towers){
+    var center = new THREE.Box3().setFromObject(t.mesh).getCenter(new THREE.Vector3()).project(camera);
+    if(center.z < -1 || center.z > 1) continue;
+    var sx = (center.x + 1) * window.innerWidth / 2;
+    var sy = (1 - center.y) * window.innerHeight / 2;
+    var d = (clientX - sx) * (clientX - sx) + (clientY - sy) * (clientY - sy);
+    if(d < best){ best = d; nearest = t; }
+  }
+  return nearest;
+}
+function onMouseMove(ev){
+  var reticle = document.getElementById('mouse-reticle');
+  var overCanvas = ev.target === renderer.domElement;
+  if(reticle){
+    reticle.style.display = overCanvas ? 'block' : 'none';
+    if(overCanvas){
+      reticle.style.left = ev.clientX + 'px';
+      reticle.style.top = ev.clientY + 'px';
+      var padCross = document.getElementById('crosshair');
+      if(padCross) padCross.style.opacity = '0';
+    }
+  }
+  var hoveredTower = overCanvas ? towerAtScreen(ev.clientX, ev.clientY, true) : null;
+  if(!overCanvas || !S.towers.length) aimAtScreen(ev.clientX, ev.clientY);
+  if(reticle) reticle.className = hoveredTower ? 'inspect-target' : '';
   var hitPoint = new THREE.Vector3();
   if(raycaster.ray.intersectPlane(rayPlane, hitPoint)){
     var g = worldToGrid3D(hitPoint);
     if(inB(g.gx, g.gy) && S.selected){
       var chk = canPlace(g.gx, g.gy);
+      if(reticle && !hoveredTower) reticle.className = chk.ok ? '' : 'bad';
       var wPos = gridToWorld3D(g.gx, g.gy, 0.15);
       hoverBoxMesh.position.copy(wPos);
       hoverBoxMesh.material.color.setHex(chk.ok ? 0x00f5d4 : 0xff5d5d);
@@ -6418,28 +7145,49 @@ function onMouseMove(ev){
   }
 }
 
+var lastPlacedTile = { gx: -1, gy: -1 };
+var lastPlacedTime = 0;
+
 function onClick(ev){
   audio();
-  if(ev.target.closest('#topbar, #drawer, #inspect, .preview-wrap, #cam-mode, #gfx-mode, #ability-cluster, #transport-cluster, #glyphShop, #banner, #loading-screen')) return;
-  raycaster.setFromCamera(mouse, camera);
+  if(ev.target.closest('#topbar, #drawer, #inspect, #field-panel, #threat-announcement, #ability-cluster, #glyphShop, #banner, #loading-screen, #more-controls-panel, #claude-fm-popover, #padmap-modal, #settings-modal, #tutorial-modal')) return;
+
+  aimAtScreen(ev.clientX, ev.clientY);
   var hitPoint = new THREE.Vector3();
   if(raycaster.ray.intersectPlane(rayPlane, hitPoint)){
     var g = worldToGrid3D(hitPoint);
     if(!inB(g.gx, g.gy)) return;
 
     if(S.selected){
-      var res = placeAt(g.gx, g.gy, S.selected);
-      if(!res.ok){ toast(res.why); sfx('error'); }
-      else if(S.cash < TOWERS[S.selected].cost){ S.selected = null; paintCards(); }
-    } else {
-      var found = null;
-      for(var t of S.towers){
-        if(t.gx === g.gx && t.gy === g.gy) found = t;
+      // In placement mode: allow seamless successive placement without popping up upgrade inspector
+      var now = performance.now();
+      if(g.gx === lastPlacedTile.gx && g.gy === lastPlacedTile.gy && (now - lastPlacedTime) < 550){
+        return;
       }
-      S.selTower = found;
-      if(found){ showInspect(); sfx('click'); }
-      else hideInspect();
+      var res = placeAt(g.gx, g.gy, S.selected);
+      if(!res.ok){
+        if(res.why !== 'Tile occupied' || (now - lastPlacedTime) > 600){
+          toast(res.why);
+          sfx('error');
+        }
+      } else {
+        lastPlacedTile = { gx: g.gx, gy: g.gy };
+        lastPlacedTime = now;
+        if(S.cash < TOWERS[S.selected].cost){ S.selected = null; paintCards(); }
+      }
+      return;
     }
+
+    // Not in placement mode: check if clicking on a placed battery to inspect and upgrade
+    var found = towerAtScreen(ev.clientX, ev.clientY);
+    if(!found){
+      for(var t of S.towers){
+        if(t.gx === g.gx && t.gy === g.gy){ found = t; break; }
+      }
+    }
+    S.selTower = found;
+    if(found){ showInspect(); sfx('click'); }
+    else hideInspect();
   }
 }
 
@@ -6461,7 +7209,7 @@ function bindInput(){
         skipTutorial();
         return;
       }
-      if(k === 'arrowright' || k === 'enter' || k === ' '){
+      if(k === 'arrowright' || ((k === 'enter' || k === ' ') && !(ev.target && ev.target.closest && ev.target.closest('#tutorial-modal button')))){
         ev.preventDefault();
         nextTutorialStep();
         return;
@@ -6471,9 +7219,10 @@ function bindInput(){
         prevTutorialStep();
         return;
       }
+      return;
     }
     if(k === '?' || (ev.shiftKey && (k === '/' || ev.key === '?'))){
-      startTutorial(0);
+      startTutorial(0, true);
       return;
     }
     if(k === 'tab' || (k === 'y' && S && S.selTower)){
@@ -6503,7 +7252,7 @@ function bindInput(){
     else if(k === 'g') toggleGlyphShop();
     else if(k === 'k') toggleTacticalClarity();
     else if(S && S.paused){
-      if(['q', 'w', 'e', 'r', '1', '2', '3', '4', ' ', 'd', 'f'].indexOf(k) >= 0){
+      if(['q', 'w', 'e', 'r', '1', '2', '3', '4', ' ', 'd', 'f', 'u'].indexOf(k) >= 0){
         ev.preventDefault();
         canMutateGameplay('key');
       }
@@ -6518,6 +7267,7 @@ function bindInput(){
     }
     else if(k === 'd') useSanctumAbility('root');
     else if(k === 'f') useSanctumAbility('flare');
+    else if(k === 'u') upgradeAllTowers();
   });
 
   el.btnWave.addEventListener('click', function(){ audio(); startWave(); });
@@ -6590,6 +7340,26 @@ function bindInput(){
   });
   el.btnGlyph = document.getElementById('btnGlyph');
   if(el.btnGlyph) el.btnGlyph.addEventListener('click', toggleGlyphShop);
+  var moreButton = document.getElementById('btnMoreControls');
+  var morePanel = document.getElementById('more-controls-panel');
+  if(moreButton && morePanel){
+    moreButton.addEventListener('click', function(){
+      morePanel.hidden = !morePanel.hidden;
+      moreButton.setAttribute('aria-expanded', String(!morePanel.hidden));
+    });
+    document.addEventListener('pointerdown', function(ev){
+      if(morePanel.hidden || ev.target.closest('#more-controls-panel, #btnMoreControls')) return;
+      morePanel.hidden = true;
+      moreButton.setAttribute('aria-expanded', 'false');
+    });
+    morePanel.addEventListener('click', function(ev){
+      if(!ev.target.closest('button')) return;
+      morePanel.hidden = true;
+      moreButton.setAttribute('aria-expanded', 'false');
+    });
+  }
+  el.btnUpgradeAll = document.getElementById('btnUpgradeAll');
+  if(el.btnUpgradeAll) el.btnUpgradeAll.addEventListener('click', function(){ audio(); upgradeAllTowers(); });
   var btnSettings = document.getElementById('btnSettings');
   if(btnSettings) btnSettings.addEventListener('click', function(){ audio(); openSettings('video'); });
   var btnAgain = document.getElementById('btnAgain');
@@ -6693,6 +7463,10 @@ function padCycleTower(dir){
 
 function padPress(btn){
   audio();
+  var padCross = document.getElementById('crosshair');
+  var pointerReticle = document.getElementById('mouse-reticle');
+  if(padCross) padCross.style.opacity = '1';
+  if(pointerReticle) pointerReticle.style.display = 'none';
   if(document.getElementById('loading-screen')){
     dismissGtaLoadingScreen();
     return;
@@ -6735,32 +7509,71 @@ function padPress(btn){
     padRumble(0.8, 0.2, 80);
     return;
   }
+  if(btn === M.upgradeAll){
+    if(upgradeAllTowers()) padRumble(0.3, 0.6, 120);
+    else padRumble(0.7, 0.2, 80);
+    return;
+  }
+  if(btn === M.sell){
+    if(S.selTower){
+      var now = performance.now();
+      if(padSellPending.tower === S.selTower && now < padSellPending.until){
+        var sold = S.selTower;
+        padSellPending = { tower: null, until: 0 };
+        sellTower(sold);
+        padRumble(0.5, 0.5, 110);
+      } else {
+        padSellPending = { tower: S.selTower, until: now + 3000 };
+        toast('Press ' + padBtnName(M.sell) + ' again within 3s to sell for $' + Math.round(S.selTower.invested * SELL_RATE));
+        padRumble(0.2, 0.3, 70);
+      }
+    } else {
+      S.selected = null; hideInspect(); paintCards();
+    }
+    return;
+  }
   if(btn === M.place){ // place selected tower at crosshair, or inspect unit there
     var g = centerTile();
     if(!g){ toast('Aim the crosshair at the battlefield to place or select'); sfx('error'); return; }
+
     if(S.selected){
+      var now = performance.now();
+      if(g.gx === lastPlacedTile.gx && g.gy === lastPlacedTile.gy && (now - lastPlacedTime) < 550){
+        return;
+      }
       var res = placeAt(g.gx, g.gy, S.selected);
-      if(!res.ok){ toast(res.why); sfx('error'); padRumble(0.9, 0.2, 80); }
-      else {
+      if(!res.ok){
+        if(res.why !== 'Tile occupied' || (now - lastPlacedTime) > 600){
+          toast(res.why);
+          sfx('error');
+          padRumble(0.9, 0.2, 80);
+        }
+      } else {
+        lastPlacedTile = { gx: g.gx, gy: g.gy };
+        lastPlacedTime = now;
         padRumble(0.3, 0.7, 90);
         if(S.cash < TOWERS[S.selected].cost){ S.selected = null; paintCards(); }
       }
-    } else {
-      var found = null;
+      return;
+    }
+
+    var aimedTower = towerAtScreen(window.innerWidth / 2, window.innerHeight / 2);
+    if(!aimedTower){
       for(var ti = 0; ti < S.towers.length; ti++){
         if(S.towers[ti].gx === g.gx && S.towers[ti].gy === g.gy){
-          found = S.towers[ti]; break;
+          aimedTower = S.towers[ti]; break;
         }
       }
-      if(found){
-        S.selTower = found;
-        showInspect(); sfx('click');
-      } else {
-        // If nothing is under crosshair, auto-select Tower 1 (Petal Gatling) so pressing A immediately equips a tower
-        selectBuild(PAD_TOWERS[0]);
-        toast('Equipped ' + TOWERS[PAD_TOWERS[0]].name + ' — Press ' + padBtnName(M.place) + ' to place');
-        sfx('click');
-      }
+    }
+    if(aimedTower){
+      S.selTower = aimedTower; paintCards();
+      showInspect(); sfx('click'); padRumble(0.2, 0.4, 70);
+      return;
+    } else {
+      // If nothing is under crosshair, auto-select Tower 1 (Petal Gatling) so pressing A immediately equips a tower
+      selectBuild(PAD_TOWERS[0]);
+      toast('Equipped ' + TOWERS[PAD_TOWERS[0]].name + ' — Press ' + padBtnName(M.place) + ' to place');
+      sfx('click');
     }
   }
   else if(btn === M.wave){
@@ -6768,7 +7581,7 @@ function padPress(btn){
     else { padRumble(0.3, 0.7, 100); }
   }
   else if(btn === M.prev){
-    if(S.selTower && !S.selTower.branch){
+    if(S.selTower){
       var ra = upgradeTo(S.selTower, 'A');
       if(!ra.ok){ toast(ra.why); sfx('error'); padRumble(0.6, 0.2, 80); }
       else { sfx('upgrade'); padRumble(0.2, 0.6, 120); showInspect(); refreshHud(); }
@@ -6777,7 +7590,7 @@ function padPress(btn){
     }
   }
   else if(btn === M.next){
-    if(S.selTower && !S.selTower.branch){
+    if(S.selTower){
       var rb = upgradeTo(S.selTower, 'B');
       if(!rb.ok){ toast(rb.why); sfx('error'); padRumble(0.6, 0.2, 80); }
       else { sfx('upgrade'); padRumble(0.2, 0.6, 120); showInspect(); refreshHud(); }
@@ -6788,14 +7601,8 @@ function padPress(btn){
   // L3 / R3 ability shortcuts (Left Stick Click = Root, Right Stick Click = Solar Flare)
   else if(btn === 10){ useSanctumAbility('root'); padRumble(0.4, 0.5, 120); }
   else if(btn === 11){ useSanctumAbility('flare'); padRumble(0.7, 0.7, 160); }
-  // fixed D-pad aliases (always live): Up/Down/Left/Right
-  else if(btn === 12){ padCycleTower(-1); }
-  else if(btn === 13){
-    S.selected = null; S.selTower = null; hideInspect(); paintCards();
-    if(hoverBoxMesh) hoverBoxMesh.visible = false;
-    if(rangeRingMesh) rangeRingMesh.visible = false;
-  }
-  else if(btn === 14){ padCycleTower(1); }
+  // D-pad Left / Right remain quick tower cycling and wave shortcuts.
+  else if(btn === 14){ padCycleTower(-1); }
   else if(btn === 15){
     if(!startWave()){ toast('Wave already raging!'); sfx('error'); }
     else { padRumble(0.3, 0.7, 100); }
@@ -7017,22 +7824,24 @@ function bindSettingsUI(){
   if(sm) sm.addEventListener('click', function(ev){ if(ev.target === sm) closeSettings(); });
 }
 
-var PADMAP_DEFAULT = { place: 0, cancel: 1, wave: 2, view: 3, prev: 4, next: 5, speed: 8, pause: 9 };
+var PADMAP_DEFAULT = { place: 0, cancel: 1, wave: 2, view: 3, prev: 4, next: 5, speed: 8, pause: 9, upgradeAll: 12, sell: 13 };
+var padSellPending = { tower: null, until: 0 };
 var PADMAP_ACTIONS = [
   ['place', 'Place / Select', 'Put tower at crosshair, or inspect'],
   ['cancel', 'Cancel', 'Clear selection, close panel'],
   ['wave', 'Call Wave', 'Send the next wave (also D-pad ▶)'],
   ['view', 'Camera view', 'Tactical ↔ boots-on-the-map'],
-  ['prev', 'Prev tower', 'Cycle dock backwards'],
-  ['next', 'Next tower', 'Cycle dock forwards'],
+  ['prev', 'Prev tower / Upgrade A', 'Cycle dock; upgrade selected turret to A'],
+  ['next', 'Next tower / Upgrade B', 'Cycle dock; upgrade selected turret to B'],
+  ['upgradeAll', 'Upgrade all', 'Buy branch A for every unupgraded battery'],
+  ['sell', 'Sell tower', 'Press twice within 3 seconds to sell selection'],
   ['speed', 'Game speed', 'Cycle 1x · 2x · 4x'],
   ['pause', 'Pause', 'Freeze / resume']
 ];
 var PADMAP = (function(){
   try {
     var saved = JSON.parse(localStorage.getItem('aegis_padmap') || 'null');
-    if(saved) for(var k in PADMAP_DEFAULT) if(typeof saved[k] !== 'number') return Object.assign({}, PADMAP_DEFAULT);
-    if(saved) return saved;
+    if(saved) return Object.assign({}, PADMAP_DEFAULT, saved);
   } catch(e){}
   return Object.assign({}, PADMAP_DEFAULT);
 })();
@@ -7048,6 +7857,7 @@ function updatePadPill(){
     if(label) label.innerHTML = '<i class="pad-dot"></i>' + padBtnName(PADMAP.wave) + ' wave';
     chip.title = 'Connected: ' + (PAD.name || 'Gamepad') +
       ' — ' + padBtnName(PADMAP.place) + ' place · ' + padBtnName(PADMAP.wave) + ' wave · ' +
+      padBtnName(PADMAP.upgradeAll) + ' upgrade all · ' + padBtnName(PADMAP.sell) + ' sell twice · ' +
       padBtnName(PADMAP.view) + ' view · sticks move/look · click to remap';
   } else {
     chip.classList.remove('connected');
@@ -7179,6 +7989,9 @@ function pollGamepad(dt){
   if(lx || ly || rx || ry) {
     if(!audioUnlocked) resumeAudioContext();
     releaseDirector(); // stick input takes camera back instantly
+    if(cross) cross.style.opacity = '1';
+    var mouseReticle = document.getElementById('mouse-reticle');
+    if(mouseReticle) mouseReticle.style.display = 'none';
   }
 
   // march: left stick SLIDES the map smoothly
@@ -7487,7 +8300,7 @@ function addTrauma(amount){
 function animate(){
   requestAnimationFrame(animate);
   var dt = Math.min(0.05, clock.getDelta());
-  if(!S.paused && (S.phase === 'build' || S.phase === 'combat')){
+  if(!S.paused && !isTutorialActive() && (S.phase === 'build' || S.phase === 'combat')){
     var sdt = dt * S.speed;
     update(sdt);
   }
@@ -7544,12 +8357,23 @@ function animate(){
   if(scene.userData.sanctumLight){
     scene.userData.sanctumLight.intensity = 3.6 + Math.sin(S.time * 2.4) * 0.9;
   }
-  // floating sister islands ambient breathing & slow majestic rotation
+  // floating sister islands ambient breathing, rotation & orbital debris shards
   if(scene.userData.floatingIslands){
     for(var fii = 0; fii < scene.userData.floatingIslands.length; fii++){
       var fis = scene.userData.floatingIslands[fii];
       fis.group.position.y = fis.baseY + Math.sin(S.time * fis.speed + fis.phase) * fis.amp;
       fis.group.rotation.y += dt * fis.spin;
+      if(fis.debris){
+        for(var dbi = 0; dbi < fis.debris.length; dbi++){
+          var deb = fis.debris[dbi];
+          deb.ang += dt * deb.speed;
+          deb.mesh.position.x = Math.cos(deb.ang) * deb.rad;
+          deb.mesh.position.z = Math.sin(deb.ang) * deb.rad;
+          deb.mesh.position.y = deb.baseY + Math.sin(S.time * 1.5 + deb.phase) * 1.2;
+          deb.mesh.rotation.x += dt * deb.spinX;
+          deb.mesh.rotation.y += dt * deb.spinY;
+        }
+      }
     }
   }
 
@@ -7609,43 +8433,43 @@ function animate(){
 var TUTORIAL_STEPS = [
   {
     step: 1,
-    title: 'The Objective: Spawn Portal & Sanctum Core',
-    desc: 'Diesel automata march from the Spawn Portal (left edge, x=0) across the 36×20 grid to breach your Sanctum Core (right edge, x=35). If enemies reach the Sanctum, you lose lives. Creeps cannot walk through towers!',
+    title: 'There is no fixed lane.',
+    desc: 'This is free-form tower defense. Automata enter from the left and search the open field for a way to your Sanctum on the right. Every enemy that gets through costs you lives.',
     icon: '✦',
-    visual: '<b>Objective:</b> Build a gauntlet of towers to defend Sanctum lives (HP) across 50 waves.'
+    visual: 'Many routes are possible. Your builds decide which stays open.'
   },
   {
     step: 2,
-    title: 'Tower Placement & The Mazing Hook',
-    desc: 'Select a battery from the dock below (e.g. Petal Gatling [1]) and click an open grass tile to construct it. Towers serve double duty: lethal defensive weapons and physical maze walls!',
+    title: 'Enemies find another way.',
+    desc: 'Place a tower on an open tile and ground enemies steer around it. They recalculate a walkable route toward the Sanctum as you build, so each defense changes both your firepower and their journey.',
     icon: '⚙',
-    visual: '<b>Controls:</b> Keys [1]-[5] or [Q]-[B] select towers · Left click places · Right click cancels.'
+    visual: 'Each tower is a weapon and an obstacle.'
   },
   {
     step: 3,
-    title: 'Real-Time Route Recalculation',
-    desc: 'Every tower placed forces creeps to recalculate their A* path in real-time. Notice the golden trajectory line shift! By placing towers in alternating rows, you create winding switchbacks that multiply enemy transit time.',
+    title: 'Make the journey longer.',
+    desc: 'Stagger towers to weave a long chain of turns. A winding route keeps a wave under overlapping fire for longer, giving your defenses time to destroy it before it reaches the other side.',
     icon: '⚡',
-    visual: '<b>Golden Path Line:</b> Live shortest route creeps will follow through your constructed maze.'
+    visual: 'More distance means more time to deal damage.'
   },
   {
     step: 4,
-    title: 'The Mazing Law: No Complete Blocking',
-    desc: 'You cannot completely seal off the Sanctum. Creeps must always maintain an open, walkable path from Spawn to Sanctum. If a placement would isolate the Sanctum, the grid rejects the build with an error chime.',
+    title: 'Leave a path. Call the wave.',
+    desc: 'You cannot seal the Sanctum off completely: the game rejects any build that blocks every route. Select a defense from the arsenal, place it on the field, then press Start Wave or Space when your maze is ready.',
     icon: '⛔',
-    visual: '<b>Path Validation:</b> Built-in A* checker guarantees every wave can reach the Sanctum.'
+    visual: 'Keep one route open from Entry to Sanctum.'
   },
   {
     step: 5,
     title: 'Funneling & Lethal Choke Points',
-    desc: 'Stagger cheap Ruin Barrier walls [5] and towers to funnel swarms into tight single-file choke points. Concentrate heavy Bloom Mortars [2] and Prism Pillars [3] along choke points to maximize area splash.',
+    desc: 'Stagger defenses to funnel swarms through narrow turns, then place Bloom Mortars and Prism Pillars where they can fire along the route. Ruin Barrier walls become available after you unlock the Mazing Mastery glyph.',
     icon: '🏹',
     visual: '<b>Pro Tip:</b> Tight choke points turn slow Bloom Mortars into catastrophic swarm sweepers.'
   },
   {
     step: 6,
     title: 'Launching the Wave & Earning Scrap',
-    desc: 'When your maze is prepared, hit [Start Wave] or press Space. Destroying enemy automata yields Scrap gold and score, allowing you to build additional batteries and upgrades mid-combat.',
+    desc: 'When your maze is prepared, hit Start Wave or press Space. Destroyed automata yield Scrap and score, letting you build more defenses and upgrade batteries during combat.',
     icon: '⚔',
     visual: '<b>Pacing:</b> Space calls waves · [P] pauses simulation · [V] cycles 1x / 2x / 4x speed.'
   },
@@ -7666,41 +8490,239 @@ var TUTORIAL_STEPS = [
 ];
 
 var curTutorialStep = 0;
+var tutorialBriefing = false;
 function isTutorialActive(){
   var tm = document.getElementById('tutorial-modal');
   return !!(tm && tm.classList.contains('open'));
 }
 
-function startTutorial(stepIdx){
+function startTutorial(stepIdx, briefing){
+  tutorialBriefing = !!briefing;
   curTutorialStep = typeof stepIdx === 'number' ? stepIdx : 0;
   var tm = document.getElementById('tutorial-modal');
   if(!tm) return;
   renderTutorialStep();
   tm.classList.add('open');
+  var next = document.getElementById('btnTutNext');
+  if(next && typeof next.focus === 'function') next.focus();
   if(typeof sfx === 'function') sfx('click');
+}
+
+function tutorialDiagram(stepIdx){
+  var idx = Math.min(Math.max(0, stepIdx), 7);
+  var defs = '<defs>' +
+    '<pattern id="tutGrid" width="24" height="24" patternUnits="userSpaceOnUse">' +
+      '<path d="M24 0H0V24" fill="none" stroke="rgba(128,232,189,.08)" stroke-width="1"/>' +
+      '<circle cx="24" cy="24" r="1" fill="rgba(223,191,120,.18)"/>' +
+    '</pattern>' +
+    '<linearGradient id="tutGoldGrad" x1="0%" y1="0%" x2="100%" y2="0%">' +
+      '<stop offset="0%" stop-color="#dfbf78"/><stop offset="50%" stop-color="#ffe19c"/><stop offset="100%" stop-color="#80e8bd"/>' +
+    '</linearGradient>' +
+    '<linearGradient id="tutDangerGrad" x1="0%" y1="0%" x2="100%" y2="0%">' +
+      '<stop offset="0%" stop-color="#ff72aa"/><stop offset="100%" stop-color="#ff4466"/>' +
+    '</linearGradient>' +
+  '</defs>';
+
+  var baseBg = '<rect x="1" y="1" width="598" height="218" rx="6" fill="#06181c"/>' +
+    '<rect x="1" y="1" width="598" height="218" rx="6" fill="url(#tutGrid)"/>';
+
+  var spawnGate = '<g transform="translate(34, 110)">' +
+    '<circle cx="0" cy="0" r="15" fill="#082329" stroke="#dfbf78" stroke-width="2"/>' +
+    '<circle cx="0" cy="0" r="7" fill="#dfbf78"/>' +
+    '<path d="M-3 -4l5 4-5 4" fill="none" stroke="#06181c" stroke-width="2.5" stroke-linecap="round"/>' +
+    '<text x="0" y="27" fill="#dfbf78" font-size="8.5" font-weight="700" font-family="var(--font-stats)" text-anchor="middle" letter-spacing="1">ENTRY</text>' +
+  '</g>';
+
+  var sanctumCore = '<g transform="translate(566, 110)">' +
+    '<circle cx="0" cy="0" r="16" fill="#082329" stroke="#80e8bd" stroke-width="2"/>' +
+    '<circle cx="0" cy="0" r="9" fill="rgba(128,232,189,.22)" stroke="#80e8bd" stroke-width="1.5"/>' +
+    '<circle cx="0" cy="0" r="4" fill="#a4ffd4"/>' +
+    '<text x="0" y="27" fill="#80e8bd" font-size="8.5" font-weight="700" font-family="var(--font-stats)" text-anchor="middle" letter-spacing="1">SANCTUM</text>' +
+  '</g>';
+
+  function renderTower(x, y, range){
+    return '<g class="tut-map-tower" transform="translate(' + x + ' ' + y + ')">' +
+      (range ? '<circle cx="0" cy="0" r="' + range + '" fill="rgba(128,232,189,.05)" stroke="rgba(128,232,189,.22)" stroke-dasharray="4 4"/>' : '') +
+      '<rect x="-14" y="-14" width="28" height="28" rx="4" fill="#12353a" stroke="#dfbf78" stroke-width="1.8"/>' +
+      '<circle cx="0" cy="0" r="7" fill="#1c4b52" stroke="#80e8bd" stroke-width="1.2"/>' +
+      '<circle cx="0" cy="0" r="3" fill="#ffe19c"/>' +
+    '</g>';
+  }
+
+  var heads = [
+    ['ENTRY GATE', 'NO FIXED LANE · 36×20 FREEFORM FIELD', 'SANCTUM CORE'],
+    ['ENTRY GATE', 'DYNAMIC REROUTING · ENEMIES STEER AROUND TOWERS', 'SANCTUM CORE'],
+    ['ENTRY GATE', 'MAZING SLALOM · TRIPLE ENEMY TRAVEL TIME', 'SANCTUM CORE'],
+    ['ENTRY GATE', 'LEAVE ONE ROUTE OPEN · READY TO CALL WAVE', 'SANCTUM CORE'],
+    ['TACTICAL FUNNEL', 'CHOKE POINTS & AOE ARTILLERY BASTION', 'KILL ZONE'],
+    ['COMBAT COMMAND', 'TIMING, SIMULATION SPEED & SCRAP BOUNTY', 'ECONOMY'],
+    ['UNIT INSPECTION', 'ELITE BRANCH A / B SPECIALIZATION', 'TARGETING'],
+    ['THREAT INTEL', 'GROUND · FLYING · RAM SIEGE · SANCTUM ULTS', 'DEFENSES']
+  ];
+
+  var h = heads[idx];
+  var headHtml = '<div class="tut-map-head"><span>' + h[0] + '</span><span>' + h[1] + '</span><span>' + h[2] + '</span></div>';
+
+  var content = '';
+  if(idx === 0){
+    content = '<g>' +
+      '<path d="M34 110 C 170 38, 430 38, 566 110" fill="none" stroke="rgba(223,191,120,.35)" stroke-width="2.5" stroke-dasharray="6 8"/>' +
+      '<path d="M34 110 H566" fill="none" stroke="rgba(223,191,120,.65)" stroke-width="3" stroke-dasharray="8 10"/>' +
+      '<path d="M34 110 C 170 182, 430 182, 566 110" fill="none" stroke="rgba(223,191,120,.35)" stroke-width="2.5" stroke-dasharray="6 8"/>' +
+      '<rect x="180" y="93" width="240" height="34" rx="5" fill="rgba(6,25,30,.92)" stroke="rgba(223,191,120,.5)"/>' +
+      '<text x="300" y="114" fill="#ffe19c" font-size="10" font-weight="700" font-family="var(--font-stats)" text-anchor="middle" letter-spacing="1">✦ UNHINDERED MARCH: 120m DIRECT</text>' +
+      '<circle cx="210" cy="110" r="4" fill="#dfbf78"/><circle cx="390" cy="110" r="4" fill="#dfbf78"/>' +
+    '</g>' + spawnGate + sanctumCore;
+  } else if(idx === 1){
+    var reroutePath = 'M34 110 H140 C 140 46, 210 46, 300 46 C 390 46, 460 46, 460 110 H566';
+    content = '<g>' +
+      '<path d="M34 110 H460" fill="none" stroke="url(#tutDangerGrad)" stroke-width="3" stroke-dasharray="6 6" opacity=".55"/>' +
+      '<path d="' + reroutePath + '" fill="none" stroke="rgba(223,191,120,.2)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="' + reroutePath + '" fill="none" stroke="url(#tutGoldGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
+      renderTower(220, 110, 48) + renderTower(300, 110, 48) + renderTower(380, 110, 48) +
+      '<rect x="236" y="97" width="128" height="26" rx="4" fill="rgba(45,15,20,.94)" stroke="#ff72aa" stroke-width="1.2"/>' +
+      '<text x="300" y="114" fill="#ffb4cc" font-size="9" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">✕ ROUTE BLOCKED</text>' +
+      '<rect x="188" y="160" width="224" height="26" rx="4" fill="rgba(6,25,30,.92)" stroke="rgba(128,232,189,.5)"/>' +
+      '<text x="300" y="177" fill="#80e8bd" font-size="9" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">✔ DETOUR AROUND DEFENSES</text>' +
+    '</g>' + spawnGate + sanctumCore;
+  } else if(idx === 2){
+    var mazePath = 'M34 110 H110 V156 H200 V64 H300 V156 H400 V64 H490 V110 H566';
+    content = '<g>' +
+      '<path d="' + mazePath + '" fill="none" stroke="rgba(223,191,120,.18)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="' + mazePath + '" fill="none" stroke="url(#tutGoldGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
+      renderTower(155, 64, 52) + renderTower(245, 156, 52) + renderTower(345, 64, 52) + renderTower(445, 156, 52) +
+      '<rect x="175" y="14" width="250" height="28" rx="4" fill="rgba(6,25,30,.92)" stroke="rgba(223,191,120,.5)"/>' +
+      '<text x="300" y="32" fill="#ffe19c" font-size="9.5" font-weight="700" font-family="var(--font-stats)" text-anchor="middle" letter-spacing="1">⚡ EXTENDED: 120m ➔ 380m (3.2× TRAVEL)</text>' +
+    '</g>' + spawnGate + sanctumCore;
+  } else if(idx === 3){
+    var legalPath = 'M34 110 H120 V154 H230 V66 H350 V154 H470 V110 H566';
+    content = '<g>' +
+      '<path d="' + legalPath + '" fill="none" stroke="rgba(128,232,189,.22)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="' + legalPath + '" fill="none" stroke="#80e8bd" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
+      renderTower(175, 66, 48) + renderTower(290, 154, 48) + renderTower(410, 66, 48) +
+      '<line x1="470" y1="94" x2="470" y2="126" stroke="#ff72aa" stroke-width="4" stroke-dasharray="4 4"/>' +
+      '<rect x="424" y="96" width="92" height="26" rx="4" fill="rgba(40,12,18,.95)" stroke="#ff72aa"/>' +
+      '<text x="470" y="113" fill="#ffb4cc" font-size="8" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">✕ NO SEALING</text>' +
+      '<rect x="195" y="162" width="210" height="34" rx="5" fill="linear-gradient(165deg,#fff2c4,#d59a3c)" stroke="#fff" stroke-width="1.5"/>' +
+      '<text x="300" y="183" fill="#142528" font-size="11" font-weight="800" font-family="var(--font-stats)" text-anchor="middle" letter-spacing=".5">▶ START WAVE (SPACE)</text>' +
+    '</g>' + spawnGate + sanctumCore;
+  } else if(idx === 4){
+    content = '<g>' +
+      '<path d="M34 110 H220 L300 70 L380 110 H566" fill="none" stroke="rgba(223,191,120,.2)" stroke-width="18" stroke-linecap="round"/>' +
+      '<path d="M34 110 H220 L300 70 L380 110 H566" fill="none" stroke="url(#tutGoldGrad)" stroke-width="4" stroke-linecap="round"/>' +
+      renderTower(240, 140, 50) + renderTower(360, 140, 50) +
+      '<g transform="translate(300, 32)">' +
+        '<circle cx="0" cy="0" r="15" fill="#2d1c10" stroke="#f0a840" stroke-width="2"/>' +
+        '<circle cx="0" cy="0" r="6" fill="#f0a840"/>' +
+        '<circle cx="0" cy="38" r="42" fill="rgba(240,168,64,.18)" stroke="#f0a840" stroke-dasharray="5 5"/>' +
+        '<text x="0" y="-20" fill="#ffd873" font-size="9" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">BLOOM MORTAR AOE</text>' +
+      '</g>' +
+      '<rect x="200" y="165" width="200" height="26" rx="4" fill="rgba(6,25,30,.92)" stroke="rgba(240,168,64,.6)"/>' +
+      '<text x="300" y="182" fill="#ffd873" font-size="9" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">💥 CONCENTRATE AOE FIRE</text>' +
+    '</g>' + spawnGate + sanctumCore;
+  } else if(idx === 5){
+    content = '<g>' +
+      '<rect x="40" y="45" width="150" height="130" rx="6" fill="#082329" stroke="rgba(223,191,120,.4)"/>' +
+      '<text x="115" y="70" fill="#ffd873" font-size="10" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">CONTROLS</text>' +
+      '<text x="60" y="100" fill="#e8eee8" font-size="9" font-family="var(--font-stats)">[Space] Start Wave</text>' +
+      '<text x="60" y="125" fill="#e8eee8" font-size="9" font-family="var(--font-stats)">[V] Speed (1x-4x)</text>' +
+      '<text x="60" y="150" fill="#e8eee8" font-size="9" font-family="var(--font-stats)">[P] Pause Engine</text>' +
+      '<g transform="translate(290, 110)"><circle cx="0" cy="0" r="28" fill="rgba(255,114,170,.12)" stroke="#ff72aa" stroke-dasharray="4 4"/><text x="0" y="4" fill="#ff72aa" font-size="12" font-family="var(--font-stats)" text-anchor="middle">💥 DEFEAT</text></g>' +
+      '<g transform="translate(450, 85)"><circle cx="0" cy="0" r="18" fill="#1b392a" stroke="#80e8bd" stroke-width="1.8"/><text x="0" y="5" fill="#ffe19c" font-size="14" font-weight="700" text-anchor="middle">¤</text><text x="42" y="5" fill="#80e8bd" font-size="11" font-weight="700" font-family="var(--font-stats)">+15 SCRAP</text></g>' +
+      '<g transform="translate(450, 135)"><circle cx="0" cy="0" r="18" fill="#182d38" stroke="#86eaf0" stroke-width="1.8"/><text x="0" y="5" fill="#86eaf0" font-size="13" font-weight="700" text-anchor="middle">★</text><text x="42" y="5" fill="#86eaf0" font-size="11" font-weight="700" font-family="var(--font-stats)">+100 SCORE</text></g>' +
+    '</g>';
+  } else if(idx === 6){
+    content = '<g>' +
+      '<g transform="translate(130, 110)">' +
+        '<rect x="-55" y="-35" width="110" height="70" rx="6" fill="#082329" stroke="rgba(223,191,120,.5)"/>' +
+        '<text x="0" y="-12" fill="#ffd873" font-size="10" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">BASE TOWER</text>' +
+        '<text x="0" y="8" fill="#a4b8bc" font-size="8.5" font-family="var(--font-stats)" text-anchor="middle">Click to Inspect</text>' +
+        '<text x="0" y="24" fill="#80e8bd" font-size="8.5" font-family="var(--font-stats)" text-anchor="middle">[TAB] Targeting</text>' +
+      '</g>' +
+      '<path d="M185 95 L280 65 H340" fill="none" stroke="#dfbf78" stroke-width="2"/>' +
+      '<path d="M185 125 L280 155 H340" fill="none" stroke="#dfbf78" stroke-width="2"/>' +
+      '<g transform="translate(430, 65)">' +
+        '<rect x="-85" y="-24" width="170" height="48" rx="5" fill="#12353a" stroke="#80e8bd" stroke-width="1.5"/>' +
+        '<text x="0" y="-4" fill="#a4ffd4" font-size="10" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">BRANCH A: VULCAN</text>' +
+        '<text x="0" y="14" fill="#c2ded2" font-size="8" font-family="var(--font-stats)" text-anchor="middle">High-RPM Swarm Shredder</text>' +
+      '</g>' +
+      '<g transform="translate(430, 155)">' +
+        '<rect x="-85" y="-24" width="170" height="48" rx="5" fill="#12353a" stroke="#86eaf0" stroke-width="1.5"/>' +
+        '<text x="0" y="-4" fill="#86eaf0" font-size="10" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">BRANCH B: NEEDLER</text>' +
+        '<text x="0" y="14" fill="#c2ded2" font-size="8" font-family="var(--font-stats)" text-anchor="middle">Line-Piercing Kinetic Rail</text>' +
+      '</g>' +
+    '</g>';
+  } else {
+    content = '<g>' +
+      '<g transform="translate(100, 70)">' +
+        '<rect x="-65" y="-26" width="130" height="52" rx="5" fill="#082329" stroke="rgba(223,191,120,.4)"/>' +
+        '<text x="0" y="-6" fill="#ffe19c" font-size="9.5" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">GROUND MECHA</text>' +
+        '<text x="0" y="12" fill="#8ea9ab" font-size="8" font-family="var(--font-stats)" text-anchor="middle">Bound to maze path</text>' +
+      '</g>' +
+      '<g transform="translate(260, 70)">' +
+        '<rect x="-65" y="-26" width="130" height="52" rx="5" fill="#082329" stroke="rgba(134,234,240,.5)"/>' +
+        '<text x="0" y="-6" fill="#86eaf0" font-size="9.5" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">✈ ROTOR DRONES</text>' +
+        '<text x="0" y="12" fill="#8ea9ab" font-size="8" font-family="var(--font-stats)" text-anchor="middle">Fly directly over walls!</text>' +
+      '</g>' +
+      '<g transform="translate(420, 70)">' +
+        '<rect x="-65" y="-26" width="130" height="52" rx="5" fill="#082329" stroke="rgba(255,114,170,.5)"/>' +
+        '<text x="0" y="-6" fill="#ff72aa" font-size="9.5" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">🛡 DREADNOUGHT RAM</text>' +
+        '<text x="0" y="12" fill="#8ea9ab" font-size="8" font-family="var(--font-stats)" text-anchor="middle">Heavy armor · Stalls towers</text>' +
+      '</g>' +
+      '<g transform="translate(180, 160)">' +
+        '<rect x="-105" y="-22" width="210" height="44" rx="5" fill="#0f3428" stroke="#80e8bd" stroke-width="1.5"/>' +
+        '<text x="0" y="-2" fill="#a4ffd4" font-size="10" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">✿ [D] BRAMBLE ROOT</text>' +
+        '<text x="0" y="14" fill="#c2ded2" font-size="8" font-family="var(--font-stats)" text-anchor="middle">35 Mana · Entangles Swarm</text>' +
+      '</g>' +
+      '<g transform="translate(420, 160)">' +
+        '<rect x="-105" y="-22" width="210" height="44" rx="5" fill="#382512" stroke="#ffd873" stroke-width="1.5"/>' +
+        '<text x="0" y="-2" fill="#ffe19c" font-size="10" font-weight="700" font-family="var(--font-stats)" text-anchor="middle">☼ [F] SOLAR FLARE</text>' +
+        '<text x="0" y="14" fill="#ffd873" font-size="8" font-family="var(--font-stats)" text-anchor="middle">75 Mana · Orbital Annihilation</text>' +
+      '</g>' +
+    '</g>';
+  }
+
+  return headHtml +
+    '<svg class="tut-map" viewBox="0 0 600 220" role="img" aria-label="Illustration of tactical mazing and battlefield concepts">' +
+    defs + baseBg + content + '</svg>';
 }
 
 function renderTutorialStep(){
   var tm = document.getElementById('tutorial-modal');
   if(!tm) return;
   var step = TUTORIAL_STEPS[curTutorialStep] || TUTORIAL_STEPS[0];
-  var total = TUTORIAL_STEPS.length;
+  var total = tutorialBriefing ? 4 : TUTORIAL_STEPS.length;
   var counter = document.getElementById('tutStepCounter');
   if(counter) counter.textContent = 'Step ' + (curTutorialStep + 1) + ' of ' + total;
+  var pills = document.getElementById('tutPills');
+  if(pills){
+    var pillHtml = '';
+    for(var p = 0; p < total; p++){
+      pillHtml += '<span class="tut-pill' + (p === curTutorialStep ? ' active' : (p < curTutorialStep ? ' passed' : '')) + '"></span>';
+    }
+    pills.innerHTML = pillHtml;
+  }
+  var progress = document.getElementById('tutProgress');
+  if(progress) progress.innerHTML = '<i style="width:' + Math.round((curTutorialStep + 1) / total * 100) + '%"></i>';
   var title = document.getElementById('tutTitle');
   if(title) title.textContent = step.title;
   var desc = document.getElementById('tutDesc');
   if(desc) desc.textContent = step.desc;
   var vis = document.getElementById('tutVisual');
-  if(vis) vis.innerHTML = '<span class="tut-visual-icon">' + step.icon + '</span><div>' + step.visual + '</div>';
+  if(vis) vis.innerHTML = tutorialDiagram(curTutorialStep) + '<div class="tut-map-caption">' + step.visual + '</div>';
   var btnPrev = document.getElementById('btnTutPrev');
   if(btnPrev) btnPrev.style.display = curTutorialStep > 0 ? 'inline-block' : 'none';
   var btnNext = document.getElementById('btnTutNext');
-  if(btnNext) btnNext.textContent = (curTutorialStep === total - 1) ? 'Finish & Play ✦' : 'Next →';
+  if(btnNext) btnNext.textContent = (curTutorialStep === total - 1) ? (tutorialBriefing ? 'Enter Build Phase →' : 'Finish & Play →') : 'Next →';
+  var btnGuide = document.getElementById('btnTutFullGuide');
+  if(btnGuide) btnGuide.style.display = tutorialBriefing ? 'inline-flex' : 'none';
+  var btnSkip = document.getElementById('btnTutSkipText');
+  if(btnSkip) btnSkip.textContent = tutorialBriefing ? 'Skip briefing' : 'Close guide';
 }
 
 function nextTutorialStep(){
-  if(curTutorialStep < TUTORIAL_STEPS.length - 1){
+  var total = tutorialBriefing ? 4 : TUTORIAL_STEPS.length;
+  if(curTutorialStep < total - 1){
     curTutorialStep++;
     renderTutorialStep();
     if(typeof sfx === 'function') sfx('click');
@@ -7719,6 +8741,7 @@ function prevTutorialStep(){
 
 function completeTutorial(){
   try { localStorage.setItem('aegis_tutorial_completed', 'true'); } catch(e){}
+  try { localStorage.setItem('aegis_mazing_briefing_v3', 'true'); } catch(e){}
   var tm = document.getElementById('tutorial-modal');
   if(tm) tm.classList.remove('open');
   if(typeof toast === 'function') toast('Tutorial Complete — Good luck, Architect!');
@@ -7727,6 +8750,7 @@ function completeTutorial(){
 
 function skipTutorial(){
   try { localStorage.setItem('aegis_tutorial_completed', 'true'); } catch(e){}
+  try { localStorage.setItem('aegis_mazing_briefing_v3', 'true'); } catch(e){}
   var tm = document.getElementById('tutorial-modal');
   if(tm) tm.classList.remove('open');
   if(typeof toast === 'function') toast('Tutorial skipped. Replay anytime in Settings or Help (?)');
@@ -7739,8 +8763,8 @@ function getTutorialStep(){
 
 function checkFirstRunTutorial(){
   try {
-    if(!localStorage.getItem('aegis_tutorial_completed')){
-      startTutorial(0);
+    if(!localStorage.getItem('aegis_mazing_briefing_v3')){
+      startTutorial(0, true);
     }
   } catch(e){}
 }
@@ -7754,8 +8778,10 @@ function bindTutorialUI(){
   if(btnSkip) btnSkip.addEventListener('click', skipTutorial);
   var btnSkipText = document.getElementById('btnTutSkipText');
   if(btnSkipText) btnSkipText.addEventListener('click', skipTutorial);
+  var btnGuide = document.getElementById('btnTutFullGuide');
+  if(btnGuide) btnGuide.addEventListener('click', function(){ tutorialBriefing = false; renderTutorialStep(); });
   var btnTut = document.getElementById('btnTutorial');
-  if(btnTut) btnTut.addEventListener('click', function(){ startTutorial(0); });
+  if(btnTut) btnTut.addEventListener('click', function(){ startTutorial(0, true); });
   var tm = document.getElementById('tutorial-modal');
   if(tm) tm.addEventListener('click', function(ev){ if(ev.target === tm) skipTutorial(); });
 }
@@ -7776,6 +8802,7 @@ function boot(){
   el.btnCam = document.getElementById('btnCam');
   el.btnRoot = document.getElementById('btnRoot');
   el.btnFlare = document.getElementById('btnFlare');
+  el.btnUpgradeAll = document.getElementById('btnUpgradeAll');
   initGtaLoadingScreen();
   updateFullscreenIcon();
   updateAudioButton();

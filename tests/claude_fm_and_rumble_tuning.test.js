@@ -441,4 +441,5 @@ if (failed > 0) {
   process.exit(1);
 } else {
   console.log('All Claude FM & Rumble Tuning tests passed! ✓');
+  process.exit(0);
 }

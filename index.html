@@ -7,6 +7,7 @@
   <meta name="description" content="A luxury Solarpunk 3D Mazing Tower Defense game developed by murderszn. Sculpt living labyrinths across an open Greco-Roman ruins battlefield and repel the clockwork automata legion. Play the free web demo.">
   <meta name="author" content="murderszn">
   <meta name="theme-color" content="#030706">
+  <link rel="icon" type="image/png" href="assets/favicon.png" sizes="64x64">
 
   <!-- OpenGraph / Social Metadata -->
   <meta property="og:title" content="Aegis Flora — Solarpunk 3D Mazing Tower Defense">
@@ -24,7 +25,6 @@
   <meta name="twitter:description" content="Tactical freeform mazing, botanical artillery, and dieselpunk automata incursions. Developed by murderszn.">
   <meta name="twitter:image" content="https://murderszn.github.io/aegis-flora/assets/aegis_master.jpg">
 
-  <link rel="icon" type="image/jpeg" href="assets/aegis_flora_logo.jpg">
 
   <style>
     :root {
@@ -62,33 +62,24 @@
 
     /* Floating Navigation (Minimalist, Monochromatic, Containerless) */
     header.site-header {
-      position: fixed; top: 0; left: 0; right: 0; height: 80px;
+      position: fixed; top: 0; left: 0; right: 0; height: 76px;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 48px; z-index: 50; pointer-events: auto;
-      background: linear-gradient(180deg, rgba(3, 7, 6, 0.85) 0%, rgba(3, 7, 6, 0.4) 70%, transparent 100%);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 0 44px; z-index: 50; pointer-events: auto;
+      background: linear-gradient(180deg, rgba(3, 7, 6, 0.45) 0%, rgba(3, 7, 6, 0.15) 70%, transparent 100%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      transition: background 0.3s ease, border-color 0.3s ease;
     }
     .brand {
       display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;
     }
-    .brand-logo-img {
-      width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(226, 192, 130, 0.4);
-      object-fit: cover;
-    }
+    .brand-mark { width: 29px; height: 34px; color: #fff; flex: 0 0 auto; }
+    .brand-mark path, .brand-mark line { vector-effect: non-scaling-stroke; }
     .brand-title {
       font-family: var(--font-serif); font-size: 17px; letter-spacing: 3.5px;
       color: #ffffff; text-transform: uppercase; font-weight: 400;
     }
-    .nav-links {
-      display: flex; align-items: center; gap: 28px;
-    }
-    .nav-link-simple {
-      color: var(--text-dim); text-decoration: none; font-size: 12px; font-weight: 600;
-      letter-spacing: 2px; text-transform: uppercase; transition: color 0.2s ease;
-    }
-    .nav-link-simple:hover { color: #ffffff; }
 
     .header-actions {
       display: flex; align-items: center; gap: 14px;
@@ -261,13 +252,84 @@
     .cinematic-heading { grid-column: 2; grid-row: 1; max-width: 720px; }
     .cinematic-heading .chapter-title { font-size: clamp(34px, 3.8vw, 54px); margin-bottom: 14px; }
     .cinematic-heading .chapter-prose { margin: 0 auto; font-size: clamp(14px, 1.3vw, 17px); }
-    .cinematic-frame {
-      grid-column: 1; grid-row: 1; width: 100%; max-width: 1080px; overflow: hidden; border-radius: 8px;
-      border: 1px solid rgba(232, 226, 207, 0.22);
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+    /* Steam-Style Showcase Media Viewer */
+    .steam-media-viewer {
+      grid-column: 1; grid-row: 1; width: 100%; max-width: 1080px;
+      background: #061114;
+      border: 1px solid rgba(226, 192, 130, 0.32);
+      border-radius: 8px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), inset 0 1px rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      display: flex; flex-direction: column;
     }
-    .cinematic-video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #030706; }
-    .cinematic-caption { grid-column: 1; justify-self: end; color: var(--text-dim); font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; }
+    .steam-viewer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px;
+      background: linear-gradient(180deg, rgba(22, 42, 46, 0.95), rgba(11, 25, 28, 0.95));
+      border-bottom: 1px solid rgba(226, 192, 130, 0.2);
+    }
+    .steam-viewer-title {
+      display: flex; align-items: center; gap: 9px;
+      font-family: var(--font-serif); font-size: 11.5px; letter-spacing: 2px;
+      color: #e8ded0; text-transform: uppercase; font-weight: 600;
+    }
+    .steam-status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #5fe3b3; box-shadow: 0 0 8px #5fe3b3;
+      display: inline-block;
+    }
+    .steam-viewer-badges {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .steam-badge {
+      font-size: 9px; letter-spacing: 1.2px; font-weight: 700;
+      color: var(--text-dim); background: rgba(255, 255, 255, 0.06);
+      padding: 2px 7px; border-radius: 3px; border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .steam-badge.highlight {
+      color: #ffd873; border-color: rgba(255, 216, 115, 0.35);
+      background: rgba(255, 216, 115, 0.08);
+    }
+    .steam-viewer-stage {
+      position: relative; width: 100%; aspect-ratio: 16 / 9;
+      background: #020606; overflow: hidden;
+    }
+    .steam-viewer-stage .cinematic-video,
+    .steam-viewer-stage .steam-viewer-image {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    }
+    .steam-viewer-thumbs {
+      display: flex; gap: 8px; padding: 10px 14px;
+      background: linear-gradient(180deg, #091a1d, #050e10);
+      border-top: 1px solid rgba(226, 192, 130, 0.15);
+      overflow-x: auto; scrollbar-width: thin;
+    }
+    .steam-thumb-btn {
+      position: relative; flex: 0 0 112px; height: 63px;
+      border: 1.5px solid rgba(255, 255, 255, 0.18);
+      border-radius: 4px; overflow: hidden; padding: 0; cursor: pointer;
+      background: #030706; transition: all 0.18s ease; opacity: 0.72;
+    }
+    .steam-thumb-btn:hover {
+      opacity: 1; border-color: rgba(226, 192, 130, 0.6); transform: translateY(-2px);
+    }
+    .steam-thumb-btn.active {
+      opacity: 1; border-color: #e2c082;
+      box-shadow: 0 0 14px rgba(226, 192, 130, 0.45);
+    }
+    .steam-thumb-btn img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .steam-thumb-play {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 16px; background: rgba(0, 0, 0, 0.4);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    }
+    .steam-thumb-tag {
+      position: absolute; bottom: 3px; right: 4px; font-size: 8px; font-weight: 700;
+      letter-spacing: 0.8px; color: #fff; background: rgba(0, 0, 0, 0.65);
+      padding: 1px 4px; border-radius: 2px;
+    }
 
     /* Visual Gallery Section (Containerless, Floating) */
     .steam-gallery-section {
@@ -473,17 +535,12 @@
   <!-- Minimalist Floating Navigation Bar -->
   <header class="site-header">
     <a href="#chapter-sanctum" class="brand">
-      <img src="assets/aegis_flora_logo.jpg" alt="Aegis Flora Logo" class="brand-logo-img">
+      <svg class="brand-mark" viewBox="0 0 24 28" aria-hidden="true" focusable="false">
+        <path d="M12 1.5 21 5v7.4c0 6.2-3.8 11.1-9 14.1-5.2-3-9-7.9-9-14.1V5l9-3.5Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/>
+        <path d="M12 6v14.5M12 10.5l4-2.2M12 14.2l-4.2-2.3" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
+      </svg>
       <span class="brand-title">AEGIS FLORA</span>
     </a>
-
-    <nav class="nav-links" aria-label="Main Navigation">
-      <a href="#chapter-sanctum" class="nav-link-simple">Sanctum</a>
-      <a href="#gameplay-cinematic" class="nav-link-simple">Cinematic</a>
-      <a href="#steam-gallery" class="nav-link-simple">Gallery</a>
-      <a href="#game-intel" class="nav-link-simple">Specs</a>
-      <a href="https://github.com/murderszn/aegis-flora" target="_blank" rel="noopener" class="nav-link-simple">GitHub</a>
-    </nav>
 
     <div class="header-actions">
       <a href="game.html" class="btn-launch">Play Game</a>
@@ -535,11 +592,6 @@
         <div class="hero-btn-row">
           <a href="game.html" class="btn-primary-hero">Launch Game</a>
           <a href="#steam-gallery" class="btn-ghost-hero">Inspect Sanctum</a>
-        </div>
-
-        <div class="platform-pill-strip">
-          <span>Windows & macOS</span>
-          <span>Zero-Install WebGL Demo</span>
         </div>
       </div>
 
@@ -604,12 +656,55 @@
         <h2 class="chapter-title" id="cinematic-title">THE SANCTUM IN <em>MOTION</em></h2>
         <p class="chapter-prose">Watch a live defense unfold across the floating labyrinth in real-time 3D tactical glory.</p>
       </div>
-      <div class="cinematic-frame">
-        <video id="gameplayVideo" class="cinematic-video" controls muted loop playsinline preload="none"
-               poster="assets/aegis_gameplay_poster.jpg" src="assets/aegis_gameplay_cinematic.mp4"
-               aria-label="Aegis Flora gameplay cinematic"></video>
+      <div class="steam-media-viewer" id="steamMediaViewer">
+        <div class="steam-viewer-header">
+          <div class="steam-viewer-title">
+            <span class="steam-status-dot"></span>
+            <span class="steam-title-text">AEGIS FLORA // OFFICIAL GAMEPLAY TRAILER</span>
+          </div>
+          <div class="steam-viewer-badges">
+            <span class="steam-badge">1080P</span>
+            <span class="steam-badge highlight">60 FPS WEBGL</span>
+          </div>
+        </div>
+        <div class="steam-viewer-stage">
+          <video id="gameplayVideo" class="cinematic-video" controls muted loop playsinline preload="none"
+                 poster="assets/aegis_gameplay_poster.jpg" src="assets/aegis_gameplay_cinematic.mp4"
+                 aria-label="Aegis Flora gameplay cinematic"></video>
+          <img id="steamViewerImg" class="steam-viewer-image" alt="Aegis Flora gameplay preview" style="display:none;">
+        </div>
+        <div class="steam-viewer-thumbs" role="tablist" aria-label="Media Showcase Gallery">
+          <button type="button" class="steam-thumb-btn active" data-type="video" title="Gameplay Trailer" aria-selected="true">
+            <img src="assets/aegis_gameplay_poster.jpg" alt="Trailer thumbnail">
+            <span class="steam-thumb-play">▶</span>
+            <span class="steam-thumb-tag">TRAILER</span>
+          </button>
+          <button type="button" class="steam-thumb-btn" data-type="image" data-src="assets/battlefield_map.jpg" title="Tactical Labyrinth Grid" aria-selected="false">
+            <img src="assets/battlefield_map.jpg" alt="Labyrinth Grid thumbnail">
+            <span class="steam-thumb-tag">GRID</span>
+          </button>
+          <button type="button" class="steam-thumb-btn" data-type="image" data-src="assets/sanctum_core.jpg" title="Verdant Sanctum Core" aria-selected="false">
+            <img src="assets/sanctum_core.jpg" alt="Sanctum Core thumbnail">
+            <span class="steam-thumb-tag">CORE</span>
+          </button>
+          <button type="button" class="steam-thumb-btn" data-type="image" data-src="assets/3d_prism_pbr.jpg" title="Prism Pillar Crystal Tower" aria-selected="false">
+            <img src="assets/3d_prism_pbr.jpg" alt="Prism Pillar thumbnail">
+            <span class="steam-thumb-tag">PRISM</span>
+          </button>
+          <button type="button" class="steam-thumb-btn" data-type="image" data-src="assets/3d_turret_pbr.jpg" title="Petal Gatling Plinth" aria-selected="false">
+            <img src="assets/3d_turret_pbr.jpg" alt="Petal Gatling thumbnail">
+            <span class="steam-thumb-tag">GATLING</span>
+          </button>
+          <button type="button" class="steam-thumb-btn" data-type="image" data-src="assets/3d_barrier_pbr.jpg" title="Ruin Barrier Wall" aria-selected="false">
+            <img src="assets/3d_barrier_pbr.jpg" alt="Ruin Barrier thumbnail">
+            <span class="steam-thumb-tag">BARRIER</span>
+          </button>
+          <button type="button" class="steam-thumb-btn" data-type="image" data-src="assets/aegis_master.jpg" title="Verdant Bastion Study" aria-selected="false">
+            <img src="assets/aegis_master.jpg" alt="Sanctum Master thumbnail">
+            <span class="steam-thumb-tag">BASTION</span>
+          </button>
+        </div>
       </div>
-      <p class="cinematic-caption">GAMEPLAY FOOTAGE · 39 SECONDS · 60 FPS WEBGL</p>
     </section>
 
     <!-- Visual Archive & Screenshot Showcase Gallery -->
@@ -639,11 +734,27 @@
           </div>
         </div>
 
-        <div class="gallery-item" data-img="assets/3d_turret_pbr.jpg" data-title="Prism Gatling Plinth" data-sub="Tier 3 High-Poly Turret Evolution">
-          <img src="assets/3d_turret_pbr.jpg" alt="Prism Gatling 3D PBR Model" loading="lazy">
+        <div class="gallery-item" data-img="assets/3d_barrier_pbr.jpg" data-title="Ruin Barrier Masonry" data-sub="Classical Solarpunk Fortification Wall">
+          <img src="assets/3d_barrier_pbr.jpg" alt="Ruin Barrier 3D PBR Model" loading="lazy">
           <div class="gallery-overlay">
-            <div class="gallery-overlay-title">Prism Gatling Plinth</div>
-            <div class="gallery-overlay-sub">3D PBR Asset · Hydraulic Recoil</div>
+            <div class="gallery-overlay-title">Ruin Barrier Masonry</div>
+            <div class="gallery-overlay-sub">3D PBR Asset · Tactical Routing Block</div>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="assets/3d_prism_pbr.jpg" data-title="Prism Pillar Spire" data-sub="Refractive Solar Laser Crystal">
+          <img src="assets/3d_prism_pbr.jpg" alt="Prism Pillar 3D PBR Model" loading="lazy">
+          <div class="gallery-overlay">
+            <div class="gallery-overlay-title">Prism Pillar Spire</div>
+            <div class="gallery-overlay-sub">3D PBR Asset · Ramping Energy Beam</div>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="assets/3d_turret_pbr.jpg" data-title="Petal Gatling Plinth" data-sub="Spinning Brass Rotary Kinetic Turret">
+          <img src="assets/3d_turret_pbr.jpg" alt="Petal Gatling 3D PBR Model" loading="lazy">
+          <div class="gallery-overlay">
+            <div class="gallery-overlay-title">Petal Gatling Plinth</div>
+            <div class="gallery-overlay-sub">3D PBR Asset · High-RPM Kinetic Fire</div>
           </div>
         </div>
 
@@ -801,6 +912,10 @@
   <footer class="containerless-footer">
     <div class="footer-left">
       <div class="footer-brand">
+        <svg class="brand-mark" viewBox="0 0 24 28" aria-hidden="true" focusable="false">
+          <path d="M12 1.5 21 5v7.4c0 6.2-3.8 11.1-9 14.1-5.2-3-9-7.9-9-14.1V5l9-3.5Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/>
+          <path d="M12 6v14.5M12 10.5l4-2.2M12 14.2l-4.2-2.3" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
+        </svg>
         <span>AEGIS FLORA</span>
       </div>
       <div class="footer-credit">
@@ -1088,6 +1203,39 @@
           lightbox.classList.remove('active');
         }
       });
+
+      // Steam-style Media Showcase Switcher
+      var steamViewer = document.getElementById('steamMediaViewer');
+      if(steamViewer){
+        var stageVideo = document.getElementById('gameplayVideo');
+        var stageImg = document.getElementById('steamViewerImg');
+        var thumbBtns = steamViewer.querySelectorAll('.steam-thumb-btn');
+        thumbBtns.forEach(function(btn){
+          btn.addEventListener('click', function(){
+            thumbBtns.forEach(function(b){ b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+            btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
+            var type = btn.getAttribute('data-type');
+            if(type === 'video'){
+              if(stageImg) stageImg.style.display = 'none';
+              if(stageVideo){
+                stageVideo.style.display = 'block';
+                stageVideo.play().catch(function(){});
+              }
+            } else {
+              var src = btn.getAttribute('data-src');
+              if(stageVideo){
+                stageVideo.pause();
+                stageVideo.style.display = 'none';
+              }
+              if(stageImg){
+                stageImg.src = src;
+                stageImg.style.display = 'block';
+              }
+            }
+          });
+        });
+      }
 
     })();
   </script>
