@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-console.log('--- Aegis Flora: Running Windows-First Steam Release Verification Tests (Issue #13) ---');
+console.log('--- Aegis Florae: Running Windows-First Steam Release Verification Tests (Issue #13) ---');
 
 const rootDir = path.resolve(__dirname, '..');
 const desktopDir = path.join(rootDir, 'desktop');
@@ -23,7 +23,7 @@ assert.strictEqual(pkg.scripts['pack'], 'electron-builder --dir', 'Must have pac
 // Windows build config check
 assert(pkg.build, 'package.json must have build configuration');
 assert(pkg.build.win, 'package.json must have build.win configuration');
-assert.strictEqual(pkg.build.win.executableName, 'AegisFlora', 'Executable name must be AegisFlora');
+assert.strictEqual(pkg.build.win.executableName, 'AegisFlorae', 'Executable name must be AegisFlorae');
 assert(Array.isArray(pkg.build.win.target), 'build.win.target must be an array');
 
 const targetNames = pkg.build.win.target.map(t => typeof t === 'string' ? t : t.target);

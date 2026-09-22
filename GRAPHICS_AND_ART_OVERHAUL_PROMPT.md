@@ -1,5 +1,5 @@
 # Master Art & Graphics Overhaul Specification
-> *A production-grade prompt and art direction manifesto to elevate Aegis Flora to commercial AAA visual fidelity.*
+> *A production-grade prompt and art direction manifesto to elevate Aegis Florae to commercial AAA visual fidelity.*
 
 ---
 
@@ -13,7 +13,7 @@ Copy and paste the prompt in **Section 1** into your AI generation workflows, gi
 ```markdown
 Act as a Principal Technical Artist and Art Director with experience shipping AAA PC/Console strategy titles (e.g., Dota 2, Warhammer 40k: Dawn of War, Frostpunk, Into the Breach). 
 
-Your goal is to completely overhaul the visual fidelity, color grading, surface materials, lighting, and HUD design of "Aegis Flora" — an open-field mazing tower defense game that fuses Classical Greco-Roman ruins with lush solarpunk flora and heavy dieselpunk automata.
+Your goal is to completely overhaul the visual fidelity, color grading, surface materials, lighting, and HUD design of "Aegis Florae" — an open-field mazing tower defense game that fuses Classical Greco-Roman ruins with lush solarpunk flora and heavy dieselpunk automata.
 
 Anchor all artistic and technical decisions to this visual target:
 - Master Reference: Crumbling Carrara marble ruins (fluted Ionic/Corinthian columns with Corinthian capitals and friezes) overgrown with dense golden chrysanthemums, blooming pink peonies, and creeping ivy.

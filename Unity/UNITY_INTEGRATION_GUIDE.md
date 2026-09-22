@@ -1,4 +1,4 @@
-# Aegis Flora: Unity 3D Integration Guide
+# Aegis Florae: Unity 3D Integration Guide
 
 This guide details how to import the generated 3D Blender models, PBR textures, and C# mazing scripts into **Unity (URP / HDRP)** to transition from the HTML5 prototype to a full commercial-tier 3D tower defense game.
 

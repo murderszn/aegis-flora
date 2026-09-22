@@ -5,7 +5,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-console.log('--- Aegis Flora: Running WebP Twin Asset Tests ---');
+console.log('--- Aegis Florae: Running WebP Twin Asset Tests ---');
 
 const rootDir = path.resolve(__dirname, '..');
 for (const page of ['index.html', 'landing.html']) {

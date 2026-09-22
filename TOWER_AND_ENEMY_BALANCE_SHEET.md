@@ -1,4 +1,4 @@
-# Aegis Flora: Tower & Enemy Balance Specification
+# Aegis Florae: Tower & Enemy Balance Specification
 
 ---
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aegis Flora 3D — Solarpunk-Mecha Mazing Tower Defense</title>
+<title>Aegis Florae 3D — Solarpunk-Mecha Mazing Tower Defense</title>
 <link rel="icon" type="image/png" href="assets/aegis_shield_icon.png?v=2" sizes="512x512">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -599,7 +599,7 @@
         <path d="M12 6v14.5M12 10.5l4-2.2M12 14.2l-4.2-2.3" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
       </svg>
       <div class="gta-brand-text">
-        <div class="gta-title-main">AEGIS FLORA</div>
+        <div class="gta-title-main">AEGIS FLORAE</div>
         <div class="gta-title-sub">VERDANT OLYMPOS // 720-TILE BASTION SIEGE</div>
       </div>
     </div>
@@ -643,12 +643,12 @@
 <!-- Sanctum command bar (Clean, dedicated telemetry) -->
 <div class="bar" id="topbar">
   <div class="topbar-left">
-    <a class="brand" id="logoClick" href="landing.html" title="Open Aegis Flora Landing Page">
+    <a class="brand" id="logoClick" href="landing.html" title="Open Aegis Florae Landing Page">
       <svg class="brand-mark" viewBox="0 0 24 28" aria-hidden="true" focusable="false">
         <path d="M12 1.5 21 5v7.4c0 6.2-3.8 11.1-9 14.1-5.2-3-9-7.9-9-14.1V5l9-3.5Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/>
         <path d="M12 6v14.5M12 10.5l4-2.2M12 14.2l-4.2-2.3" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
       </svg>
-      <span class="brand-title">AEGIS FLORA</span>
+      <span class="brand-title">AEGIS FLORAE</span>
     </a>
   </div>
   <div class="resource-group" aria-label="Sanctum resources">
@@ -907,7 +907,7 @@
 <script>
 'use strict';
 /* ============================================================
-   AEGIS FLORA 3D — Professional AAA Mazing Tower Defense
+   AEGIS FLORAE 3D — Professional AAA Mazing Tower Defense
    Graphics: Three.js PBR Engine + GLTF Models + Procedural Fallback
    ============================================================ */
 
@@ -7648,7 +7648,7 @@ function gameOver(win){
 
   // 8. Generate Match Report for Clipboard
   LAST_MATCH_REPORT = [
-    '═══════════════ AEGIS FLORA MISSION REPORT ═══════════════',
+    '═══════════════ AEGIS FLORAE MISSION REPORT ═══════════════',
     'Status: ' + (win ? 'VICTORY — SANCTUM SECURED' : 'DEFEAT — SANCTUM BREACHED'),
     'Wave Cleared: ' + S.wave + ' / ' + WAVE_MAX + ' | Final Score: ' + S.score.toLocaleString() + ' | Duration: ' + timeStr,
     '----------------------------------------------------------',
@@ -10067,7 +10067,7 @@ var API = {
   get FX_SHARED(){ return FX_SHARED; }
 };
 window.RoboFlora = API;
-window.AegisFlora = API;
+window.AegisFlorae = API;
 
 if(document.readyState !== 'loading') boot();
 else document.addEventListener('DOMContentLoaded', boot);

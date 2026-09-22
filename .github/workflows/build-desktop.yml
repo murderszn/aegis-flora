@@ -45,13 +45,13 @@ jobs:
         include:
           - os: windows-latest
             build_script: npm run build:win
-            artifact_name: Aegis-Flora-1.1.0-Windows-x64
+            artifact_name: Aegis-Florae-1.1.0-Windows-x64
             artifact_path: |
               desktop/dist/*.exe
               desktop/dist/*.zip
           - os: macos-latest
             build_script: npm run build:mac
-            artifact_name: Aegis-Flora-1.1.0-macOS-DMG
+            artifact_name: Aegis-Florae-1.1.0-macOS-DMG
             artifact_path: desktop/dist/*.dmg
 
     steps:
@@ -133,10 +133,10 @@ jobs:
           [ ${#zips[@]} -eq 1 ] || { echo "expected 1 win zip, found ${#zips[@]}"; exit 1; }
           [ ${#arms[@]} -eq 1 ] || { echo "expected 1 mac arm64 dmg, found ${#arms[@]}"; exit 1; }
           [ ${#x64s[@]} -eq 1 ] || { echo "expected 1 mac x64 dmg, found ${#x64s[@]}"; exit 1; }
-          mv "${exes[0]}" "AegisFlora-1.1.0-Windows-x64-Setup.exe"
-          mv "${zips[0]}" "AegisFlora-1.1.0-Windows-x64-Portable.zip"
-          mv "${arms[0]}" "AegisFlora-1.1.0-macOS-arm64.dmg"
-          mv "${x64s[0]}" "AegisFlora-1.1.0-macOS-x64.dmg"
+          mv "${exes[0]}" "AegisFlorae-1.1.0-Windows-x64-Setup.exe"
+          mv "${zips[0]}" "AegisFlorae-1.1.0-Windows-x64-Portable.zip"
+          mv "${arms[0]}" "AegisFlorae-1.1.0-macOS-arm64.dmg"
+          mv "${x64s[0]}" "AegisFlorae-1.1.0-macOS-x64.dmg"
           ls -la
 
       - name: Publish to GitHub Releases

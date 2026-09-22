@@ -1,10 +1,10 @@
-# Aegis Flora: UI & UX Specification
+# Aegis Florae: UI & UX Specification
 
 ---
 
 ## 1. UX Design Philosophy
 
-The user interface of **Aegis Flora** bridges the minimalist grid-clarity of **Robo Defense** with the tactile, cinematic weight of **Dota 2**.
+The user interface of **Aegis Florae** bridges the minimalist grid-clarity of **Robo Defense** with the tactile, cinematic weight of **Dota 2**.
 
 ```
 +---------------------------------------------------------------------------------------+

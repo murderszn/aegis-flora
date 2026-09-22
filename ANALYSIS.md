@@ -1,4 +1,4 @@
-# Aegis Flora 3D — Gap Analysis & Implementation Status
+# Aegis Florae 3D — Gap Analysis & Implementation Status
 
 This document reconciles the project's **documented specifications** (GDD, TECHNICAL_ARCHITECTURE, UI_AND_UX_SPEC, TOWER_AND_ENEMY_BALANCE_SHEET) with the **actual implementation** in `game.html`.
 

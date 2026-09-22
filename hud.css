@@ -1,4 +1,4 @@
-/* Aegis Flora · Sanctum Command Interface & Tactical HUD */
+/* Aegis Florae · Sanctum Command Interface & Tactical HUD */
 html, body { overflow-x: clip; }
 @media (prefers-reduced-motion: reduce) {
   #btnWave, #topbar #btnWave.btn-wave-heroic { animation: none; transition: none; }

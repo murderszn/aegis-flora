@@ -1,9 +1,9 @@
-// Aegis Flora: HUD polish-pass verification (wave HUD, sidebar, tutorial,
+// Aegis Florae: HUD polish-pass verification (wave HUD, sidebar, tutorial,
 // banners, mortar roles, flashes, audio, terrain, debug API, viewports).
 const assert = require('assert');
 const fs = require('fs');
 
-console.log('--- Aegis Flora: HUD Polish Pass Tests ---');
+console.log('--- Aegis Florae: HUD Polish Pass Tests ---');
 
 global.window = global;
 global.addEventListener = () => {};
@@ -111,8 +111,8 @@ const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/m);
 assert(scriptMatch, 'Must find inline game script');
 eval(scriptMatch[1]);
 
-const api = global.AegisFlora;
-assert(api, 'AegisFlora API must be exposed');
+const api = global.AegisFlorae;
+assert(api, 'AegisFlorae API must be exposed');
 assert(api.state, 'Game state must boot without JS errors');
 
 console.log('1. Obsolete overlays removed, wave counter preserved...');

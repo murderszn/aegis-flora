@@ -1,6 +1,6 @@
-# Aegis Flora: Authoritative Shipping Feature Matrix
+# Aegis Florae: Authoritative Shipping Feature Matrix
 
-This document is the single source of truth for all gameplay, architecture, and visual features in *Aegis Flora*. Every feature is classified by verified implementation status against `game.html` and automated regression tests.
+This document is the single source of truth for all gameplay, architecture, and visual features in *Aegis Florae*. Every feature is classified by verified implementation status against `game.html` and automated regression tests.
 
 ---
 

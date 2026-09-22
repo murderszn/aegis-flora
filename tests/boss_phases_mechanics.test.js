@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-console.log('--- Aegis Flora: Running Boss Multi-Phase & Mechanics Tests (Issue #21) ---');
+console.log('--- Aegis Florae: Running Boss Multi-Phase & Mechanics Tests (Issue #21) ---');
 
 // Mock browser environment
 global.window = global;
@@ -111,8 +111,8 @@ try {
   console.log('Script non-fatal notice:', e.message);
 }
 
-const api = global.AegisFlora || global.RoboFlora;
-assert(api, 'AegisFlora API must be exposed on window');
+const api = global.AegisFlorae || global.RoboFlora;
+assert(api, 'AegisFlorae API must be exposed on window');
 
 console.log('1. Initializing game state and spawning Goliath Colossus (Wave 10 Boss)...');
 const S = api.newGame(101);

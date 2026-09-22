@@ -1,4 +1,4 @@
-# Aegis Flora 3D — Complete Task List & Release Progress
+# Aegis Florae 3D — Complete Task List & Release Progress
 
 For the verified feature matrix, see [SHIPPING_FEATURE_MATRIX.md](./SHIPPING_FEATURE_MATRIX.md).
 

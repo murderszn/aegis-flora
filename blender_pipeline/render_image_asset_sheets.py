@@ -1,5 +1,5 @@
 """
-Aegis Flora: High-Resolution Concept Image Sheets Generator
+Aegis Florae: High-Resolution Concept Image Sheets Generator
 Renders multi-asset concept sheets in image format (.png) using Blender 5.1
 1. assets/treasure_showcase_sheet.png: Treasure chests, Relic Amphoras, Mana Crystals, Gold Coins & Gears on courtyard pavers.
 2. assets/flora_showcase_sheet.png: Clockwork Lotus Basin, Golden Chrysanthemum, Cypress, Olive Tree & Wildflower meadow.

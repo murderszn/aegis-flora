@@ -1,15 +1,15 @@
 <p align="center">
-  <img src="assets/aegis_master.jpg" alt="Aegis Flora — Solarpunk-Mecha Tower Defense" width="600" />
+  <img src="assets/aegis_master.jpg" alt="Aegis Florae — Solarpunk-Mecha Tower Defense" width="600" />
 </p>
 
-<h1 align="center">Aegis Flora</h1>
+<h1 align="center">Aegis Florae</h1>
 <p align="center">
   <em>Solarpunk-Mecha Mazing Tower Defense</em><br/>
   <sub>Classical ruins. Living labyrinths. Diesel war-machines.</sub>
 </p>
 
 <p align="center">
-  <a href="https://murderszn.github.io/aegis-flora/"><strong>🌐 Play in Browser</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://murderszn.github.io/aegis-florae/"><strong>🌐 Play in Browser</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="#-getting-started"><strong>⚡ Quick Start</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="./GDD.md"><strong>📖 Game Design Doc</strong></a>&nbsp;&nbsp;·&nbsp;&nbsp;
   <a href="#-documentation"><strong>📚 Docs</strong></a>
@@ -25,9 +25,9 @@
 
 ---
 
-## 🎮 What Is Aegis Flora?
+## 🎮 What Is Aegis Florae?
 
-**Aegis Flora** reimagines the open-grid mazing purity of **Robo Defense** and **WC3 Wintermaul** with the visual spectacle, particle kineticism, and HUD polish of **Dota 2**.
+**Aegis Florae** reimagines the open-grid mazing purity of **Robo Defense** and **WC3 Wintermaul** with the visual spectacle, particle kineticism, and HUD polish of **Dota 2**.
 
 Players place living brass-and-marble defense engines onto an open Greco-Roman ruins battlefield—sculpting serpentine labyrinths, choke points, and kill boxes—to deflect, delay, and obliterate oncoming waves of rogue autonomous dieselpunk war-machines before they breach the **Verdant Sanctum**.
 
@@ -79,7 +79,7 @@ Players place living brass-and-marble defense engines onto an open Greco-Roman r
 ### Play Online
 The game is hosted on GitHub Pages:
 
-**→ [https://murderszn.github.io/aegis-flora/](https://murderszn.github.io/aegis-flora/)**
+**→ [https://murderszn.github.io/aegis-florae/](https://murderszn.github.io/aegis-florae/)**
 
 ### Run Locally
 
@@ -87,8 +87,8 @@ No build tools required — it's a static HTML/JS application.
 
 ```bash
 # Clone the repository
-git clone https://github.com/murderszn/aegis-flora.git
-cd aegis-flora
+git clone https://github.com/murderszn/aegis-florae.git
+cd aegis-florae
 
 # Serve locally (pick any static file server)
 npx serve .
@@ -193,7 +193,7 @@ Then open [http://localhost:8000](http://localhost:8000) (landing page) or [http
 ## 🏛 Architecture
 
 ```
-aegis-flora/
+aegis-florae/
 ├── index.html                    # Landing page (scrollytelling showcase)
 ├── game.html                     # Full game client (~4,500 lines)
 ├── hud.css                       # Dota 2-style HUD stylesheet

@@ -17,11 +17,11 @@
 - **Scope of Required Rights:** Worldwide, perpetual commercial synchronization, master use, and mechanical rights across Steam (Windows, macOS, Linux), digital trailers, web demos, and future console/portable ports.
 - **Feasibility Findings:**
   1. Square Enix does not offer standardized or royalty-free indie sync licenses for their flagship legacy IP (Chrono Trigger, Final Fantasy).
-  2. Commercial sync licenses for iconic titles from Japanese publishers require bespoke negotiation, minimum upfront guarantees typically exceeding $50,000–$150,000 USD, strict territory limitations, and revenue-sharing royalties that would jeopardize Aegis Flora's commercial viability on Steam.
+  2. Commercial sync licenses for iconic titles from Japanese publishers require bespoke negotiation, minimum upfront guarantees typically exceeding $50,000–$150,000 USD, strict territory limitations, and revenue-sharing royalties that would jeopardize Aegis Florae's commercial viability on Steam.
   3. Fair use does not protect background music in a commercial game or digital distribution store.
 
 ### 2.2 Written Decision: NO-GO
-**Decision:** Under no circumstances will any copyrighted Chrono Trigger recording, extracted ROM audio, fan transcription, MIDI arrangement, or sampled waveform be incorporated into Aegis Flora.
+**Decision:** Under no circumstances will any copyrighted Chrono Trigger recording, extracted ROM audio, fan transcription, MIDI arrangement, or sampled waveform be incorporated into Aegis Florae.
 
 Instead, the project delivers an **original, royalty-free solarpunk soundtrack** inspired solely by the high-level aesthetic qualities of classic 16-bit forest music: warm pentatonic woodwinds, kalimba/harp plucked arpeggios, and gentle ambient subterranean resonance.
 
@@ -31,8 +31,8 @@ Instead, the project delivers an **original, royalty-free solarpunk soundtrack**
 
 ### 3.1 Provenance & Copyright Grant
 - **Title:** *Verdant Harmonies: Solarpunk Echoes*
-- **Composer / Sound Designer:** Aegis Flora Core Engineering Team
-- **License:** MIT License / Dedicated to Aegis Flora Public Repository
+- **Composer / Sound Designer:** Aegis Florae Core Engineering Team
+- **License:** MIT License / Dedicated to Aegis Florae Public Repository
 - **Commercial Rights:** 100% royalty-free, worldwide, perpetual commercial rights for Steam, web, demos, and promotional media.
 - **External Dependencies:** Zero (0 MB). Synthesized entirely via native browser Web Audio API oscillators, biquad filters, and custom envelope gain nodes.
 

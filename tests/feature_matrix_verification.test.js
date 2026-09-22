@@ -2,7 +2,7 @@
 const assert = require('assert');
 const fs = require('fs');
 
-console.log('--- Aegis Flora: Running Feature Matrix & Documentation Verification Tests (Issue #12) ---');
+console.log('--- Aegis Florae: Running Feature Matrix & Documentation Verification Tests (Issue #12) ---');
 
 // 1. Verify existence of documentation files
 assert(fs.existsSync('SHIPPING_FEATURE_MATRIX.md'), 'SHIPPING_FEATURE_MATRIX.md must exist');

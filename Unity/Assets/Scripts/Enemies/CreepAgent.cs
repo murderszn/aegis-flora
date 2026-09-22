@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using AegisFlora.Mazing;
-using AegisFlora.Core;
+using AegisFlorae.Mazing;
+using AegisFlorae.Core;
 
-namespace AegisFlora.Enemies
+namespace AegisFlorae.Enemies
 {
     public enum DamageType { Kinetic, Explosive, Energy, Sonic }
 

@@ -4,9 +4,9 @@ const fs = require('fs');
 
 // Setup Crash Reporting for production diagnostics
 crashReporter.start({
-  productName: 'Aegis Flora',
+  productName: 'Aegis Florae',
   companyName: 'murderszn',
-  submitURL: 'https://submit.backtrace.io/murderszn/aegis-flora/crashpad',
+  submitURL: 'https://submit.backtrace.io/murderszn/aegis-florae/crashpad',
   uploadToServer: false, // Keep crash dumps stored locally in userData/Crashpad by default
   compress: true
 });
@@ -42,7 +42,7 @@ function createWindow() {
     height: 900,
     minWidth: 1024,
     minHeight: 600,
-    title: 'Aegis Flora',
+    title: 'Aegis Florae',
     icon: fs.existsSync(iconPath) ? iconPath : undefined,
     autoHideMenuBar: process.platform === 'win32',
     backgroundColor: '#0a0f0d',
@@ -56,7 +56,7 @@ function createWindow() {
   // Minimal Custom Menu
   const menuTemplate = [
     {
-      label: 'Aegis Flora',
+      label: 'Aegis Florae',
       submenu: [
         { role: 'about' },
         { type: 'separator' },
@@ -136,7 +136,7 @@ app.whenReady().then(() => {
   });
 
   if (process.platform === 'darwin' && typeof app.setName === 'function') {
-    app.setName('Aegis Flora');
+    app.setName('Aegis Florae');
   }
 
   createWindow();

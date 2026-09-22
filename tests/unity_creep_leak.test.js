@@ -7,7 +7,7 @@ console.log('--- Verifying Unity Sanctum Breach & Leak Implementation (Issue #2)
 // 1. Verify CreepAgent.cs source changes
 const creepAgentSrc = fs.readFileSync('Unity/Assets/Scripts/Enemies/CreepAgent.cs', 'utf8');
 
-assert(creepAgentSrc.includes('using AegisFlora.Core;'), 'CreepAgent.cs must import AegisFlora.Core');
+assert(creepAgentSrc.includes('using AegisFlorae.Core;'), 'CreepAgent.cs must import AegisFlorae.Core');
 assert(creepAgentSrc.includes('public static event Action<CreepAgent, int> OnCreepSanctumBreached;'), 'CreepAgent.cs must declare OnCreepSanctumBreached event');
 assert(creepAgentSrc.includes('public GameObject breachVFXPrefab;'), 'CreepAgent.cs must declare breachVFXPrefab');
 assert(creepAgentSrc.includes('public AudioClip breachSFX;'), 'CreepAgent.cs must declare breachSFX');

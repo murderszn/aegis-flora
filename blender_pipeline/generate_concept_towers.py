@@ -1,4 +1,4 @@
-"""Concept-art towers for Aegis Flora — Heliostat Orchid + Mycelium Bell.
+"""Concept-art towers for Aegis Florae — Heliostat Orchid + Mycelium Bell.
 
 Builds two game-ready tower meshes from assets/concepts/*.png, following the
 established blender_pipeline conventions (palette, export_and_render, EEVEE
@@ -119,7 +119,7 @@ def export_and_render(objs, model_name, render_name):
 
 
 def palette():
-    """Canonical Aegis Flora PBR materials needed by the concept towers."""
+    """Canonical Aegis Florae PBR materials needed by the concept towers."""
     return {
         "marble":   make_material("ConceptMarble",     (0.90, 0.88, 0.82, 1.0), metallic=0.04, roughness=0.35),
         "marble_old": make_material("ConceptAgedMarble", (0.76, 0.73, 0.66, 1.0), metallic=0.04, roughness=0.55),

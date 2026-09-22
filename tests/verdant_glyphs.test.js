@@ -2,7 +2,7 @@
 const assert = require('assert');
 const fs = require('fs');
 
-console.log('--- Aegis Flora: Running Verdant Glyph Progression Tests (Issues #6 & #18) ---');
+console.log('--- Aegis Florae: Running Verdant Glyph Progression Tests (Issues #6 & #18) ---');
 
 // 1. Verify Issue #18: No duplicate top-level glyph definitions
 const html = fs.readFileSync('game.html', 'utf8');
@@ -112,7 +112,7 @@ const endIdx = html.lastIndexOf(endTag);
 const jsCode = html.slice(startIdx + startTag.length, endIdx);
 eval(jsCode);
 
-const API = global.AegisFlora || global.RoboFlora;
+const API = global.AegisFlorae || global.RoboFlora;
 assert(API, 'API must be exported');
 
 console.log('2. Testing Save Validation and Clamping (Issue #6)...');

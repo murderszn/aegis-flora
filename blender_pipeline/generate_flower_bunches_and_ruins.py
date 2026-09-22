@@ -1,5 +1,5 @@
 """
-Aegis Flora: Flower Bunches & Greek Ruins Asset Generator
+Aegis Florae: Flower Bunches & Greek Ruins Asset Generator
 Generates GLTF (.glb) models and isometric PNG renders using Blender's Python API.
 
 Assets:
@@ -77,7 +77,7 @@ def make_material(name, color, metallic=0.0, roughness=0.5,
 
 
 def setup_camera_and_lighting(target_z=2.0, ortho_scale=5.5):
-    """Isometric camera rig + Aegis Flora 3-light studio setup."""
+    """Isometric camera rig + Aegis Florae 3-light studio setup."""
     # Camera
     cam_data = bpy.data.cameras.new(name="IsoCam")
     cam_data.type = 'ORTHO'
@@ -144,11 +144,11 @@ def export_and_render(objs, model_name, render_name):
 
 
 # ---------------------------------------------------------------------------
-# Aegis Flora Material Palette (consistent across all assets)
+# Aegis Florae Material Palette (consistent across all assets)
 # ---------------------------------------------------------------------------
 
 def palette():
-    """Return dict of canonical Aegis Flora PBR materials."""
+    """Return dict of canonical Aegis Florae PBR materials."""
     return {
         # Architecture & Stone
         "marble":       make_material("CarraraMarble",      (0.90, 0.88, 0.82, 1.0), metallic=0.04, roughness=0.35),
@@ -411,7 +411,7 @@ def build_hero_bouquet():
         petal.data.materials.append(p["chrysanthemum"] if fi % 2 == 0 else p["peony"])
         objs.append(petal)
 
-    # -- Floating cyan mana spores (Aegis Flora signature) --
+    # -- Floating cyan mana spores (Aegis Florae signature) --
     for si in range(4):
         sa = si * (math.pi / 2) + 0.5
         sx = math.cos(sa) * 0.3
@@ -959,7 +959,7 @@ def build_rubble_kit():
     ground.data.materials.append(p["flagstone"])
     objs.append(ground)
 
-    # Paver grid lines (inlaid brass — Aegis Flora signature)
+    # Paver grid lines (inlaid brass — Aegis Florae signature)
     for gx in [-2.0, -1.0, 0.0, 1.0, 2.0]:
         bpy.ops.mesh.primitive_cube_add(size=1.0, location=(gx, 0, 0.07))
         line = bpy.context.active_object
@@ -1114,7 +1114,7 @@ def build_rubble_kit():
 
 if __name__ == "__main__":
     print("=" * 72)
-    print("  AEGIS FLORA: Flower Bunches & Greek Ruins Asset Generator")
+    print("  AEGIS FLORAE: Flower Bunches & Greek Ruins Asset Generator")
     print("=" * 72)
 
     print("\n[1/6] Building Hero Flower Bouquet...")

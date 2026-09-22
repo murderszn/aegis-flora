@@ -1,7 +1,7 @@
 using UnityEngine;
-using AegisFlora.Enemies;
+using AegisFlorae.Enemies;
 
-namespace AegisFlora.Towers
+namespace AegisFlorae.Towers
 {
     public enum TowerType { PetalGatling, BloomMortar, PrismPillar, ResonanceObelisk }
 

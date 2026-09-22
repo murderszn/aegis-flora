@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-console.log('--- Aegis Flora: Claude FM Radio & Rumble Tuning Tests ---');
+console.log('--- Aegis Florae: Claude FM Radio & Rumble Tuning Tests ---');
 
 // Mock browser environment
 global.window = global;
@@ -192,8 +192,8 @@ try {
   console.log('Script non-fatal notice:', e.message);
 }
 
-const api = global.AegisFlora || global.RoboFlora;
-assert(api, 'AegisFlora API must be exposed on window');
+const api = global.AegisFlorae || global.RoboFlora;
+assert(api, 'AegisFlorae API must be exposed on window');
 
 let passed = 0;
 let failed = 0;

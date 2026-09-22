@@ -1,7 +1,7 @@
 using UnityEngine;
-using AegisFlora.Enemies;
+using AegisFlorae.Enemies;
 
-namespace AegisFlora.Combat
+namespace AegisFlorae.Combat
 {
     public class BallisticProjectile : MonoBehaviour
     {

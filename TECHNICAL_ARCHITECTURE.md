@@ -1,10 +1,10 @@
-# Aegis Flora: Technical Architecture & Engine Specification
+# Aegis Florae: Technical Architecture & Engine Specification
 
 ---
 
 ## 1. System Overview & Technology Stack
 
-**Aegis Flora** is engineered to deliver zero-lag, 60+ FPS high-fidelity mazing gameplay on modern web platforms with responsive scaling across desktop and widescreen displays.
+**Aegis Florae** is engineered to deliver zero-lag, 60+ FPS high-fidelity mazing gameplay on modern web platforms with responsive scaling across desktop and widescreen displays.
 
 ```
 +-----------------------------------------------------------------------------------------+

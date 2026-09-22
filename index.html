@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aegis Flora — Solarpunk 3D Mazing Tower Defense by murderszn</title>
+  <title>Aegis Florae — Solarpunk 3D Mazing Tower Defense by murderszn</title>
   <meta name="description" content="A luxury Solarpunk 3D Mazing Tower Defense game developed by murderszn. Sculpt living labyrinths across an open Greco-Roman ruins battlefield and repel the clockwork automata legion. Play the free web demo.">
   <meta name="author" content="murderszn">
   <meta name="theme-color" content="#030706">
@@ -11,30 +11,30 @@
   <link rel="icon" type="image/png" href="assets/aegis_shield_icon.png?v=2" sizes="512x512">
 
   <!-- OpenGraph / Social Metadata -->
-  <meta property="og:title" content="Aegis Flora — Solarpunk 3D Mazing Tower Defense">
+  <meta property="og:title" content="Aegis Florae — Solarpunk 3D Mazing Tower Defense">
   <meta property="og:description" content="Sculpt living labyrinths, deploy botanical artillery, and defend the Floating Sanctum of Olympos against 50 waves of automata incursions. Developed by murderszn.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://murderszn.github.io/aegis-flora/">
-  <meta property="og:image" content="https://murderszn.github.io/aegis-flora/assets/aegis_master.jpg">
-  <meta property="og:site_name" content="Aegis Flora">
+  <meta property="og:url" content="https://murderszn.github.io/aegis-florae/">
+  <meta property="og:image" content="https://murderszn.github.io/aegis-florae/assets/aegis_master.jpg">
+  <meta property="og:site_name" content="Aegis Florae">
 
   <!-- Twitter Card Metadata -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@murderszn">
   <meta name="twitter:creator" content="@murderszn">
-  <meta name="twitter:title" content="Aegis Flora — Solarpunk 3D Mazing Tower Defense">
+  <meta name="twitter:title" content="Aegis Florae — Solarpunk 3D Mazing Tower Defense">
   <meta name="twitter:description" content="Tactical freeform mazing, botanical artillery, and dieselpunk automata incursions. Developed by murderszn.">
-  <meta name="twitter:image" content="https://murderszn.github.io/aegis-flora/assets/aegis_master.jpg">
+  <meta name="twitter:image" content="https://murderszn.github.io/aegis-florae/assets/aegis_master.jpg">
 
   <!-- Structured data: VideoGame rich result -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "VideoGame",
-    "name": "Aegis Flora",
+    "name": "Aegis Florae",
     "description": "A luxury Solarpunk 3D Mazing Tower Defense game. Sculpt living labyrinths across an open Greco-Roman ruins battlefield and repel 50 waves of clockwork automata.",
-    "url": "https://murderszn.github.io/aegis-flora/",
-    "image": "https://murderszn.github.io/aegis-flora/assets/aegis_master.jpg",
+    "url": "https://murderszn.github.io/aegis-florae/",
+    "image": "https://murderszn.github.io/aegis-florae/assets/aegis_master.jpg",
     "author": { "@type": "Person", "name": "murderszn" },
     "genre": ["Tower Defense", "Strategy"],
     "gamePlatform": ["Windows", "macOS", "Linux", "WebGL"],
@@ -42,9 +42,9 @@
     "operatingSystem": ["Windows", "macOS", "Linux"],
     "trailer": {
       "@type": "VideoObject",
-      "name": "Aegis Flora — Official Gameplay Trailer",
-      "thumbnailUrl": "https://murderszn.github.io/aegis-flora/assets/aegis_gameplay_poster.jpg",
-      "contentUrl": "https://murderszn.github.io/aegis-flora/assets/aegis_gameplay_cinematic.mp4"
+      "name": "Aegis Florae — Official Gameplay Trailer",
+      "thumbnailUrl": "https://murderszn.github.io/aegis-florae/assets/aegis_gameplay_poster.jpg",
+      "contentUrl": "https://murderszn.github.io/aegis-florae/assets/aegis_gameplay_cinematic.mp4"
     },
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
   }
@@ -628,7 +628,7 @@
 
   <!-- Fixed Fullscreen Background WebGL / Canvas Stage (Multi-Layer Cinematic Scrollytelling) -->
   <canvas id="storyCanvas"></canvas>
-  <div id="story-loader" role="status" aria-label="Loading artwork"><span class="loader-mark">✦ AEGIS FLORA ✦</span><span>growing the sanctum…</span></div>
+  <div id="story-loader" role="status" aria-label="Loading artwork"><span class="loader-mark">✦ AEGIS FLORAE ✦</span><span>growing the sanctum…</span></div>
   <div class="vignette-overlay"></div>
 
   <!-- Minimalist Floating Navigation Bar -->
@@ -638,7 +638,7 @@
         <path d="M12 1.5 21 5v7.4c0 6.2-3.8 11.1-9 14.1-5.2-3-9-7.9-9-14.1V5l9-3.5Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/>
         <path d="M12 6v14.5M12 10.5l4-2.2M12 14.2l-4.2-2.3" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
       </svg>
-      <span class="brand-title">AEGIS FLORA</span>
+      <span class="brand-title">AEGIS FLORAE</span>
     </a>
 
     <div class="header-actions">
@@ -755,7 +755,7 @@
         <div class="steam-viewer-header">
           <div class="steam-viewer-title">
             <span class="steam-status-dot"></span>
-            <span class="steam-title-text">AEGIS FLORA // OFFICIAL GAMEPLAY TRAILER</span>
+            <span class="steam-title-text">AEGIS FLORAE // OFFICIAL GAMEPLAY TRAILER</span>
           </div>
           <div class="steam-viewer-badges">
             <span class="steam-badge">1080P</span>
@@ -765,8 +765,8 @@
         <div class="steam-viewer-stage">
           <video id="gameplayVideo" class="cinematic-video" controls muted loop playsinline preload="none"
                  poster="assets/aegis_gameplay_poster.jpg" src="assets/aegis_gameplay_cinematic.mp4"
-                 aria-label="Aegis Flora gameplay cinematic"></video>
-          <img id="steamViewerImg" class="steam-viewer-image" alt="Aegis Flora gameplay preview" style="display:none;">
+                 aria-label="Aegis Florae gameplay cinematic"></video>
+          <img id="steamViewerImg" class="steam-viewer-image" alt="Aegis Florae gameplay preview" style="display:none;">
         </div>
         <div class="steam-viewer-thumbs" role="tablist" aria-label="Media Showcase Gallery">
           <button type="button" class="steam-thumb-btn active" data-type="video" title="Gameplay Trailer" aria-selected="true">
@@ -821,7 +821,7 @@
 
       <div class="gallery-grid">
         <div class="gallery-item" data-img="assets/battlefield_map.jpg" data-title="Tactical Labyrinth Grid" data-sub="36x20 Floating Marble Battlefield">
-          <img src="assets/battlefield_map.jpg" alt="Aegis Flora Battlefield Labyrinth Map" loading="lazy">
+          <img src="assets/battlefield_map.jpg" alt="Aegis Florae Battlefield Labyrinth Map" loading="lazy">
           <div class="gallery-overlay">
             <div class="gallery-overlay-title">Tactical Labyrinth Grid</div>
             <div class="gallery-overlay-sub">36×20 Open Pathing Field</div>
@@ -941,7 +941,7 @@
         <!-- Left: Game Overview & Architecture -->
         <div class="intel-column-left">
           <span class="chapter-num">TACTICAL ARCHITECTURE</span>
-          <h3 class="intel-title" id="intel-heading">AEGIS <em>FLORA</em></h3>
+          <h3 class="intel-title" id="intel-heading">AEGIS <em>FLORAE</em></h3>
           <p class="intel-prose">
             A luxury Solarpunk 3D Mazing Tower Defense chronicle. Sculpt living labyrinths across an open Greco-Roman ruins battlefield, deploy evolving botanical artillery, and repel fifty escalating waves of rogue automata war-machines.
           </p>
@@ -979,8 +979,8 @@
             </p>
             <form id="downloadGateForm" action="https://api.web3forms.com/submit" method="POST">
               <input type="hidden" name="access_key" value="c1d12d19-35cf-48d7-9e10-380128d4f1fc">
-              <input type="hidden" name="subject" value="Aegis Flora — desktop download unlock">
-              <input type="hidden" name="from_name" value="Aegis Flora Website">
+              <input type="hidden" name="subject" value="Aegis Florae — desktop download unlock">
+              <input type="hidden" name="from_name" value="Aegis Florae Website">
               <input type="checkbox" name="botcheck" class="gate-honeypot" tabindex="-1" autocomplete="off">
               <div class="dl-email-row">
                 <input type="email" name="email" id="downloadGateEmail" placeholder="you@example.com" required autocomplete="email" aria-label="Email address">
@@ -1067,7 +1067,7 @@
           <path d="M12 1.5 21 5v7.4c0 6.2-3.8 11.1-9 14.1-5.2-3-9-7.9-9-14.1V5l9-3.5Z" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round"/>
           <path d="M12 6v14.5M12 10.5l4-2.2M12 14.2l-4.2-2.3" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
         </svg>
-        <span>AEGIS FLORA</span>
+        <span>AEGIS FLORAE</span>
       </div>
       <div class="footer-credit">
         Developed & Published by <a href="https://github.com/murderszn" target="_blank" rel="noopener">murderszn</a> · © 2026 All Rights Reserved
@@ -1504,16 +1504,16 @@
       // Keep version in lockstep with desktop/package.json (see tests/desktop_download_gate.test.js).
       var DESKTOP_RELEASE = {
         version: '1.1.0',
-        repo: 'murderszn/aegis-flora',
+        repo: 'murderszn/aegis-florae',
         files: [
-          { os: 'Windows', tag: 'WIN · X64', name: 'Installer (recommended)', file: 'AegisFlora-1.1.0-Windows-x64-Setup.exe' },
-          { os: 'Windows', tag: 'WIN · X64', name: 'Portable ZIP', file: 'AegisFlora-1.1.0-Windows-x64-Portable.zip' },
-          { os: 'macOS', tag: 'MAC · ARM64', name: 'Apple Silicon DMG', file: 'AegisFlora-1.1.0-macOS-arm64.dmg' },
-          { os: 'macOS', tag: 'MAC · X64', name: 'Intel DMG', file: 'AegisFlora-1.1.0-macOS-x64.dmg' }
+          { os: 'Windows', tag: 'WIN · X64', name: 'Installer (recommended)', file: 'AegisFlorae-1.1.0-Windows-x64-Setup.exe' },
+          { os: 'Windows', tag: 'WIN · X64', name: 'Portable ZIP', file: 'AegisFlorae-1.1.0-Windows-x64-Portable.zip' },
+          { os: 'macOS', tag: 'MAC · ARM64', name: 'Apple Silicon DMG', file: 'AegisFlorae-1.1.0-macOS-arm64.dmg' },
+          { os: 'macOS', tag: 'MAC · X64', name: 'Intel DMG', file: 'AegisFlorae-1.1.0-macOS-x64.dmg' }
         ]
       };
-      var STORE_KEY = 'aegisflora_download_unlocked';
-      var STORE_EMAIL = 'aegisflora_download_email';
+      var STORE_KEY = 'aegisflorae_download_unlocked';
+      var STORE_EMAIL = 'aegisflorae_download_email';
 
       var form = document.getElementById('downloadGateForm');
       var emailInput = document.getElementById('downloadGateEmail');
@@ -1569,8 +1569,8 @@
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify({
             access_key: 'c1d12d19-35cf-48d7-9e10-380128d4f1fc',
-            subject: 'Aegis Flora — desktop download unlock',
-            from_name: 'Aegis Flora Website',
+            subject: 'Aegis Florae — desktop download unlock',
+            from_name: 'Aegis Florae Website',
             email: email,
             botcheck: false
           })

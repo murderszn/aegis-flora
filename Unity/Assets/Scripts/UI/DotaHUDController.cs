@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
-using AegisFlora.Mazing;
+using AegisFlorae.Mazing;
 
-namespace AegisFlora.UI
+namespace AegisFlorae.UI
 {
     public class DotaHUDController : MonoBehaviour
     {

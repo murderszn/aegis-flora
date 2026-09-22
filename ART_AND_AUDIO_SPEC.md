@@ -1,11 +1,11 @@
-# Aegis Flora: Art & Audio Specification
+# Aegis Florae: Art & Audio Specification
 
 ---
 
 ## 1. Visual Identity & Aesthetic Philosophy
 
 ### 1.1 The "Solarpunk-Mecha" Fusion
-**Aegis Flora** juxtaposes the grandeur of ancient classical architecture with rugged, clanking dieselpunk machinery and thriving, radiant botanical life.
+**Aegis Florae** juxtaposes the grandeur of ancient classical architecture with rugged, clanking dieselpunk machinery and thriving, radiant botanical life.
 
 ```
        +-------------------------------------------------------------+
@@ -46,7 +46,7 @@ The visual target is anchored by the master reference ([`aegis.jpeg`](file:///Us
 
 ## 2. Animation & Particle Pipeline (The Dota 2 Update)
 
-In Robo Defense, units were static or 2-frame 2D sprites sliding across a flat grid. In **Aegis Flora**, we elevate the experience with Dota 2-level kinetic feedback, attack animations, and particle systems.
+In Robo Defense, units were static or 2-frame 2D sprites sliding across a flat grid. In **Aegis Florae**, we elevate the experience with Dota 2-level kinetic feedback, attack animations, and particle systems.
 
 ### 2.1 Tower Animation States
 Every defensive structure possesses four distinct animation states:

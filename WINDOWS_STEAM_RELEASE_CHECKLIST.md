@@ -1,7 +1,7 @@
-# Aegis Flora — Windows-First Steam Release Architecture & Checklist
+# Aegis Florae — Windows-First Steam Release Architecture & Checklist
 
 > **Authoritative Specification for Steam Launch**  
-> Issue Reference: [#13](https://github.com/murderszn/aegis-flora/issues/13) | Category: `release`, `priority:P1`
+> Issue Reference: [#13](https://github.com/murderszn/aegis-florae/issues/13) | Category: `release`, `priority:P1`
 
 ---
 
@@ -37,10 +37,10 @@
   - `npm run pack`: Emits the unpacked distribution directly to `desktop/dist/win-unpacked/` for instant local testing.
 
 ### 2.2 Output Deliverables
-1. **Steam Depot Archive (`Aegis Flora-1.1.0-win-x64.zip` / `win-unpacked/`)**:
-   - Direct, uncompressed folder containing `AegisFlora.exe`, Chromium framework DLLs, GPU ANGLE backends, and `resources/`.
+1. **Steam Depot Archive (`Aegis Florae-1.1.0-win-x64.zip` / `win-unpacked/`)**:
+   - Direct, uncompressed folder containing `AegisFlorae.exe`, Chromium framework DLLs, GPU ANGLE backends, and `resources/`.
    - Designed for direct ingestion into Valve's `steamcmd` ContentBuilder.
-2. **Standalone NSIS Installer (`Aegis Flora-1.1.0-win-x64.exe`)**:
+2. **Standalone NSIS Installer (`Aegis Florae-1.1.0-win-x64.exe`)**:
    - Custom installer with start menu and desktop shortcuts for DRM-free direct web distribution.
 
 ### 2.3 Windows GPU & Rendering Flags (`desktop/main.js`)
@@ -62,7 +62,7 @@ app.commandLine.appendSwitch('enable-gamepad-button-axis-events');
 
 ### 3.1 Steam App & Depot Layout
 - **App ID**: Placeholder `2891940` (assigned upon Steamworks registration).
-- **Executable**: `AegisFlora.exe`
+- **Executable**: `AegisFlorae.exe`
 - **Working Directory**: Root of unpacked folder.
 - **SteamPipe Depot Configuration (`depot_<depotid>.vdf`)**:
   ```vdf
@@ -81,12 +81,12 @@ app.commandLine.appendSwitch('enable-gamepad-button-axis-events');
 ### 3.2 Steam Cloud Configuration
 Player saves, unlocked Verdant Glyphs, and settings must seamlessly sync between desktop PCs and Steam Deck:
 - **Windows Save Directory**:
-  `%APPDATA%\Aegis Flora\Local Storage\leveldb`
+  `%APPDATA%\Aegis Florae\Local Storage\leveldb`
 - **Steam Auto-Cloud Rule**:
   - **Root**: `WinAppDataRoaming`
-  - **Subdirectory Path**: `Aegis Flora/Local Storage`
+  - **Subdirectory Path**: `Aegis Florae/Local Storage`
   - **Pattern**: `*`
-  - **OS**: `Windows` (and mapped to `MacOS` via `~/Library/Application Support/Aegis Flora/Local Storage`).
+  - **OS**: `Windows` (and mapped to `MacOS` via `~/Library/Application Support/Aegis Florae/Local Storage`).
 
 ### 3.3 Steam Input & Controller Profile
 - **Gamepad API**: Standard W3C Gamepad specification supported via `--enable-gamepad-button-axis-events`.
@@ -129,16 +129,16 @@ When updating save formats in future game updates:
 ### 5.1 Electron Crashpad Configuration (`desktop/main.js`)
 ```javascript
 crashReporter.start({
-  productName: 'Aegis Flora',
+  productName: 'Aegis Florae',
   companyName: 'murderszn',
-  submitURL: 'https://submit.backtrace.io/murderszn/aegis-flora/crashpad',
+  submitURL: 'https://submit.backtrace.io/murderszn/aegis-florae/crashpad',
   uploadToServer: false, // Default to local dumps; user can opt-in for support
   compress: true
 });
 ```
 - **Local Dump Paths**:
-  - Windows: `%APPDATA%\Aegis Flora\Crashpad\reports\*.dmp`
-  - macOS: `~/Library/Application Support/Aegis Flora/Crashpad/reports/*.dmp`
+  - Windows: `%APPDATA%\Aegis Florae\Crashpad\reports\*.dmp`
+  - macOS: `~/Library/Application Support/Aegis Florae/Crashpad/reports/*.dmp`
 - Minidumps can be analyzed with `WinDbg` or `llvm-minidump` using electron symbol tables from `https://artifacts.electronjs.org/headers/dist`.
 
 ---
@@ -149,8 +149,8 @@ Prior to tagging any public release branch or pushing to the default Steam depot
 
 | Phase | Item | Requirement | Verification Method |
 |---|---|---|---|
-| **Build** | Windows Executable | `AegisFlora.exe` launches clean from unpacked folder with no console crashes | Run `npm run build:win && npm run pack` |
-| **Build** | Icon Embedding | `build/icon.ico` embeds properly into `.exe` header and taskbar | Inspect properties of `AegisFlora.exe` |
+| **Build** | Windows Executable | `AegisFlorae.exe` launches clean from unpacked folder with no console crashes | Run `npm run build:win && npm run pack` |
+| **Build** | Icon Embedding | `build/icon.ico` embeds properly into `.exe` header and taskbar | Inspect properties of `AegisFlorae.exe` |
 | **Graphics** | DirectX 11 Acceleration | WebGL context reports ANGLE (Direct3D 11) renderer | Check `chrome://gpu` or renderer info in DevTools |
 | **Graphics** | Framerate Stability | Minimum 60 FPS sustained during 350-unit swarm benchmark | Run `tests/large_wave_performance.test.js` |
 | **Audio** | Audio Latency & Mute | Web Audio synth plays SFX with zero clipping and mutes immediately on `M` | Run `tests/audio_safety.test.js` |

@@ -2,7 +2,7 @@
 const assert = require('assert');
 const fs = require('fs');
 
-console.log('--- Aegis Flora: Running Audio Limiter & Mute Regression Tests (Issues #4 & #5) ---');
+console.log('--- Aegis Florae: Running Audio Limiter & Mute Regression Tests (Issues #4 & #5) ---');
 
 // Mock browser environment for audio testing in Node
 global.window = global;
@@ -169,8 +169,8 @@ const jsCode = html.slice(startIdx + startTag.length, endIdx);
 eval(jsCode);
 
 console.log('Game initialized. Verifying Web Audio Architecture...');
-const API = global.AegisFlora || global.RoboFlora;
-assert(API, 'AegisFlora API must be exported');
+const API = global.AegisFlorae || global.RoboFlora;
+assert(API, 'AegisFlorae API must be exported');
 
 // 1. Verify Audio Graph Initialized with Limiter and Buses
 const ac = API.getAudioContext();

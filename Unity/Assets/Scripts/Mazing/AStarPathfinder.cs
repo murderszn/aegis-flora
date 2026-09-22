@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace AegisFlora.Mazing
+namespace AegisFlorae.Mazing
 {
     public class AStarPathfinder
     {

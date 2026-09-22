@@ -2,7 +2,7 @@
 const assert = require('assert');
 const fs = require('fs');
 
-console.log('--- Aegis Flora: Running Large Wave Performance & Profiling Tests (Issue #11) ---');
+console.log('--- Aegis Florae: Running Large Wave Performance & Profiling Tests (Issue #11) ---');
 
 // Mock browser environment for game runtime
 global.window = global;
@@ -104,8 +104,8 @@ try {
   console.log('Script evaluated with non-fatal init notice:', e.message);
 }
 
-const api = global.AegisFlora || global.RoboFlora;
-assert(api, 'AegisFlora API must be exposed on window');
+const api = global.AegisFlorae || global.RoboFlora;
+assert(api, 'AegisFlorae API must be exposed on window');
 
 console.log('1. Testing Goal-Rooted Flow Field calculation...');
 const flow = api.computeFlowField(api.cfg.SANCTUM.x, api.cfg.SANCTUM.y, api.state.blocked);

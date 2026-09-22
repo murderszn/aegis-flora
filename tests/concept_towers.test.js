@@ -4,7 +4,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-console.log('--- Aegis Flora: Running Concept Tower Artifact Tests ---');
+console.log('--- Aegis Florae: Running Concept Tower Artifact Tests ---');
 
 const rootDir = path.resolve(__dirname, '..');
 const modelsDir = path.join(rootDir, 'blender_pipeline', 'models');

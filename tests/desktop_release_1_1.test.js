@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-console.log('--- Aegis Flora: Desktop 1.1.0 Release Verification ---');
+console.log('--- Aegis Florae: Desktop 1.1.0 Release Verification ---');
 
 const rootDir = path.resolve(__dirname, '..');
 const desktopDir = path.join(rootDir, 'desktop');
@@ -26,8 +26,8 @@ for (const icon of ['build/icon.ico', 'build/icon.icns']) {
 console.log('✓ Icons present.');
 
 console.log('3. macOS production config (DMG, arches, entitlements, layout)...');
-assert.strictEqual(pkg.build.appId, 'com.murderszn.aegisflora');
-assert.strictEqual(pkg.build.productName, 'Aegis Flora');
+assert.strictEqual(pkg.build.appId, 'com.murderszn.aegisflorae');
+assert.strictEqual(pkg.build.productName, 'Aegis Florae');
 assert.ok(pkg.build.artifactName.includes('${version}'), 'artifactName must embed version');
 const macTargets = pkg.build.mac.target;
 assert(macTargets.some((t) => t.target === 'dmg' && t.arch.includes('arm64') && t.arch.includes('x64')),
@@ -78,8 +78,8 @@ assert(workflow.includes("tags:") && workflow.includes("'v*'"), 'must build on v
 assert(workflow.includes('workflow_dispatch'), 'must support manual dispatch');
 assert(workflow.includes('npm ci'), 'must use npm ci when lockfile exists');
 assert(workflow.includes('check-icons'), 'must gate on production icons');
-assert(workflow.includes('Aegis-Flora-1.1.0-Windows-x64'), 'Windows artifacts must be versioned');
-assert(workflow.includes('Aegis-Flora-1.1.0-macOS-DMG'), 'macOS artifacts must be versioned');
+assert(workflow.includes('Aegis-Florae-1.1.0-Windows-x64'), 'Windows artifacts must be versioned');
+assert(workflow.includes('Aegis-Florae-1.1.0-macOS-DMG'), 'macOS artifacts must be versioned');
 assert(workflow.includes('windows-latest') && workflow.includes('macos-latest'), 'both runners required');
 console.log('✓ Workflow correct.');
 

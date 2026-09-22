@@ -5,7 +5,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-console.log('--- Aegis Flora: Running Gated Desktop Download Tests ---');
+console.log('--- Aegis Florae: Running Gated Desktop Download Tests ---');
 
 const rootDir = path.resolve(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'desktop', 'package.json'), 'utf8'));
@@ -13,10 +13,10 @@ const workflow = fs.readFileSync(path.join(rootDir, '.github/workflows/build-des
 
 const ACCESS_KEY = 'c1d12d19-35cf-48d7-9e10-380128d4f1fc';
 const RELEASE_FILES = [
-  'AegisFlora-1.1.0-Windows-x64-Setup.exe',
-  'AegisFlora-1.1.0-Windows-x64-Portable.zip',
-  'AegisFlora-1.1.0-macOS-arm64.dmg',
-  'AegisFlora-1.1.0-macOS-x64.dmg',
+  'AegisFlorae-1.1.0-Windows-x64-Setup.exe',
+  'AegisFlorae-1.1.0-Windows-x64-Portable.zip',
+  'AegisFlorae-1.1.0-macOS-arm64.dmg',
+  'AegisFlorae-1.1.0-macOS-x64.dmg',
 ];
 
 const pages = ['index.html', 'landing.html'];

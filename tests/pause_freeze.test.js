@@ -2,7 +2,7 @@
 const assert = require('assert');
 const fs = require('fs');
 
-console.log('--- Aegis Flora: Running Pause Gameplay-Mutation Regression Tests ---');
+console.log('--- Aegis Florae: Running Pause Gameplay-Mutation Regression Tests ---');
 
 // Mock browser environment for game logic testing in Node
 global.window = global;
@@ -111,8 +111,8 @@ const jsCode = html.slice(startIdx + startTag.length, endIdx);
 eval(jsCode);
 
 console.log('Game initialized. Testing API and state...');
-const API = global.AegisFlora || global.RoboFlora;
-assert(API, 'AegisFlora API must be exported');
+const API = global.AegisFlorae || global.RoboFlora;
+assert(API, 'AegisFlorae API must be exported');
 
 const S = API.newGame(100);
 assert(S, 'Game state must exist');

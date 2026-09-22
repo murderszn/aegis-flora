@@ -1,9 +1,9 @@
 using System;
 using UnityEngine;
-using AegisFlora.Enemies;
-using AegisFlora.UI;
+using AegisFlorae.Enemies;
+using AegisFlorae.UI;
 
-namespace AegisFlora.Core
+namespace AegisFlorae.Core
 {
     public enum GamePhase { Build, Combat, Defeat, Victory }
 

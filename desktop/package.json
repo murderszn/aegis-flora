@@ -1,7 +1,7 @@
 {
-  "name": "aegis-flora",
+  "name": "aegis-florae",
   "version": "1.1.0",
-  "description": "Aegis Flora Desktop Game",
+  "description": "Aegis Florae Desktop Game",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -22,8 +22,8 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
-    "appId": "com.murderszn.aegisflora",
-    "productName": "Aegis Flora",
+    "appId": "com.murderszn.aegisflorae",
+    "productName": "Aegis Florae",
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "dist",
@@ -40,15 +40,15 @@
           "arch": ["x64"]
         }
       ],
-      "executableName": "AegisFlora",
+      "executableName": "AegisFlorae",
       "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "Aegis Flora",
-      "uninstallDisplayName": "Aegis Flora ${version}",
+      "shortcutName": "Aegis Florae",
+      "uninstallDisplayName": "Aegis Florae ${version}",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     },
@@ -68,7 +68,7 @@
       "icon": "build/icon.icns"
     },
     "dmg": {
-      "title": "Aegis Flora ${version}",
+      "title": "Aegis Florae ${version}",
       "contents": [
         {
           "x": 130,

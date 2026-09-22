@@ -1,5 +1,5 @@
 """
-Aegis Flora: High-Fidelity 3D Treasure, Relics & Hero Floral Assets Generator
+Aegis Florae: High-Fidelity 3D Treasure, Relics & Hero Floral Assets Generator
 Generates GLTF (.glb) models and isometric PNG renders using Blender 5.1
 1. prop_treasure_chest: Steampunk/Greco-Roman strongbox with brass brackets, open lid, spilling gold coins & cyan mana crystals.
 2. prop_relic_urn: Classical Greco-Roman amphora/urn with gold filigree, overflowing with gold coins, gems & trailing wisteria.

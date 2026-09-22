@@ -1,11 +1,11 @@
-# Aegis Flora: Game Design Document (GDD)
+# Aegis Florae: Game Design Document (GDD)
 
 ---
 
 ## 1. High-Level Vision & Design Goals
 
 ### 1.1 Core Elevator Pitch
-**Aegis Flora** reimagines the open-grid mazing purity of **Robo Defense** with the visual spectacle, particle kineticism, and deep tactical responsiveness of **Dota 2**. Players place living brass-and-marble defense engines onto an open Greco-Roman ruins battlefield to deflect, delay, and obliterate oncoming waves of mechanized rogue war-machines before they breach the **Verdant Sanctum**.
+**Aegis Florae** reimagines the open-grid mazing purity of **Robo Defense** with the visual spectacle, particle kineticism, and deep tactical responsiveness of **Dota 2**. Players place living brass-and-marble defense engines onto an open Greco-Roman ruins battlefield to deflect, delay, and obliterate oncoming waves of mechanized rogue war-machines before they breach the **Verdant Sanctum**.
 
 ### 1.2 Core Pillars
 1. **The Maze is the Weapon:** Players do not simply place towers on roadside slots; they architect the entire road. Every tower is a physical wall. A well-designed maze turns a 10-second march into a 90-second gauntlet.

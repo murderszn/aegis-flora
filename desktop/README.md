@@ -1,4 +1,4 @@
-# Aegis Flora - Desktop Release Packaging (Windows & macOS)
+# Aegis Florae - Desktop Release Packaging (Windows & macOS)
 
 Current release: **1.1.0**. Electron + `electron-builder` wrap the static
 WebGL game (`game.html`) in a native window with GPU acceleration, gamepad
@@ -54,13 +54,13 @@ npm run build:all     # both platforms (where the host supports them)
 Expected output files in `desktop/dist/` (version/arch come from
 `artifactName` in `package.json`):
 
-- `Aegis Flora-1.1.0-mac-arm64.dmg` — Apple Silicon drag-to-Applications image
-- `Aegis Flora-1.1.0-mac-x64.dmg` — Intel drag-to-Applications image
-- `Aegis Flora-1.1.0-win-x64.exe` (NSIS setup) — exact setup name is
-  `Aegis Flora-1.1.0-win-x64.exe`
-- `Aegis Flora-1.1.0-win-x64.zip` — portable build for Steam depot upload
+- `Aegis Florae-1.1.0-mac-arm64.dmg` — Apple Silicon drag-to-Applications image
+- `Aegis Florae-1.1.0-mac-x64.dmg` — Intel drag-to-Applications image
+- `Aegis Florae-1.1.0-win-x64.exe` (NSIS setup) — exact setup name is
+  `Aegis Florae-1.1.0-win-x64.exe`
+- `Aegis Florae-1.1.0-win-x64.zip` — portable build for Steam depot upload
 - `win-unpacked/` — unpacked portable tree used directly as the Steam depot
-  source (launch executable: `AegisFlora.exe`)
+  source (launch executable: `AegisFlorae.exe`)
 
 ---
 
@@ -68,7 +68,7 @@ Expected output files in `desktop/dist/` (version/arch come from
 
 1. `npm run pack` (macOS) or `npm run build:win` then look in
    `dist/win-unpacked/` (Windows).
-2. Launch the app binary directly (`Aegis Flora.app` / `AegisFlora.exe`) —
+2. Launch the app binary directly (`Aegis Florae.app` / `AegisFlorae.exe`) —
    no install step needed.
 3. Confirm: `game.html` loads, WebGL renders (check renderer in DevTools),
    audio plays on first input gesture, a gamepad registers via the Gamepad
@@ -76,19 +76,19 @@ Expected output files in `desktop/dist/` (version/arch come from
 
 ## How to install the DMG (macOS)
 
-1. Open `Aegis Flora-1.1.0-mac-{arm64,x64}.dmg` (match your chip).
-2. Drag **Aegis Flora** onto the **Applications** link.
+1. Open `Aegis Florae-1.1.0-mac-{arm64,x64}.dmg` (match your chip).
+2. Drag **Aegis Florae** onto the **Applications** link.
 3. First launch of an unsigned build: right-click → Open (Gatekeeper), or
-   `xattr -d com.apple.quarantine "/Applications/Aegis Flora.app"`.
+   `xattr -d com.apple.quarantine "/Applications/Aegis Florae.app"`.
 4. Signed + notarized releases (see below) open normally on double-click.
 
 ## How to install the Windows EXE
 
-1. Run the NSIS installer (`Aegis Flora-*-win-x64.exe`).
+1. Run the NSIS installer (`Aegis Florae-*-win-x64.exe`).
 2. Pick Standard or a custom installation directory when prompted.
 3. Launch from the Desktop or Start Menu shortcut.
-4. Uninstall via **Settings → Apps → Aegis Flora → Uninstall** (also removes
-   shortcuts; per-user save data under `%APPDATA%\Aegis Flora` is preserved).
+4. Uninstall via **Settings → Apps → Aegis Florae → Uninstall** (also removes
+   shortcuts; per-user save data under `%APPDATA%\Aegis Florae` is preserved).
 
 ## Steam depot usage (Windows portable build)
 
@@ -108,7 +108,7 @@ Expected output files in `desktop/dist/` (version/arch come from
      }
    }
    ```
-3. Set the Steamworks launch executable to `AegisFlora.exe`.
+3. Set the Steamworks launch executable to `AegisFlorae.exe`.
 4. The `.zip` artifact is the same portable tree in a single file — useful
    for DRM-free distribution and depot staging.
 
@@ -117,9 +117,9 @@ Expected output files in `desktop/dist/` (version/arch come from
 Saves (`aegis_glyphs`, `aegis_settings`, `aegis_save_v1`, …) live in
 `localStorage`, persisted under the Electron user-data directory:
 
-- **Windows**: `%APPDATA%\Aegis Flora\Local Storage\leveldb\`
-- **macOS**: `~/Library/Application Support/Aegis Flora/Local Storage/leveldb/`
-- **Steam Auto-Cloud**: root `WinAppDataRoaming`, subdirectory `Aegis Flora`,
+- **Windows**: `%APPDATA%\Aegis Florae\Local Storage\leveldb\`
+- **macOS**: `~/Library/Application Support/Aegis Florae/Local Storage/leveldb/`
+- **Steam Auto-Cloud**: root `WinAppDataRoaming`, subdirectory `Aegis Florae`,
   pattern `*` (map macOS path equivalently).
 
 ### Steam Input & Gamepad Support
@@ -136,8 +136,8 @@ Saves (`aegis_glyphs`, `aegis_settings`, `aegis_save_v1`, …) live in
 `desktop/main.js` starts Electron's `crashReporter` at launch. Dumps stay
 local by default (`uploadToServer: false`):
 
-- Windows: `%APPDATA%\Aegis Flora\Crashpad\reports`
-- macOS: `~/Library/Application Support/Aegis Flora/Crashpad/reports`
+- Windows: `%APPDATA%\Aegis Florae\Crashpad\reports`
+- macOS: `~/Library/Application Support/Aegis Florae/Crashpad/reports`
 
 To forward to Backtrace/Sentry, set `submitURL` and `uploadToServer: true`.
 

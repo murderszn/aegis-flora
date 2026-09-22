@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-console.log('--- Aegis Flora: Running Sanctum Leak Alarm & Defeat SFX Tests (Issue #19) ---');
+console.log('--- Aegis Florae: Running Sanctum Leak Alarm & Defeat SFX Tests (Issue #19) ---');
 
 // Mock browser environment for audio testing in Node
 global.window = global;
@@ -185,8 +185,8 @@ try {
   console.log('Script init non-fatal notice:', e.message);
 }
 
-const api = global.AegisFlora || global.RoboFlora;
-assert(api, 'AegisFlora API must be exposed on window');
+const api = global.AegisFlorae || global.RoboFlora;
+assert(api, 'AegisFlorae API must be exposed on window');
 
 console.log('1. Checking sfx function for alarm, defeat, and victory cases...');
 assert.strictEqual(typeof api.playAlarmSFX, 'function', 'playAlarmSFX must be exposed on API');

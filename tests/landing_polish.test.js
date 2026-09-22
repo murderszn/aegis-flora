@@ -4,7 +4,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-console.log('--- Aegis Flora: Running Landing Polish Tests ---');
+console.log('--- Aegis Florae: Running Landing Polish Tests ---');
 
 const pages = ['index.html', 'landing.html'];
 
@@ -93,7 +93,7 @@ pages.forEach(function (page) {
   assert.ok(ldMatch, 'JSON-LD block must exist');
   const schema = JSON.parse(ldMatch[1]);
   assert.strictEqual(schema['@type'], 'VideoGame', 'schema must be a VideoGame');
-  assert.strictEqual(schema.name, 'Aegis Flora', 'schema must name the game');
+  assert.strictEqual(schema.name, 'Aegis Florae', 'schema must name the game');
   assert.ok(schema.trailer && schema.trailer.contentUrl, 'schema must reference the trailer');
   assert.ok(schema.trailer.contentUrl.endsWith('.mp4'), 'trailer URL must point at the cinematic');
   const trailerLocal = 'assets/' + path.basename(schema.trailer.contentUrl);
