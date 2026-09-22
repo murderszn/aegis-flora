@@ -8,7 +8,7 @@
   <meta name="author" content="murderszn">
   <meta name="theme-color" content="#030706">
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0a1512">
-  <link rel="icon" type="image/png" href="assets/favicon.png" sizes="64x64">
+  <link rel="icon" type="image/png" href="assets/aegis_shield_icon.png?v=2" sizes="512x512">
 
   <!-- OpenGraph / Social Metadata -->
   <meta property="og:title" content="Aegis Flora — Solarpunk 3D Mazing Tower Defense">
@@ -256,38 +256,6 @@
       transform: translateY(-2px);
       border-color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.1);
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
-    }
-
-    /* Act I trailer teaser: poster thumbnail with play affordance */
-    .hero-trailer-teaser {
-      display: inline-flex; align-items: center; gap: 14px; margin-top: 26px;
-      text-decoration: none; color: var(--text);
-      transition: transform 0.2s ease;
-    }
-    .hero-trailer-teaser:hover { transform: translateY(-2px); }
-    .hero-trailer-thumb {
-      position: relative; display: block; width: 132px; aspect-ratio: 16 / 9;
-      border-radius: 8px; overflow: hidden; flex-shrink: 0;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-    .hero-trailer-teaser:hover .hero-trailer-thumb {
-      border-color: var(--gold);
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(226, 192, 130, 0.25);
-    }
-    .hero-trailer-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .hero-trailer-play {
-      position: absolute; inset: 0; margin: auto;
-      width: 34px; height: 34px; border-radius: 50%;
-      background: rgba(3, 7, 6, 0.7); border: 1px solid var(--gold);
-      color: var(--gold); font-size: 12px; line-height: 32px; text-align: center;
-    }
-    .hero-trailer-text {
-      font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
-      text-align: left; line-height: 1.9;
-    }
-    .hero-trailer-text small {
-      display: block; color: var(--gold); font-size: 10px; letter-spacing: 2px; font-weight: 600;
     }
 
     /* Platform Pill Strip */
@@ -560,6 +528,45 @@
       color: #e2e8e4; font-size: 12px; font-weight: 300;
     }
 
+    /* Email-gated desktop download (inside intel section) */
+    .dl-block {
+      margin-top: 30px; padding-top: 26px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .dl-email-row {
+      display: flex; gap: 18px; align-items: baseline; flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    #downloadGateEmail {
+      flex: 1 1 220px; background: transparent; border: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      color: #ffffff; font-size: 14px; font-weight: 300;
+      padding: 8px 2px; outline: none;
+    }
+    #downloadGateEmail:focus { border-bottom-color: var(--gold); }
+    #downloadGateEmail::placeholder { color: var(--text-dim); }
+    .dl-submit {
+      background: none; border: none; cursor: pointer; padding: 8px 0;
+      color: var(--gold); font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; font-weight: 600;
+      border-bottom: 1px dotted rgba(226, 192, 130, 0.4);
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .dl-submit:hover { color: #ffffff; border-bottom-color: #ffffff; }
+    .dl-submit:disabled { opacity: 0.5; cursor: wait; }
+    .gate-honeypot { display: none !important; }
+    .gate-status {
+      margin-top: 10px; font-size: 13px; font-weight: 300;
+      min-height: 18px; color: var(--gold);
+    }
+    .dl-rows { display: flex; flex-direction: column; margin-top: 8px; }
+    .dl-rows .intel-row {
+      padding: 11px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .dl-unlocked-note {
+      font-size: 12px; font-weight: 300; color: var(--text-dim); margin-bottom: 4px;
+    }
+
     /* Act VI Final CTA section */
     #chapter-command {
       min-height: 80vh;
@@ -681,13 +688,6 @@
           Suspended above the clouds of Olympos floats the Verdant Sanctum—an eternal temple where ancient Greek stonework and clockwork mechanisms breathe with solar mana. Here, the Aegis shield guards the heart of botanical creation against the clockwork automata legions.
         </p>
 
-        <a class="hero-trailer-teaser" href="#gameplay-cinematic" aria-label="Watch the official gameplay trailer">
-          <span class="hero-trailer-thumb">
-            <img src="assets/aegis_gameplay_poster.jpg" alt="" loading="lazy">
-            <span class="hero-trailer-play" aria-hidden="true">▶</span>
-          </span>
-          <span class="hero-trailer-text">Watch the trailer<small>Official gameplay · 60 FPS</small></span>
-        </a>
       </div>
 
       <div class="scroll-hint">
@@ -969,6 +969,28 @@
             </div>
           </div>
 
+          <!-- Free desktop build, unlocked with an email -->
+          <div class="dl-block" id="desktop-download">
+            <span class="chapter-num">FREE DESKTOP BUILD · V1.1.0</span>
+            <h3 class="intel-title">PLAY <em>OFFLINE</em></h3>
+            <p class="intel-prose">
+              Native Windows &amp; macOS builds with offline play — free forever.
+              Enter your email to unlock the installers.
+            </p>
+            <form id="downloadGateForm" action="https://api.web3forms.com/submit" method="POST">
+              <input type="hidden" name="access_key" value="c1d12d19-35cf-48d7-9e10-380128d4f1fc">
+              <input type="hidden" name="subject" value="Aegis Flora — desktop download unlock">
+              <input type="hidden" name="from_name" value="Aegis Flora Website">
+              <input type="checkbox" name="botcheck" class="gate-honeypot" tabindex="-1" autocomplete="off">
+              <div class="dl-email-row">
+                <input type="email" name="email" id="downloadGateEmail" placeholder="you@example.com" required autocomplete="email" aria-label="Email address">
+                <button type="submit" class="dl-submit" id="downloadGateBtn">Unlock ↓</button>
+              </div>
+              <p class="gate-status" id="downloadGateStatus" role="status" aria-live="polite"></p>
+            </form>
+            <div class="dl-rows" id="downloadFiles" hidden></div>
+          </div>
+
         </div>
 
         <!-- Right: System Specifications -->
@@ -1018,6 +1040,9 @@
         <div class="hero-btn-row">
           <a href="game.html" class="btn-primary-hero" style="font-size: 15px; padding: 18px 52px;">
             Launch Game
+          </a>
+          <a href="#desktop-download" class="btn-ghost-hero" style="font-size: 15px; padding: 18px 52px;">
+            Download for Desktop
           </a>
         </div>
       </div>
@@ -1470,6 +1495,101 @@
         });
       }
 
+    })();
+  </script>
+
+  <!-- Email-gated desktop downloads (Web3Forms + GitHub Releases) -->
+  <script>
+    (function(){
+      // Keep version in lockstep with desktop/package.json (see tests/desktop_download_gate.test.js).
+      var DESKTOP_RELEASE = {
+        version: '1.1.0',
+        repo: 'murderszn/aegis-flora',
+        files: [
+          { os: 'Windows', tag: 'WIN · X64', name: 'Installer (recommended)', file: 'AegisFlora-1.1.0-Windows-x64-Setup.exe' },
+          { os: 'Windows', tag: 'WIN · X64', name: 'Portable ZIP', file: 'AegisFlora-1.1.0-Windows-x64-Portable.zip' },
+          { os: 'macOS', tag: 'MAC · ARM64', name: 'Apple Silicon DMG', file: 'AegisFlora-1.1.0-macOS-arm64.dmg' },
+          { os: 'macOS', tag: 'MAC · X64', name: 'Intel DMG', file: 'AegisFlora-1.1.0-macOS-x64.dmg' }
+        ]
+      };
+      var STORE_KEY = 'aegisflora_download_unlocked';
+      var STORE_EMAIL = 'aegisflora_download_email';
+
+      var form = document.getElementById('downloadGateForm');
+      var emailInput = document.getElementById('downloadGateEmail');
+      var submitBtn = document.getElementById('downloadGateBtn');
+      var statusEl = document.getElementById('downloadGateStatus');
+      var filesEl = document.getElementById('downloadFiles');
+      if(!form || !filesEl) return;
+
+      function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
+
+      // Link targets are assembled at runtime so the raw page carries no direct hrefs.
+      function assetUrl(fileName){
+        return 'https://github.com/' + DESKTOP_RELEASE.repo
+          + '/releases/latest/download/' + encodeURIComponent(fileName);
+      }
+
+      function escapeHtml(s){
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function renderUnlocked(email){
+        form.style.display = 'none';
+        filesEl.hidden = false;
+        var html = '<p class="dl-unlocked-note">Unlocked'
+          + (email ? ' for ' + escapeHtml(email) : '')
+          + ' — v' + DESKTOP_RELEASE.version + ' installers, free forever.</p>';
+        DESKTOP_RELEASE.files.forEach(function(entry){
+          html += '<div class="intel-row dl-row">'
+            + '<span class="intel-label">' + entry.os + ' · ' + entry.name + '</span>'
+            + '<span class="intel-val"><a href="' + assetUrl(entry.file) + '" download rel="noopener">'
+            + entry.file + ' ↓</a></span></div>';
+        });
+        filesEl.innerHTML = html;
+      }
+
+      try {
+        var saved = window.localStorage.getItem(STORE_KEY);
+        if(saved === '1'){
+          renderUnlocked(window.localStorage.getItem(STORE_EMAIL) || '');
+          return;
+        }
+      } catch(e){ /* private mode: gate simply re-asks each visit */ }
+
+      form.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        if(!form.checkValidity()){ form.reportValidity(); return; }
+        var email = emailInput.value.trim();
+        submitBtn.disabled = true;
+        setStatus('Unlocking your download…');
+        fetch(form.action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            access_key: 'c1d12d19-35cf-48d7-9e10-380128d4f1fc',
+            subject: 'Aegis Flora — desktop download unlock',
+            from_name: 'Aegis Flora Website',
+            email: email,
+            botcheck: false
+          })
+        }).then(function(res){ return res.json(); }).then(function(data){
+          if(data && data.success){
+            try {
+              window.localStorage.setItem(STORE_KEY, '1');
+              window.localStorage.setItem(STORE_EMAIL, email);
+            } catch(e){}
+            renderUnlocked(email);
+          } else {
+            setStatus('Hmm — that did not go through. Please check your email and try again.');
+            submitBtn.disabled = false;
+          }
+        }).catch(function(){
+          setStatus('Network hiccup — please try again in a moment.');
+          submitBtn.disabled = false;
+        });
+      });
     })();
   </script>
 </body>
