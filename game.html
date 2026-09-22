@@ -650,11 +650,6 @@
       </svg>
       <span class="brand-title">AEGIS FLORA</span>
     </a>
-    <div class="wave-chip" id="waveChip" aria-label="Wave status" role="status">
-      <span class="wave-chip-wave">WAVE <b id="wave">0 / 50</b></span>
-      <span class="wave-chip-phase" id="phaseLabel">PREPARING</span>
-      <span class="wave-chip-score">SCORE <b id="score">0</b></span>
-    </div>
   </div>
   <div class="resource-group" aria-label="Sanctum resources">
     <div class="stat lives" title="Sanctum integrity">
@@ -721,8 +716,19 @@
   <button class="rail-icon" id="btnClaudeRadio" title="Aegis radio" aria-label="Open radio"><span>♫</span><i class="live-dot" id="claudeFmDot"></i></button>
   <button class="rail-icon" id="btnTutorial" title="Walkthrough and field guide (?)" aria-label="Open walkthrough">?</button>
   <button class="rail-icon" id="btnPad" title="Controller mapping" aria-label="Controller mapping"><span id="btnPadLabel">⌘</span></button>
+  <button class="rail-icon" id="btnWavePanel" title="Wave status overlay (O)" aria-label="Toggle wave status overlay" aria-expanded="true"><span>◉</span></button>
   <div id="cam-mode" class="sr-only" aria-live="polite"><span>TACTICAL VIEW</span></div>
 </aside>
+
+<!-- Wave status overlay: wave count + phase live beside the utility rail, toggled via rail button or O key -->
+<div id="waveOverlay" role="status" aria-label="Wave status">
+  <div class="wave-overlay-kicker">WAVE COMMAND</div>
+  <div class="wave-chip" id="waveChip" aria-label="Wave status">
+    <span class="wave-chip-wave">WAVE <b id="wave">0 / 50</b></span>
+    <span class="wave-chip-phase" id="phaseLabel">PREPARING</span>
+    <span class="wave-chip-score">SCORE <b id="score">0</b></span>
+  </div>
+</div>
 
 <!-- Claude FM Radio Tuner Popover -->
 <div id="claude-fm-popover" style="display:none;">
@@ -966,16 +972,17 @@ var BRANCH = {
 };
 
 var FOES = {
-  spider:  { hp: 28, speed: 2.7, reward: 3, leak: 1, r: 0.22, kind: 'gnd', name: 'Skitter Scout', armor: 0, dmgMod: { Kinetic: 1.25, Blast: 1.0, Energy: 1.0, Sonic: 1.0 } },
-  prowler: { hp: 85, speed: 2.1, reward: 8, leak: 2, r: 0.26, kind: 'gnd', name: 'Steam Prowler', armor: 2, dodge: 0.20, dmgMod: { Kinetic: 1.0, Blast: 1.35, Energy: 1.0, Sonic: 1.35 } },
-  tank:    { hp: 160, speed: 1.35, reward: 10, leak: 2, r: 0.32, kind: 'gnd', armored: true, name: 'Tread Tank', armor: 8, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
-  walker:  { hp: 540, speed: 0.95, reward: 22, leak: 4, r: 0.38, kind: 'gnd', armored: true, name: 'Diesel Walker', armor: 10, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
-  ram:     { hp: 920, speed: 0.72, reward: 36, leak: 5, r: 0.44, kind: 'gnd', armored: true, name: 'Dreadnought Ram', armor: 12, dmgMod: { Kinetic: 0.5, Blast: 0.8, Energy: 1.2, Sonic: 1.4 } },
-  boss:    { hp: 4400, speed: 0.65, reward: 150, leak: 10, r: 0.58, kind: 'gnd', armored: true, name: 'Goliath Colossus', armor: 16, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
-  drone:   { hp: 45, speed: 2.2, reward: 7, leak: 1, r: 0.25, kind: 'air', name: 'Rotor Drone', armor: 1, dmgMod: { Kinetic: 1.0, Blast: 1.0, Energy: 1.0, Sonic: 1.0 } },
-  ship:    { hp: 980, speed: 0.8, reward: 50, leak: 6, r: 0.48, kind: 'air', armored: true, name: 'Zeppelin Sky-Hull', armor: 6, dmgMod: { Kinetic: 0.7, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
-  blink:   { hp: 320, speed: 1.1, reward: 30, leak: 3, r: 0.3, kind: 'gnd', name: 'Phase Blink', armor: 4, dmgMod: { Kinetic: 0.8, Blast: 1.0, Energy: 1.1, Sonic: 1.2 } },
-  dart:    { hp: 12, speed: 5.4, reward: 12, leak: 2, r: 0.2, kind: 'gnd', name: 'Rift Dart', armor: 0, dodge: 0.10, dmgMod: { Kinetic: 1.1, Blast: 1.0, Energy: 1.0, Sonic: 1.35 } }
+  // Scrap-throttle pass: kill bounties cut ~25% so in-run Scrap can't fund tower spam.
+  spider:  { hp: 28, speed: 2.7, reward: 2, leak: 1, r: 0.22, kind: 'gnd', name: 'Skitter Scout', armor: 0, dmgMod: { Kinetic: 1.25, Blast: 1.0, Energy: 1.0, Sonic: 1.0 } },
+  prowler: { hp: 85, speed: 2.1, reward: 6, leak: 2, r: 0.26, kind: 'gnd', name: 'Steam Prowler', armor: 2, dodge: 0.20, dmgMod: { Kinetic: 1.0, Blast: 1.35, Energy: 1.0, Sonic: 1.35 } },
+  tank:    { hp: 160, speed: 1.35, reward: 8, leak: 2, r: 0.32, kind: 'gnd', armored: true, name: 'Tread Tank', armor: 8, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
+  walker:  { hp: 540, speed: 0.95, reward: 17, leak: 4, r: 0.38, kind: 'gnd', armored: true, name: 'Diesel Walker', armor: 10, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
+  ram:     { hp: 920, speed: 0.72, reward: 27, leak: 5, r: 0.44, kind: 'gnd', armored: true, name: 'Dreadnought Ram', armor: 12, dmgMod: { Kinetic: 0.5, Blast: 0.8, Energy: 1.2, Sonic: 1.4 } },
+  boss:    { hp: 4400, speed: 0.65, reward: 113, leak: 10, r: 0.58, kind: 'gnd', armored: true, name: 'Goliath Colossus', armor: 16, dmgMod: { Kinetic: 0.6, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
+  drone:   { hp: 45, speed: 2.2, reward: 5, leak: 1, r: 0.25, kind: 'air', name: 'Rotor Drone', armor: 1, dmgMod: { Kinetic: 1.0, Blast: 1.0, Energy: 1.0, Sonic: 1.0 } },
+  ship:    { hp: 980, speed: 0.8, reward: 38, leak: 6, r: 0.48, kind: 'air', armored: true, name: 'Zeppelin Sky-Hull', armor: 6, dmgMod: { Kinetic: 0.7, Blast: 1.0, Energy: 0.5, Sonic: 1.0 } },
+  blink:   { hp: 320, speed: 1.1, reward: 23, leak: 3, r: 0.3, kind: 'gnd', name: 'Phase Blink', armor: 4, dmgMod: { Kinetic: 0.8, Blast: 1.0, Energy: 1.1, Sonic: 1.2 } },
+  dart:    { hp: 12, speed: 5.4, reward: 9, leak: 2, r: 0.2, kind: 'gnd', name: 'Rift Dart', armor: 0, dodge: 0.10, dmgMod: { Kinetic: 1.1, Blast: 1.0, Energy: 1.0, Sonic: 1.35 } }
 };
 
 // Dota 2 armor formula: diminishing returns on effective HP
@@ -2953,10 +2960,10 @@ var mouse = new THREE.Vector2(-999, -999);
 var rayPlane;
 var dustParticles;
 var WEATHER_MODES = [
-  { id: 'bloom', label: 'Bloom Season', icon: '☀', fog: 0x183744, density: 0.003, sun: 2.0 },
-  { id: 'rain', label: 'Rain Garden', icon: '☂', fog: 0x122c36, density: 0.006, sun: 1.25 },
-  { id: 'autumn', label: 'Autumn Gold', icon: '🍂', fog: 0x3b3028, density: 0.0042, sun: 1.7 },
-  { id: 'snow', label: 'Winter Snow', icon: '❄', fog: 0x9eb2bc, density: 0.005, sun: 1.45 }
+  { id: 'bloom', label: 'Bloom Season', icon: '☀', fog: 0x183744, density: 0.0038, sun: 2.0 },
+  { id: 'rain', label: 'Rain Garden', icon: '☂', fog: 0x122c36, density: 0.0068, sun: 1.25 },
+  { id: 'autumn', label: 'Autumn Gold', icon: '🍂', fog: 0x3b3028, density: 0.005, sun: 1.7 },
+  { id: 'snow', label: 'Winter Snow', icon: '❄', fog: 0x9eb2bc, density: 0.0056, sun: 1.45 }
 ];
 var WEATHER_INDEX = 0;
 
@@ -4203,8 +4210,8 @@ function initThreeJS(){
   var container = document.getElementById('game-container');
   scene = new THREE.Scene();
   scene.userData = { water: [], braziers: [], orbiters: [], vines: [] };
-  scene.background = new THREE.Color(0x102c38);
-  scene.fog = new THREE.FogExp2(0x183744, 0.003);
+  scene.background = new THREE.Color(0x0b212b);
+  scene.fog = new THREE.FogExp2(0x183744, 0.0038);
 
   camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 1, 1000);
   setCameraIsometric();
@@ -4530,9 +4537,9 @@ function build3DEnvironment(){
       'void main(){',
       '  vec3 d = normalize(vDir);',
       '  float h = d.y;',
-      '  vec3 zen = vec3(0.030, 0.065, 0.080);',
-      '  vec3 mid = vec3(0.055, 0.155, 0.185);',
-      '  vec3 hor = vec3(0.135, 0.230, 0.235);',
+      '  vec3 zen = vec3(0.018, 0.045, 0.062);',
+      '  vec3 mid = vec3(0.038, 0.120, 0.150);',
+      '  vec3 hor = vec3(0.105, 0.190, 0.200);',
       '  vec3 col = mix(hor, mid, smoothstep(0.0, 0.28, h));',
       '  col = mix(col, zen, smoothstep(0.25, 0.85, h));',
       '  col = mix(vec3(0.05, 0.09, 0.10), col, smoothstep(-0.25, 0.01, h));',
@@ -4540,20 +4547,32 @@ function build3DEnvironment(){
       '  col += vec3(0.85, 0.36, 0.10) * ember * 0.55;',
       '  float teal = exp(-abs(h - 0.10) * 9.0);',
       '  col += vec3(0.0, 0.35, 0.33) * teal * 0.25;',
+      '  float cover = 0.0;',
       '  if(h > -0.02){',
       '    vec2 cuv = d.xz / max(h + 0.30, 0.08);',
-      '    float t = uTime * 0.008;',
+      '    float t = uTime * 0.005 + sin(uTime * 0.03) * 0.6;',
       '    float cl = fbm(cuv * 1.4 + vec2(t, t * 0.4) + fbm(cuv * 2.2 - t) * 0.8);',
-      '    float cover = smoothstep(0.32, 0.78, cl);',
+      '    cover = smoothstep(0.30, 0.80, cl);',
       '    float shade = smoothstep(0.3, 1.0, fbm(cuv * 3.1 - vec2(t * 1.7, 0.0)));',
-      '    vec3 cloudDark = vec3(0.055, 0.075, 0.085);',
-      '    vec3 cloudLit = vec3(0.16, 0.28, 0.29);',
+      '    vec3 cloudDark = vec3(0.035, 0.052, 0.062);',
+      '    vec3 cloudLit = vec3(0.20, 0.34, 0.35);',
       '    vec3 cloud = mix(cloudDark, cloudLit, shade * 0.7);',
       '    cloud += vec3(0.9, 0.38, 0.12) * ember * 0.6;',
       '    cloud += vec3(0.65, 0.85, 0.95) * uFlash * (0.35 + 0.65 * shade);',
       '    col = mix(col, cloud, cover * smoothstep(-0.02, 0.12, h) * 0.92);',
       '  }',
       '  col += vec3(0.65, 0.85, 0.95) * uFlash * 0.12;',
+      '  if(h > 0.12){',
+      '    vec2 sp = d.xz / (h + 0.45) * 90.0;',
+      '    vec2 cell = floor(sp);',
+      '    float sh = hash(cell);',
+      '    if(sh > 0.978){',
+      '      vec2 c = fract(sp) - 0.5;',
+      '      float tw = 0.5 + 0.5 * sin(uTime * 2.5 + sh * 40.0);',
+      '      float star = (1.0 - smoothstep(0.05, 0.28, length(c))) * tw;',
+      '      col += vec3(0.75, 0.85, 1.0) * star * (1.0 - cover) * smoothstep(0.12, 0.45, h) * 0.55;',
+      '    }',
+      '  }',
       '  col += (hash(d.xy * 541.0) - 0.5) * 0.012;',
       '  gl_FragColor = vec4(col, 1.0);',
       '}'
@@ -4562,16 +4581,19 @@ function build3DEnvironment(){
   var sky = new THREE.Mesh(new THREE.SphereGeometry(480, 24, 16), skyMat);
   scene.add(sky);
   scene.userData.skyMat = skyMat;
-  scene.userData.nextBolt = 6 + Math.random() * 8;
+  scene.userData.nextBolt = 10 + Math.random() * 10;
   // ---------- Cinematic Sky Archipelago: Majestic Floating Island Sanctuaries ----------
   scene.userData.floatingIslands = [];
   var islandGrassMat = new THREE.MeshStandardMaterial({ color: 0x1E4D34, roughness: 0.85, metalness: 0.1 });
+  var islandScrubMat = new THREE.MeshStandardMaterial({ color: 0x14352a, roughness: 0.95, flatShading: true });
   var islandRockMat = new THREE.MeshStandardMaterial({ color: 0x2a3538, roughness: 0.95, flatShading: true });
   var islandFarRockMat = new THREE.MeshStandardMaterial({ color: 0x1c272a, roughness: 1.0, flatShading: true });
+  // Abyss tier: blue-purple silhouette rock, faint arcane emissive so wrecks read against the sky
+  var islandAbyssMat = new THREE.MeshStandardMaterial({ color: 0x27304a, roughness: 1.0, flatShading: true, emissive: 0x11162e, emissiveIntensity: 0.6 });
   var templeColumnMat = new THREE.MeshStandardMaterial({ color: 0xd9d1be, roughness: 0.4, metalness: 0.1 });
   var waterStreamMat = new THREE.MeshBasicMaterial({ color: 0x5ccbc6, transparent: true, opacity: 0.65, depthWrite: false });
 
-  // 12 Majestic Floating Sister Islands in 2 cinematic depth tiers with temple ruins, trees, rubble & activity
+  // 17 Majestic Floating Sister Islands in 3 cinematic depth tiers with temple ruins, trees, rubble & activity
   var islandConfigs = [
     // [radius, distance, angle, baseY, underDepth, hasTemple, hasWaterfall, hasCypress]
     // Tier 1: Mid-distance panoramic islands
@@ -4587,15 +4609,32 @@ function build3DEnvironment(){
     [42, 310, 2.75, 34, 68, true, false, true],
     [30, 270, 3.80, -22, 48, true, true, true],
     [36, 295, 4.70, 22, 58, true, true, true],
-    [28, 250, 5.80, -14, 46, true, false, true]
+    [28, 250, 5.80, -14, 46, true, false, true],
+    // Tier 3: Abyss silhouettes — ultra-far wreckage, heavy fog, blue-purple tint, low-poly
+    [16, 380, 0.15, 40, 30, false, false, false],
+    [20, 405, 1.55, -30, 36, false, false, false],
+    [14, 425, 2.90, 48, 26, false, false, false],
+    [18, 395, 4.40, -38, 32, false, false, false],
+    [15, 415, 5.50, 10, 28, false, false, false]
   ];
+
+  // Deterministic per-island jitter (seeded): vary radius/depth so no two islands repeat
+  islandConfigs = islandConfigs.map(function(cfg, mi){
+    var mr = mulberry(mi * 911 + 17);
+    var c2 = cfg.slice();
+    c2[0] = Math.round(cfg[0] * (0.85 + mr() * 0.35));
+    c2[4] = Math.round(cfg[4] * (0.85 + mr() * 0.30));
+    return c2;
+  });
 
   islandConfigs.forEach(function(cfg, idx){
     var iRad = cfg[0], iDist = cfg[1], iAng = cfg[2], iBaseY = cfg[3], iDepth = cfg[4];
     var hasTemple = cfg[5], hasWater = cfg[6], hasCyp = cfg[7];
     var isFar = iDist > 200;
+    var isAbyss = iDist > 350;
     var iSeed = (idx * 137 + 733) >>> 0;
     var iR = mulberry(iSeed);
+    var islandDebrisList = [];
 
     var ig = new THREE.Group();
     var ix = Math.cos(iAng) * iDist;
@@ -4603,17 +4642,82 @@ function build3DEnvironment(){
     ig.position.set(ix, iBaseY, iz);
     ig.rotation.y = iAng + Math.PI * 0.5;
 
-    // Plateau Grass Top (smooth 18-seg cylinder)
+    if(isAbyss){
+      // Tier 3 abyss silhouette: low-poly grass cap + blue-purple underbelly + crystal + wreck shards.
+      // Heavy fog + flat materials reduce these to faint silhouettes; no temples/trees (silhouette only).
+      var aTop = new THREE.Mesh(new THREE.CylinderGeometry(iRad, iRad * 0.92, 3, 7), islandGrassMat);
+      aTop.position.y = 1.5;
+      ig.add(aTop);
+      var aBot = new THREE.Mesh(new THREE.ConeGeometry(iRad * 0.92, iDepth, 7, 2), islandAbyssMat);
+      aBot.rotation.x = Math.PI;
+      aBot.position.y = -iDepth * 0.5;
+      ig.add(aBot);
+      var aCrys = new THREE.Mesh(new THREE.OctahedronGeometry(Math.max(1.2, iRad * 0.12), 0),
+        idx % 2 === 0 ? MATS.cyanGlow : MATS.amberGlow);
+      aCrys.position.y = -iDepth - 0.5;
+      ig.add(aCrys);
+      // Ancient wreckage shards suggest a drowned archipelago
+      for(var ab = 0; ab < 3; ab++){
+        var aShard = new THREE.Mesh(new THREE.DodecahedronGeometry(0.9 + iR() * 0.9, 0), islandAbyssMat);
+        var aAng = iR() * Math.PI * 2;
+        var aR2 = iRad * (1.2 + iR() * 0.5);
+        aShard.position.set(Math.cos(aAng) * aR2, (iR() - 0.5) * iDepth * 0.7, Math.sin(aAng) * aR2);
+        aShard.rotation.set(iR() * 3, iR() * 3, iR() * 3);
+        ig.add(aShard);
+        islandDebrisList.push({
+          mesh: aShard,
+          rad: aR2,
+          baseY: aShard.position.y,
+          ang: aAng,
+          speed: (0.10 + (ab % 2) * 0.05) * (ab % 2 === 0 ? 1 : -1),
+          phase: iR() * 10,
+          spinX: (iR() - 0.5) * 0.4,
+          spinY: (iR() - 0.5) * 0.4
+        });
+      }
+      scene.add(ig);
+      // Parallax layer: abyss silhouettes breathe almost imperceptibly — depth against nearer tiers
+      scene.userData.floatingIslands.push({
+        group: ig,
+        baseY: iBaseY,
+        phase: idx * 0.85,
+        speed: 0.10 + (idx % 2) * 0.04,
+        amp: 0.5,
+        spin: (idx % 2 === 0 ? 1 : -1) * 0.004,
+        debris: islandDebrisList
+      });
+      return;
+    }
+
+    // Plateau Grass Top (smooth 18-seg cylinder) + wider crown lip for silhouette interest
     var topMesh = new THREE.Mesh(new THREE.CylinderGeometry(iRad, iRad * 0.9, 3.5, 18), islandGrassMat);
     topMesh.position.y = 1.75;
     ig.add(topMesh);
+    var lipMesh = new THREE.Mesh(new THREE.CylinderGeometry(iRad * 1.1, iRad * 0.94, 1.4, 18), islandGrassMat);
+    lipMesh.position.y = 2.9;
+    ig.add(lipMesh);
 
-    // Inverted Organic Rock Underbelly (rugged multi-facet cone)
+    // Inverted Organic Rock Underbelly: rugged cone, or a broken pillar stump on every 4th near island
     var rMat = isFar ? islandFarRockMat : islandRockMat;
-    var botMesh = new THREE.Mesh(new THREE.ConeGeometry(iRad * 0.9, iDepth, 18, 4), rMat);
-    botMesh.rotation.x = Math.PI;
-    botMesh.position.y = -iDepth * 0.5;
+    var botMesh;
+    if(!isFar && idx % 4 === 2){
+      botMesh = new THREE.Mesh(new THREE.CylinderGeometry(iRad * 0.5, iRad * 0.85, iDepth * 0.75, 9), rMat);
+      botMesh.position.y = -iDepth * 0.36;
+      botMesh.rotation.z = 0.06;
+    } else {
+      botMesh = new THREE.Mesh(new THREE.ConeGeometry(iRad * 0.9, iDepth, isFar ? 9 : 18, isFar ? 2 : 4), rMat);
+      botMesh.rotation.x = Math.PI;
+      botMesh.position.y = -iDepth * 0.5;
+    }
     ig.add(botMesh);
+    // Distant rune band: faint arcane glow ringing far-island underbellies
+    if(isFar){
+      var band = new THREE.Mesh(new THREE.TorusGeometry(iRad * 0.68, 0.22, 6, 20),
+        idx % 2 === 0 ? MATS.cyanGlow : MATS.amberGlow);
+      band.rotation.x = Math.PI / 2;
+      band.position.y = -iDepth * 0.25;
+      ig.add(band);
+    }
 
     // Glowing Mana Crystal hanging at the bottom tip
     var crys = new THREE.Mesh(new THREE.OctahedronGeometry(Math.max(1.4, iRad * 0.13), 0),
@@ -4771,9 +4875,20 @@ function build3DEnvironment(){
       ig.add(vine);
     }
 
-    // 4. Dynamic Orbiting Rubble & Debris Shards (4 to 6 floating shards per island!)
-    var islandDebrisList = [];
-    var nDebris = 4 + ((iR() * 3) | 0);
+    // Second vegetation layer: low scrub bushes studding the turf
+    var nScrub = 3 + ((iR() * 3) | 0);
+    for(var sc2 = 0; sc2 < nScrub; sc2++){
+      var scA = iR() * Math.PI * 2;
+      var scD = (0.3 + iR() * 0.5) * iRad;
+      var scrub = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5 + iR() * 0.5, 0), islandScrubMat);
+      scrub.position.set(Math.cos(scA) * scD, 3.9, Math.sin(scA) * scD);
+      scrub.scale.y = 0.7;
+      scrub.rotation.y = iR() * 3;
+      ig.add(scrub);
+    }
+
+    // 4. Dynamic Orbiting Rubble & Debris Shards (4-6 near; 7-10 larger far shards for ancient-wreckage read)
+    var nDebris = isFar ? (7 + ((iR() * 4) | 0)) : (4 + ((iR() * 3) | 0));
     for(var debI = 0; debI < nDebris; debI++){
       var debRad = iRad * (1.15 + debI * 0.14);
       var debMesh;
@@ -4784,6 +4899,7 @@ function build3DEnvironment(){
           debI === 1 ? (idx % 2 === 0 ? MATS.cyanGlow : MATS.amberGlow) : MATS.stone);
       }
       var debBaseY = (iR() - 0.5) * (iDepth * 0.6);
+      if(isFar) debMesh.scale.multiplyScalar(1.5);
       debMesh.position.set(debRad, debBaseY, 0);
       ig.add(debMesh);
       islandDebrisList.push({
@@ -5376,7 +5492,11 @@ function create3DTowerMesh(type){
     var clone = GLTF_CACHE.heliostat.clone();
     clone.scale.set(0.72, 0.72, 0.72);
     root.add(clone);
-    root.userData = { isGltf: true, model: clone, crystal: clone, turn: clone };
+    // NOTE: no `crystal` alias here on purpose. The idle/combat crystal animation
+    // (bob ±0.12, spin, 1.35x flare swell) targets a single floating crystal mesh;
+    // aliasing the whole model made the entire Prism Pillar levitate, jitter and pulse.
+    // muzzleY: heliostat dish focal height in root-local units (model top ~2.39 x 0.72).
+    root.userData = { isGltf: true, model: clone, turn: clone, muzzleY: 1.66 };
     return addTowerBasePlinth(root, type);
   }
   if(type === 'slow' && (GLTF_CACHE.mycelium || GLTF_CACHE.resonance)){
@@ -5463,7 +5583,7 @@ function create3DTowerMesh(type){
       turn.add(prong);
     }
     root.add(turn);
-    root.userData = { crystal: crystal, turn: turn };
+    root.userData = { crystal: crystal, turn: turn, muzzleY: 2.75 };
   }
   else if(type === 'slow'){
     var ob = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.3, 0.85), MATS.stone);
@@ -7139,9 +7259,15 @@ function update(dt){
         applyDamage(best, cur * dt, 'Energy', true);
         best.lastHitType = 'Energy';
         best.heatT = 0.4; // armor heats red-hot
+        // Muzzle anchored to the emitter: crystal/dish height in root-local units
+        // scaled to world (was a fixed +0.85 over a 1.9 base = 2.75, detached from
+        // both the procedural crystal at 3.58 and the GLTF dish at ~2.2).
+        var mScaleY = (t.mesh && t.mesh.scale) ? t.mesh.scale.y : 1;
+        var mBaseY = (t.mesh && t.mesh.position) ? t.mesh.position.y : tWorld.y;
+        var mLocalY = (t.mesh && t.mesh.userData && t.mesh.userData.muzzleY) || 2.75;
         var beamMuzzle = new THREE.Vector3(
           tWorld.x + forwardX * 0.85,
-          tWorld.y + 0.85,
+          mBaseY + mLocalY * mScaleY,
           tWorld.z + forwardZ * 0.85
         );
         spawnPrismBeam(beamMuzzle, bWorld);
@@ -7302,7 +7428,8 @@ function update(dt){
 
   // 3. Wave completion
   if(S.phase === 'combat' && !S.spawnQueue.length && !S.foes.length){
-    var bonus = 15 + S.wave * 2;
+    // Scrap-throttle pass: wave-clear stipend trimmed ~30% (was 15 + wave*2).
+    var bonus = 10 + Math.floor(S.wave * 1.5);
     S.cash += bonus; S.score += S.wave * 25;
     var recovery = (S.glyphBonus || getGlyphBonus(S.glyphs)).waveHeal || 0;
     if(recovery > 0 && S.lives < S.maxLives){
@@ -7409,8 +7536,8 @@ function gameOver(win){
   logGameEvent('game-over', { win: !!win, wave: S.wave, score: S.score });
   sfx(win ? 'victory' : 'defeat');
 
-  // Bank match earnings into permanent Meta-Scrap
-  var bankedScrap = Math.max(5, Math.floor((S.score || 0) * 0.1 + (S.wave || 0) * 8 + (win ? 100 : 0)));
+  // Bank match earnings into permanent Meta-Scrap (throttled: score*0.08 + wave*6 + win 75).
+  var bankedScrap = Math.max(5, Math.floor((S.score || 0) * 0.08 + (S.wave || 0) * 6 + (win ? 75 : 0)));
   addMetaScrap(bankedScrap);
 
   // 1. Time & SPM Calculations
@@ -8042,6 +8169,7 @@ function bindInput(){
     else if(k === 'v') cycleSpeed();
     else if(k === 'g') toggleGlyphShop();
     else if(k === 'k') toggleTacticalClarity();
+    else if(k === 'o') toggleWaveOverlay();
     else if(S && S.paused){
       if(['q', 'w', 'e', 'r', '1', '2', '3', '4', ' ', 'd', 'f', 'u'].indexOf(k) >= 0){
         ev.preventDefault();
@@ -8151,6 +8279,8 @@ function bindInput(){
       sfx('click');
     });
   }
+  var btnWavePanel = document.getElementById('btnWavePanel');
+  if(btnWavePanel) btnWavePanel.addEventListener('click', function(){ audio(); toggleWaveOverlay(); sfx('click'); });
   el.btnUpgradeAll = document.getElementById('btnUpgradeAll');
   if(el.btnUpgradeAll) el.btnUpgradeAll.addEventListener('click', function(){ audio(); upgradeAllTowers(); });
   var btnSettings = document.getElementById('btnSettings');
@@ -9034,6 +9164,19 @@ function hideGlyphShop(){
   GLYPH_SHOP_OPEN = false;
 }
 
+// ---------- Wave Status Overlay (utility-rail layer) ----------
+// The WAVE / PHASE / SCORE chip lives here (not in the topbar). Same element IDs,
+// so refreshHud() keeps working unchanged; only visibility is toggled.
+function toggleWaveOverlay(force){
+  var ov = document.getElementById('waveOverlay');
+  if(!ov) return true;
+  var show = (typeof force === 'boolean') ? force : ov.classList.contains('hidden');
+  ov.classList.toggle('hidden', !show);
+  var btn = document.getElementById('btnWavePanel');
+  if(btn) btn.setAttribute('aria-expanded', String(show));
+  return show;
+}
+
 // ---------- Sanctum Abilities ----------
 function useSanctumAbility(type){
   if(!canMutateGameplay('ability')) return;
@@ -9201,12 +9344,12 @@ function animate(){
     scene.userData.skyMat.uniforms.uTime.value = S.time;
     var uni = scene.userData.skyMat.uniforms;
     if(S.time > (scene.userData.nextBolt || 10)){
-      scene.userData.nextBolt = S.time + 9 + Math.random() * 14;
-      uni.uFlash.value = 0.9 + Math.random() * 0.5;
+      scene.userData.nextBolt = S.time + 12 + Math.random() * 18;
+      uni.uFlash.value = 1.2 + Math.random() * 0.8;
       try { noiseHit(1.4, 0.05, 220); setTimeout(function(){ noiseHit(1.0, 0.035, 160); }, 350); } catch(e){}
     }
     uni.uFlash.value = Math.max(0, uni.uFlash.value - dt * 2.2);
-    if(scene.userData.boltLight) scene.userData.boltLight.intensity = uni.uFlash.value * 3.2;
+    if(scene.userData.boltLight) scene.userData.boltLight.intensity = uni.uFlash.value * 4.5;
   }
   // sanctum core breathes: mana light swells and fades
   if(scene.userData.sanctumLight){
@@ -9897,6 +10040,7 @@ var API = {
   setWeather: setWeather,
   cycleWeather: cycleWeather,
   toggleTacticalClarity: toggleTacticalClarity,
+  toggleWaveOverlay: toggleWaveOverlay,
   isTacticalClarityActive: isTacticalClarityActive,
   setTacticalClarity: setTacticalClarity,
   applyTacticalClarityScenery: applyTacticalClarityScenery,

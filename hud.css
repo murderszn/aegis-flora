@@ -181,7 +181,17 @@ body.director #letterbox-top, body.director #letterbox-bottom { height: 7vh; }
   border: 0; border-bottom: 1px solid rgba(223, 191, 120, 0.22);
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
   position: fixed; top: 0; left: 0; right: 0; z-index: 15;
+  overflow: hidden;
 }
+#topbar::before {
+  /* Full-bleed sanctum artwork behind the bar, faded so stats stay readable */
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: url("assets/aegis_master.jpg") center 30% / cover no-repeat;
+  opacity: 0.22; filter: saturate(0.9) brightness(0.85);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+}
+#topbar > * { position: relative; z-index: 1; }
 #topbar::after { display: none; }
 
 .topbar-left {
@@ -204,13 +214,13 @@ body.director #letterbox-top, body.director #letterbox-bottom { height: 7vh; }
 
 /* Middle Resource Cards: Full Bleed Visual Art Modules */
 #topbar .resource-group {
-  display: flex; align-items: stretch; gap: 8px; width: auto; height: 50px;
+  display: flex; align-items: stretch; gap: 10px; width: auto; height: 50px;
   justify-self: center; background: none; border: 0; box-shadow: none; backdrop-filter: none;
 }
 #topbar .stat {
   position: relative; isolation: isolate; overflow: hidden;
-  display: flex; flex: 0 0 152px; width: 152px; align-items: center; justify-content: center;
-  height: 100%; padding: 0 12px; border-radius: 4px;
+  display: flex; flex: 0 0 220px; width: 220px; align-items: center; justify-content: center;
+  height: 100%; padding: 0 20px; border-radius: 5px;
   border: 1px solid rgba(223, 191, 120, 0.45);
   background: #09252a;
   box-shadow: inset 0 1px rgba(255, 240, 200, 0.12), 0 6px 16px rgba(0,0,0,0.35);
@@ -272,8 +282,8 @@ body.director #letterbox-top, body.director #letterbox-bottom { height: 7vh; }
   display: flex; align-items: center; gap: 12px; justify-self: end;
 }
 
-/* Wave status chip: compact WAVE / PHASE / SCORE readout in the top bar.
-   Replaces the removed #field-panel overlay; the primary wave counter lives here. */
+/* Wave status chip: compact WAVE / PHASE / SCORE readout.
+   Lives inside #waveOverlay (utility-rail layer), not in the topbar. */
 .wave-chip {
   display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px;
   border: 1px solid rgba(223, 191, 120, 0.3); border-radius: 5px;
@@ -285,6 +295,27 @@ body.director #letterbox-top, body.director #letterbox-bottom { height: 7vh; }
 .wave-chip-wave b, .wave-chip-score b { color: #fff6df; font-size: 12px; letter-spacing: 0.5px; }
 .wave-chip-phase { color: #dfbf78; }
 .wave-chip-score b { color: #ffe19c; }
+
+/* Wave status overlay: containerless floating type docked left of the utility rail.
+   No panel, no glass — bare readout with shadow for legibility over the battlefield.
+   Toggled via #btnWavePanel or the O key; hidden state is display:none. */
+#waveOverlay {
+  position: fixed; top: 78px; right: 80px; z-index: 29;
+  display: flex; flex-direction: column; gap: 2px; align-items: flex-end;
+  background: none; border: 0; box-shadow: none;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.9), 0 1px 4px rgba(0,0,0,0.9);
+  pointer-events: none;
+}
+#waveOverlay.hidden { display: none; }
+.wave-overlay-kicker {
+  color: rgba(223, 191, 120, 0.75); font: 800 8px var(--font-stats); letter-spacing: 2px;
+}
+#waveOverlay .wave-chip {
+  height: auto; padding: 0; gap: 10px;
+  background: none; border: 0; box-shadow: none;
+  font-size: 11px;
+}
+#waveOverlay .wave-chip-wave b, #waveOverlay .wave-chip-score b { font-size: 14px; }
 
 /* Start Wave Button: Spacebar-shaped keycap overlay hovering above the bottom HUD.
    Only pops up when the next wave is available (build phase) or at game start. */
@@ -541,7 +572,7 @@ body.director #letterbox-top, body.director #letterbox-bottom { height: 7vh; }
 /* ==========================================================================
    4. Bottom Tactical Dock (#drawer): Radar, Arsenal & Abilities
    (Removed overlays: #field-panel and #threat-announcement were deleted in the
-   HUD polish pass. The wave counter lives in the topbar .wave-chip.)
+   HUD polish pass. The wave counter lives in #waveOverlay (utility-rail layer).)
    ========================================================================== */
 #drawer {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 14px;
@@ -759,61 +790,62 @@ body.director #letterbox-top, body.director #letterbox-bottom { height: 7vh; }
 
 #glyphShop {
   position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); z-index: 60;
-  width: min(1050px, calc(100vw - 34px)); max-height: min(820px, calc(100vh - 92px)); overflow: auto;
+  width: min(1050px, calc(100vw - 34px)); max-height: min(860px, calc(100vh - 36px)); overflow-y: auto;
   border: 1px solid rgba(223, 191, 120, 0.72); border-top: 3px solid #dfbf78;
   border-radius: 10px; background: radial-gradient(circle at 50% -20%, rgba(48,100,87,.3), transparent 48%), linear-gradient(155deg, rgba(12, 36, 40, .99), rgba(5, 18, 22, .99));
   color: #f3ead4; box-shadow: 0 0 0 100vmax rgba(2,10,12,.78), 0 30px 90px rgba(0,0,0,.85), inset 0 1px rgba(255,255,255,.1); backdrop-filter: blur(18px);
 }
-.glyph-shop-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 22px 26px 16px; border-bottom: 1px solid rgba(223,191,120,.18); }
-#glyphShop .glyph-kicker { display: block; margin-bottom: 4px; color: #75dac1; font: 700 9px var(--font-stats); letter-spacing: 2.2px; }
-#glyphShop h3 { margin: 0 0 4px; font: normal 27px var(--font-display); letter-spacing: .7px; color: #ffe19c; }
-#glyphShop p { margin: 0; color: #a9beb7; font-size: 10.5px; line-height: 1.4; }
-.glyph-close-x { border: 0; background: transparent; color: #859f98; font: 300 27px/1 sans-serif; cursor: pointer; }
+/* Compact doctrine layout: the full 3-branch tree must fit without inner scroll. */
+.glyph-shop-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 12px 18px 10px; border-bottom: 1px solid rgba(223,191,120,.18); }
+#glyphShop .glyph-kicker { display: block; margin-bottom: 2px; color: #75dac1; font: 700 9px var(--font-stats); letter-spacing: 1.6px; }
+#glyphShop h3 { margin: 0 0 2px; font: normal 20px var(--font-display); letter-spacing: .5px; color: #ffe19c; }
+#glyphShop p { margin: 0; color: #a9beb7; font-size: 10px; line-height: 1.35; }
+.glyph-close-x { border: 0; background: transparent; color: #859f98; font: 300 24px/1 sans-serif; cursor: pointer; }
 .glyph-close-x:hover { color: #ffe19c; }
-.glyph-ledger { display: flex; align-items: stretch; gap: 1px; margin: 14px 26px 0; overflow: hidden; border: 1px solid rgba(101,216,190,.22); border-radius: 6px; background: rgba(0,0,0,.22); }
-.glyph-ledger > span { display: flex; flex-direction: column; justify-content: center; min-width: 160px; padding: 10px 14px; border-right: 1px solid rgba(101,216,190,.15); }
-.glyph-ledger small { color: #779991; font: 700 8px var(--font-stats); letter-spacing: 1.2px; }
-.glyph-ledger b { color: #70f0d4; font: 700 17px var(--font-stats); }
-.glyph-ledger .glyph-ledger-note { flex: 1; align-items: flex-end; color: #829c95; font: 9px var(--font-stats); text-transform: uppercase; letter-spacing: .7px; }
-.glyph-lock-banner { margin: 10px 26px 0; padding: 7px 10px; border-left: 3px solid #ff8057; background: rgba(255,107,53,.13); color: #ffad8d; font: 10px var(--font-stats); }
-.glyph-tree { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 14px 18px 20px; }
+.glyph-ledger { display: flex; align-items: stretch; gap: 1px; margin: 8px 18px 0; overflow: hidden; border: 1px solid rgba(101,216,190,.22); border-radius: 6px; background: rgba(0,0,0,.22); }
+.glyph-ledger > span { display: flex; flex-direction: column; justify-content: center; min-width: 140px; padding: 6px 12px; border-right: 1px solid rgba(101,216,190,.15); }
+.glyph-ledger small { color: #779991; font: 700 8px var(--font-stats); letter-spacing: 1px; }
+.glyph-ledger b { color: #70f0d4; font: 700 14px var(--font-stats); }
+.glyph-ledger .glyph-ledger-note { flex: 1; align-items: flex-end; color: #829c95; font: 9px var(--font-stats); text-transform: uppercase; letter-spacing: .6px; }
+.glyph-lock-banner { margin: 6px 18px 0; padding: 6px 10px; border-left: 3px solid #ff8057; background: rgba(255,107,53,.13); color: #ffad8d; font: 10px var(--font-stats); }
+.glyph-tree { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 8px 12px 12px; }
 .glyph-branch { --branch:#dfbf78; position: relative; overflow: hidden; border: 1px solid rgba(223,191,120,.2); border-radius: 8px; background: linear-gradient(180deg, rgba(15,46,48,.8), rgba(4,19,23,.86)); }
 .glyph-branch-forge { --branch:#f0b86b; }
 .glyph-branch-grove { --branch:#65d397; }
 .glyph-branch-solar { --branch:#6ccde8; }
 .glyph-branch::before { content:""; position:absolute; inset:0; pointer-events:none; background: radial-gradient(circle at 50% 0, color-mix(in srgb, var(--branch) 15%, transparent), transparent 35%); }
-.glyph-branch-head { position: relative; display: flex; align-items: center; gap: 9px; padding: 13px 14px 12px; border-bottom: 1px solid color-mix(in srgb, var(--branch) 26%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--branch) 9%, transparent), transparent); }
-.glyph-branch-sigil { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid color-mix(in srgb, var(--branch) 55%, transparent); border-radius: 50%; color: var(--branch); font-size: 17px; box-shadow: 0 0 16px color-mix(in srgb, var(--branch) 16%, transparent); }
-.glyph-branch-head h4 { margin: 0 0 2px; color: #f7ecd3; font: 16px var(--font-display); }
-.glyph-branch-head p { color: #77958d !important; font-size: 8.5px !important; text-transform: uppercase; letter-spacing: .5px; }
-.glyph-branch-head strong { margin-left: auto; color: var(--branch); font: 700 16px var(--font-stats); }
+.glyph-branch-head { position: relative; display: flex; align-items: center; gap: 8px; padding: 8px 10px 7px; border-bottom: 1px solid color-mix(in srgb, var(--branch) 26%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--branch) 9%, transparent), transparent); }
+.glyph-branch-sigil { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid color-mix(in srgb, var(--branch) 55%, transparent); border-radius: 50%; color: var(--branch); font-size: 14px; box-shadow: 0 0 16px color-mix(in srgb, var(--branch) 16%, transparent); }
+.glyph-branch-head h4 { margin: 0 0 1px; color: #f7ecd3; font: 13px var(--font-display); }
+.glyph-branch-head p { color: #77958d !important; font-size: 8px !important; text-transform: uppercase; letter-spacing: .4px; }
+.glyph-branch-head strong { margin-left: auto; color: var(--branch); font: 700 14px var(--font-stats); }
 .glyph-branch-head strong small { font-size: 7px; color: #78958d; }
-.glyph-path { position: relative; display: flex; flex-direction: column; gap: 16px; padding: 16px 12px 18px; }
-.glyph-path::before { content:""; position:absolute; top:12px; bottom:20px; left:31px; width:2px; background: linear-gradient(var(--branch), rgba(99,145,132,.12)); opacity:.34; }
-.glyph-node { position: relative; min-height: 103px; padding: 10px 10px 9px 55px; border: 1px solid rgba(126,157,146,.22); border-radius: 7px; background: linear-gradient(130deg, rgba(20,45,45,.98), rgba(7,25,29,.98)); box-shadow: 0 7px 18px rgba(0,0,0,.22); transition: border-color .18s, transform .18s, box-shadow .18s; }
+.glyph-path { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 8px 10px 10px; }
+.glyph-path::before { content:""; position:absolute; top:8px; bottom:14px; left:26px; width:2px; background: linear-gradient(var(--branch), rgba(99,145,132,.12)); opacity:.34; }
+.glyph-node { position: relative; padding: 7px 8px 7px 46px; border: 1px solid rgba(126,157,146,.22); border-radius: 7px; background: linear-gradient(130deg, rgba(20,45,45,.98), rgba(7,25,29,.98)); box-shadow: 0 7px 18px rgba(0,0,0,.22); transition: border-color .18s, transform .18s, box-shadow .18s; }
 .glyph-node:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--branch) 48%, transparent); }
 .glyph-node.locked { filter: saturate(.45); opacity: .58; }
 .glyph-node.invested, .glyph-node.maxed { border-color: color-mix(in srgb, var(--branch) 58%, transparent); box-shadow: inset 0 0 24px color-mix(in srgb, var(--branch) 7%, transparent), 0 8px 20px rgba(0,0,0,.28); }
-.glyph-node.capstone { margin-top: 7px; border-width: 2px; background: radial-gradient(circle at 0 0, color-mix(in srgb, var(--branch) 15%, transparent), transparent 55%), rgba(5,23,27,.98); }
-.glyph-node.capstone::before { content:"CAPSTONE"; position:absolute; right:8px; top:7px; color:var(--branch); font:700 6.5px var(--font-stats); letter-spacing:1.3px; }
+.glyph-node.capstone { margin-top: 4px; border-width: 2px; background: radial-gradient(circle at 0 0, color-mix(in srgb, var(--branch) 15%, transparent), transparent 55%), rgba(5,23,27,.98); }
+.glyph-node.capstone::before { content:"CAPSTONE"; position:absolute; right:8px; top:6px; color:var(--branch); font:700 6.5px var(--font-stats); letter-spacing:1.1px; }
 .glyph-node-top { display: flex; align-items: center; min-width: 0; }
-.glyph-icon { position: absolute; left: 10px; top: 11px; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid color-mix(in srgb, var(--branch) 44%, transparent); border-radius: 50%; background: #102a2d; color: var(--branch); font-size: 17px; z-index: 1; box-shadow: 0 0 0 4px #0a2024, 0 0 13px color-mix(in srgb, var(--branch) 14%, transparent); }
-.glyph-node.invested .glyph-icon, .glyph-node.maxed .glyph-icon { background: color-mix(in srgb, var(--branch) 22%, #0b2428); box-shadow: 0 0 0 4px #0a2024, 0 0 20px color-mix(in srgb, var(--branch) 30%, transparent); }
-.glyph-node-top b { display: block; padding-right: 48px; color: #f5edd8; font-size: 11px; line-height: 1.2; }
-.glyph-node-top small { color: #718e87; font: 7.5px var(--font-stats); letter-spacing: .7px; }
-#glyphShop .glyph-node > p { min-height: 27px; margin: 5px 0 7px; color: #9fb7b0; font-size: 8.7px; line-height: 1.35; }
+.glyph-icon { position: absolute; left: 8px; top: 7px; display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid color-mix(in srgb, var(--branch) 44%, transparent); border-radius: 50%; background: #102a2d; color: var(--branch); font-size: 14px; z-index: 1; box-shadow: 0 0 0 3px #0a2024, 0 0 13px color-mix(in srgb, var(--branch) 14%, transparent); }
+.glyph-node.invested .glyph-icon, .glyph-node.maxed .glyph-icon { background: color-mix(in srgb, var(--branch) 22%, #0b2428); box-shadow: 0 0 0 3px #0a2024, 0 0 20px color-mix(in srgb, var(--branch) 30%, transparent); }
+.glyph-node-top b { display: block; padding-right: 40px; color: #f5edd8; font-size: 10.5px; line-height: 1.2; }
+.glyph-node-top small { color: #718e87; font: 7.5px var(--font-stats); letter-spacing: .6px; }
+#glyphShop .glyph-node > p { margin: 3px 0 5px; color: #9fb7b0; font-size: 8.2px; line-height: 1.35; }
 .glyph-pips { display: flex; gap: 3px; }
 .glyph-pips i { flex: 1; max-width: 24px; height: 3px; border-radius: 2px; background: rgba(126,157,146,.19); }
 .glyph-pips i.filled { background: var(--branch); box-shadow: 0 0 5px color-mix(in srgb, var(--branch) 45%, transparent); }
-.glyph-buy { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 8px; padding: 5px 7px; border: 1px solid rgba(126,157,146,.22); border-radius: 3px; background: rgba(3,15,18,.7); color: #66817a; font: 7.5px var(--font-stats); }
+.glyph-buy { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 5px; padding: 4px 6px; border: 1px solid rgba(126,157,146,.22); border-radius: 3px; background: rgba(3,15,18,.7); color: #66817a; font: 7.5px var(--font-stats); }
 .glyph-buy b { color: inherit; font-size: 9px; }
 .glyph-buy.ready { border-color: color-mix(in srgb, var(--branch) 48%, transparent); color: #f4e3bd; cursor: pointer; }
 .glyph-buy.ready:hover { background: color-mix(in srgb, var(--branch) 16%, #071b20); box-shadow: 0 0 13px color-mix(in srgb, var(--branch) 14%, transparent); }
-.glyph-requirement, .glyph-maxed { display: block; margin-top: 8px; color: #728d86; font: 7.3px/1.35 var(--font-stats); }
+.glyph-requirement, .glyph-maxed { display: block; margin-top: 5px; color: #728d86; font: 7.3px/1.35 var(--font-stats); }
 .glyph-maxed { color: var(--branch); letter-spacing: 1px; }
-.glyph-shop-foot { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid rgba(223,191,120,.2); background: rgba(5,19,22,.97); }
-.glyph-shop-foot > span { color: #69857e; font: 8px var(--font-stats); text-transform: uppercase; letter-spacing: .8px; }
-.glyph-shop-foot .btn { min-width: 150px; padding: 8px 13px; border-color: rgba(223,191,120,.35); color: #ffe19c; }
+.glyph-shop-foot { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 8px 14px; border-top: 1px solid rgba(223,191,120,.2); background: rgba(5,19,22,.97); }
+.glyph-shop-foot > span { color: #69857e; font: 8px var(--font-stats); text-transform: uppercase; letter-spacing: .7px; }
+.glyph-shop-foot .btn { min-width: 130px; padding: 7px 12px; border-color: rgba(223,191,120,.35); color: #ffe19c; }
 .glyph-shop-foot #btnCloseGlyphs { justify-self: end; }
 .glyph-respec { justify-self: start; text-align: left; }
 .glyph-respec small { display: block; color: #718e87; font-size: 7px; }
@@ -1022,7 +1054,6 @@ body.director #letterbox-top, body.director #letterbox-bottom { height: 7vh; }
   #topbar .logo-mark { width: 22px; height: 26px; }
   .topbar-right { grid-column: 2 / 4; grid-row: 1; justify-self: end; gap: 6px; }
   .wave-chip { height: 36px; padding: 0 8px; gap: 6px; font-size: 9px; }
-  .wave-chip-score { display: none; }
   #topbar .command-group { min-width: 0; }
   #topbar #btnWave { height: 36px; font-size: 9.5px; padding: 0 6px; letter-spacing: 0; min-width: 100px; }
   /* Small screens: sidebar becomes a toggleable bottom sheet so the
@@ -1093,7 +1124,6 @@ body.director #letterbox-top, body.director #letterbox-bottom { height: 7vh; }
 }
 .topbar-left { gap: 14px; }
 .topbar-left .brand { flex: 0 0 auto; }
-.topbar-left .wave-chip { flex: 0 1 auto; }
 .wave-chip { height: 44px; padding: 0 12px; gap: 9px; }
 
 .topbar-right { gap: 9px; min-width: 0; }
@@ -1159,16 +1189,14 @@ body.director #letterbox-top, body.director #letterbox-bottom { height: 7vh; }
   .topbar-left { gap: 8px; }
   .topbar-left .brand-title { font-size: 13px; letter-spacing: 2.4px; }
   .wave-chip { padding: 0 8px; gap: 6px; font-size: 8.5px; }
-  .wave-chip-score { display: none; }
-  #topbar .stat { flex-basis: 132px; width: 132px; }
+  #topbar .stat { flex-basis: 190px; width: 190px; }
   #topbar #btnWave.btn-wave-heroic { min-width: 148px; padding-inline: 9px; }
 }
 
 @media (max-width: 1120px) {
   #topbar { grid-template-columns: minmax(205px, 1fr) auto minmax(330px, 1fr); }
   .topbar-left .brand-title { display: none; }
-  .wave-chip-phase { display: none; }
-  #topbar .stat { flex-basis: 108px; width: 108px; padding-inline: 6px; }
+  #topbar .stat { flex-basis: 150px; width: 150px; padding-inline: 6px; }
   .topbar-tools { gap: 3px; }
   .hud-icon-btn { width: 30px; height: 32px; }
   #topbar #btnWave.btn-wave-heroic { min-width: 118px; }
@@ -1182,7 +1210,6 @@ body.director #letterbox-top, body.director #letterbox-bottom { height: 7vh; }
   }
   .topbar-left { grid-column: 1; grid-row: 1; }
   .topbar-left .brand { display: none; }
-  .topbar-left .wave-chip { height: 34px; }
   .topbar-right { grid-column: 2; grid-row: 1; gap: 4px; }
   .topbar-tools { gap: 2px; padding: 2px; }
   .hud-icon-btn { width: 27px; height: 30px; }
