@@ -184,5 +184,27 @@ const placedBlocker = S2.towers.find(t => t.type === 'blocker');
 assert(placedBlocker, 'Placed blocker tower must exist');
 assert.strictEqual(placedBlocker.isBlocker, true, 'Placed blocker must have isBlocker flag');
 
+console.log('6. Testing specialization prerequisites, capstones, and build effects...');
+assert.strictEqual(Object.keys(API.GLYPH_BRANCHES).length, 3, 'Glyph tree must expose three specialization doctrines');
+assert.strictEqual(API.getGlyphUnlockState('precision').unlocked, false, 'Petal Calibration must be gated behind Foundry rank 3');
+API.setMetaScrap(20000);
+assert.strictEqual(API.purchaseGlyph('foundry'), true, 'Third Foundry rank should purchase');
+assert.strictEqual(API.getGlyphUnlockState('precision').unlocked, true, 'Petal Calibration should unlock at Foundry rank 3');
+
+const solarBuild = API.getGlyphBonus({ attune: 5, deeproots: 3, solarlens: 4, aetherflow: 2, sunheart: 1 });
+assert.strictEqual(solarBuild.manaRegen, 5.6, 'Solar Attunement should increase mana regeneration');
+assert.strictEqual(solarBuild.rootDuration, 5, 'Deep Roots should extend Overgrowth duration');
+assert.strictEqual(solarBuild.flareDamage, 1120, 'Solar Lens should amplify Solar Flare damage');
+assert.strictEqual(solarBuild.cooldownMult, 0.88, 'Aetherflow should shorten ability cooldowns');
+assert.strictEqual(solarBuild.abilityCostMult, 0.8, 'Sunheart capstone should lower ability costs');
+
+console.log('7. Testing full-refund between-wave respec...');
+const investment = API.getGlyphInvestment();
+const bankBeforeRespec = API.getMetaScrap();
+const refund = API.respecGlyphs();
+assert.strictEqual(refund, investment, 'Respec should refund the complete invested amount');
+assert.strictEqual(API.getMetaScrap(), bankBeforeRespec + investment, 'Refund must return to banked Meta-Scrap');
+assert(Object.values(API.loadGlyphs()).every(level => level === 0), 'Respec must clear every glyph rank');
+
 console.log('--- ALL VERDANT GLYPH PROGRESSION TESTS PASSED! ---');
 process.exit(0);

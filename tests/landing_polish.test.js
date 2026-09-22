@@ -40,12 +40,12 @@ pages.forEach(function (page) {
   assert.ok(html.includes('id="chapter-command"'), 'finale section must still exist');
   console.log('✓ Hero buttons removed, finale CTA intact');
 
-  // 1. Act I trailer teaser links at the mid-page cinematic section
-  assert.ok(html.includes('class="hero-trailer-teaser"'), 'trailer teaser element must exist');
-  assert.ok(html.includes('href="#gameplay-cinematic"'), 'teaser must link to #gameplay-cinematic');
-  assert.ok(html.includes('id="gameplay-cinematic"'), 'cinematic section target must exist');
-  assert.ok(html.includes('class="hero-trailer-play"'), 'teaser must include a play affordance');
-  console.log('✓ Trailer teaser present and wired to #gameplay-cinematic');
+  // 1. The hero trailer teaser has been intentionally removed; the cinematic section remains.
+  assert.ok(!html.includes('hero-trailer-teaser'), 'hero trailer teaser must be removed');
+  assert.ok(!html.includes('Watch the trailer'), 'hero trailer teaser label must be removed');
+  assert.ok(!html.includes('Official gameplay · 60 FPS'), 'hero trailer teaser metadata must be removed');
+  assert.ok(html.includes('id="gameplay-cinematic"'), 'cinematic section target must remain');
+  console.log('✓ Hero trailer teaser removed; cinematic section remains');
 
   // 2. Gallery filters cover every tile with no orphans
   const filters = ['all', 'render', 'asset', 'concept'];
@@ -64,15 +64,11 @@ pages.forEach(function (page) {
   });
   console.log('✓ Filters cover all ' + itemSrcs.length + ' tiles ' + JSON.stringify(buckets));
 
-  // Every gallery image and the teaser poster must resolve on disk
-  const posterRe = /class="hero-trailer-thumb"[\s\S]*?<img src="([^"]+)"/;
-  const poster = posterRe.exec(html);
-  assert.ok(poster, 'teaser poster img must exist');
-  const diskTargets = itemSrcs.concat([poster[1]]);
-  diskTargets.forEach(function (src) {
+  // Every gallery image must resolve on disk
+  itemSrcs.forEach(function (src) {
     assert.ok(fs.existsSync(src), 'asset must exist on disk: ' + src);
   });
-  console.log('✓ All ' + diskTargets.length + ' referenced images exist on disk');
+  console.log('✓ All ' + itemSrcs.length + ' gallery images exist on disk');
 
   // 3. Lightbox accessibility: focus trap, focus restore, keyboard tiles, Escape
   assert.ok(html.includes('function openLightbox('), 'openLightbox must exist');

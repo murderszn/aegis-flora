@@ -228,7 +228,7 @@ aegis-flora/
 │           ├── Enemies/CreepAgent.cs         # Creep movement & combat
 │           ├── Combat/BallisticProjectile.cs  # Parabolic artillery arcs
 │           └── UI/DotaHUDController.cs       # HUD hotkeys & resource UI
-└── desktop/                      # Electron macOS packaging (planned)
+└── desktop/                      # Electron Windows + macOS packaging (v1.1.0)
     ├── main.js                   # Electron main process
     ├── package.json              # Build config & electron-builder
     └── build/                    # Icons, entitlements, signing
@@ -357,15 +357,22 @@ See [`SHIPPING_FEATURE_MATRIX.md`](./SHIPPING_FEATURE_MATRIX.md) for the verifie
 
 ---
 
-## 🖥 Desktop Distribution (macOS)
+## 🖥 Desktop Distribution (Windows & macOS, v1.1.0)
 
-An Electron-based macOS `.app` and `.dmg` installer is planned for standalone desktop distribution. See the [`desktop/`](./desktop/) directory for the packaging configuration (in progress).
+Standalone desktop releases ship through the Electron wrapper in [`desktop/`](./desktop/)
+(see its README for full build/install instructions):
+
+- **Windows 10 (1909+) / 11 x64** — NSIS installer with desktop + Start Menu
+  shortcuts, plus a portable ZIP that doubles as the Steam depot upload.
+  (Windows ARM64 unsupported — x64 emulation only.)
+- **macOS 12+ arm64 + x64** — per-architecture drag-to-Applications DMGs.
 
 The desktop build wraps the web client in a native window with:
-- Hardware-accelerated WebGL2 rendering
+- Hardware-accelerated WebGL2 rendering (D3D11/ANGLE on Windows, Metal on macOS)
+- Gamepad support, localStorage saves, and Crashpad diagnostics
 - Fullscreen & borderless window modes
-- Native macOS menu bar integration
-- Code-signed `.dmg` installer with drag-to-Applications layout
+- Native menu bar integration
+- Hardened runtime; Apple signing/notarization applied when CI secrets are configured
 
 ---
 

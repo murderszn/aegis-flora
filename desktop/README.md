@@ -1,120 +1,198 @@
 # Aegis Flora - Desktop Release Packaging (Windows & macOS)
 
-This directory contains the desktop application packaging setup for **Aegis Flora**, powered by Electron and `electron-builder`.
+Current release: **1.1.0**. Electron + `electron-builder` wrap the static
+WebGL game (`game.html`) in a native window with GPU acceleration, gamepad
+support, localStorage saves, and Crashpad diagnostics.
 
-Aegis Flora ships with a **Windows-first Steam release architecture** while maintaining parity for macOS.
+---
+
+## Supported platforms
+
+| Platform | Versions | Architectures | Notes |
+|---|---|---|---|
+| macOS | 12 Monterey or newer | arm64 (Apple Silicon), x64 (Intel) | Separate per-arch DMGs |
+| Windows | 10 version 1909+, 11 | x64 | NSIS installer + portable ZIP |
+| Windows ARM64 | — | — | **Unsupported.** ARM devices must use x64 emulation; ARM64 is not a build target. |
 
 ---
 
 ## Prerequisites
 
-- **Node.js**: v18.0.0 or higher (v20+ LTS recommended)
-- **Windows**: Windows 10/11 x64, PowerShell 7+ or Command Prompt. (For building Windows binaries from source or in CI)
-- **macOS**: macOS 12+ (for building DMG with Xcode command line tools and `iconutil`)
+- **Node.js**: v18+ (v20+ LTS recommended)
+- **macOS builds**: macOS 12+ with Xcode command line tools (for `iconutil`/`sips`)
+- **Windows builds**: build on Windows (`windows-latest` in CI); cross-building
+  Windows targets from macOS/Linux requires Wine and is not supported here
 
 ---
 
-## Getting Started
+## Development commands
 
-1. Navigate to the `desktop` directory:
-   ```bash
-   cd desktop
-   ```
+```bash
+cd desktop
+npm install        # first run (creates package-lock.json; enables `npm ci`)
+npm start          # launch the game in desktop development mode
+npm run pack       # unpacked local build in dist/ (no installer, no signing)
+```
 
-2. Install runtime and build dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Launch the game locally in desktop development mode:
-   ```bash
-   npm start
-   ```
+`npm run pack` output (`dist/mac-arm64/`, `dist/win-unpacked/`, …) is the
+fastest way to test the packaged layout: run the app binary directly from
+that folder. Icon files are optional for `pack`/`start` (falls back to the
+default Electron icon).
 
 ---
 
-## Build Targets
+## Production build commands
 
-The packaging pipeline produces distribution-ready binaries for both platforms:
-
-### 1. Windows (Primary Steam Target)
 ```bash
-npm run build:win
+cd desktop
+npm run check-icons   # fail fast if build/icon.ico / build/icon.icns are missing
+npm run build:win     # Windows x64: NSIS installer + portable ZIP
+npm run build:mac     # macOS: arm64 + x64 DMGs
+npm run build:all     # both platforms (where the host supports them)
 ```
-Produces:
-- **`AegisFlora-Setup-1.0.0.exe`**: Standalone NSIS installer with desktop shortcut and uninstaller.
-- **`AegisFlora-1.0.0-win.zip`**: Unpacked portable binary directory ready for direct integration into the **SteamPipe Content Builder** depot (`ContentBuilder/content/`).
 
-### 2. macOS
-```bash
-npm run build:mac
-```
-Produces:
-- **`Aegis Flora-1.0.0.dmg`**: Drag-and-drop macOS disk image with Applications link and code signing hooks.
+Expected output files in `desktop/dist/` (version/arch come from
+`artifactName` in `package.json`):
 
-### 3. Dual-Platform Build (Cross-platform)
-```bash
-npm run build:all
-```
+- `Aegis Flora-1.1.0-mac-arm64.dmg` — Apple Silicon drag-to-Applications image
+- `Aegis Flora-1.1.0-mac-x64.dmg` — Intel drag-to-Applications image
+- `Aegis Flora-1.1.0-win-x64.exe` (NSIS setup) — exact setup name is
+  `Aegis Flora-1.1.0-win-x64.exe`
+- `Aegis Flora-1.1.0-win-x64.zip` — portable build for Steam depot upload
+- `win-unpacked/` — unpacked portable tree used directly as the Steam depot
+  source (launch executable: `AegisFlora.exe`)
 
 ---
 
-## Steamworks Integration Plan & Paths
+## How to test the unpacked application
+
+1. `npm run pack` (macOS) or `npm run build:win` then look in
+   `dist/win-unpacked/` (Windows).
+2. Launch the app binary directly (`Aegis Flora.app` / `AegisFlora.exe`) —
+   no install step needed.
+3. Confirm: `game.html` loads, WebGL renders (check renderer in DevTools),
+   audio plays on first input gesture, a gamepad registers via the Gamepad
+   API, and settings/high scores survive a window reload (localStorage).
+
+## How to install the DMG (macOS)
+
+1. Open `Aegis Flora-1.1.0-mac-{arm64,x64}.dmg` (match your chip).
+2. Drag **Aegis Flora** onto the **Applications** link.
+3. First launch of an unsigned build: right-click → Open (Gatekeeper), or
+   `xattr -d com.apple.quarantine "/Applications/Aegis Flora.app"`.
+4. Signed + notarized releases (see below) open normally on double-click.
+
+## How to install the Windows EXE
+
+1. Run the NSIS installer (`Aegis Flora-*-win-x64.exe`).
+2. Pick Standard or a custom installation directory when prompted.
+3. Launch from the Desktop or Start Menu shortcut.
+4. Uninstall via **Settings → Apps → Aegis Flora → Uninstall** (also removes
+   shortcuts; per-user save data under `%APPDATA%\Aegis Flora` is preserved).
+
+## Steam depot usage (Windows portable build)
 
 ### Steam Depot Structure
-For deployment via the Steamworks Partner portal:
-1. Run `npm run build:win` (or `npm run pack`).
-2. Point your Steam depot script (`depot_<depot_id>.vdf`) to the generated portable folder in `dist/win-unpacked/`:
+
+1. Run `npm run build:win`.
+2. Upload `dist/win-unpacked/` as the depot content:
+   ```vdf
+   "DepotBuildConfig"
+   {
+     "DepotID" "<DEPOT_ID>"
+     "FileMapping"
+     {
+       "LocalPath" "desktop\\dist\\win-unpacked\\*"
+       "DepotPath" "."
+       "recursive" "1"
+     }
+   }
    ```
-   "DepotPath" "."
-   "LocalPath" "path/to/desktop/dist/win-unpacked/*"
-   "Recursive" "1"
-   ```
-3. Set the launch executable in Steamworks App Config to `AegisFlora.exe`.
+3. Set the Steamworks launch executable to `AegisFlora.exe`.
+4. The `.zip` artifact is the same portable tree in a single file — useful
+   for DRM-free distribution and depot staging.
 
 ### Save Path & Steam Cloud Sync Configuration
-Aegis Flora persists player state (unlocked Verdant Glyphs, audio/clarity preferences, high scores, wave records) via browser `localStorage` isolated within the Electron application data directory.
 
-- **Windows Location**:
-  `%APPDATA%\Aegis Flora\Local Storage\leveldb\`
-- **macOS Location**:
-  `~/Library/Application Support/Aegis Flora/Local Storage/leveldb/`
-- **Steam Cloud Auto-Cloud Configuration**:
-  - Root: `WinAppDataRoaming`
-  - Subdirectory: `Aegis Flora`
-  - Pattern: `*`
-  - OS: `Windows` (and mapped for `MacOS`)
+Saves (`aegis_glyphs`, `aegis_settings`, `aegis_save_v1`, …) live in
+`localStorage`, persisted under the Electron user-data directory:
+
+- **Windows**: `%APPDATA%\Aegis Flora\Local Storage\leveldb\`
+- **macOS**: `~/Library/Application Support/Aegis Flora/Local Storage/leveldb/`
+- **Steam Auto-Cloud**: root `WinAppDataRoaming`, subdirectory `Aegis Flora`,
+  pattern `*` (map macOS path equivalently).
 
 ### Steam Input & Gamepad Support
-- Electron command-line flags include `--enable-gamepad-button-axis-events` to ensure standard Chromium Gamepad API access.
-- Works natively with Xbox 360/One/Series XInput, DualShock 4/DualSense, and Steam Deck controllers.
-- Recommended Steam Input community layout: **Standard Gamepad with High-Precision Stick Mouse**.
+
+- `--enable-gamepad-button-axis-events` keeps the standard Chromium Gamepad
+  API available: Xbox XInput, DualShock/DualSense, Steam Deck verified.
+- Recommended Steam Input layout: **Standard Gamepad with High-Precision
+  Stick Mouse**.
 
 ---
 
 ## Crash Reporting & Diagnostic Telemetry
 
-Aegis Flora initializes Electron's `crashReporter` at application startup:
-- Local crash dumps are automatically recorded in:
-  - Windows: `%APPDATA%\Aegis Flora\Crashpad\reports`
-  - macOS: `~/Library/Application Support/Aegis Flora/Crashpad/reports`
-- To route crash dumps to an enterprise crash reporting service (e.g. Backtrace / Sentry), configure `submitURL` and toggle `uploadToServer: true` in `desktop/main.js`.
+`desktop/main.js` starts Electron's `crashReporter` at launch. Dumps stay
+local by default (`uploadToServer: false`):
+
+- Windows: `%APPDATA%\Aegis Flora\Crashpad\reports`
+- macOS: `~/Library/Application Support/Aegis Flora/Crashpad/reports`
+
+To forward to Backtrace/Sentry, set `submitURL` and `uploadToServer: true`.
 
 ---
 
-## Creating Application Icons
+## Icons
 
-- **Windows (`build/icon.ico`)**:
-  Place a multi-resolution `.ico` (containing 16x16, 32x32, 48x48, 64x64, 128x128, 256x256 layers) at `desktop/build/icon.ico`.
-- **macOS (`build/icon.icns`)**:
-  Convert a 1024x1024 PNG icon using the included script:
-  ```bash
-  chmod +x scripts/create-icns.sh
-  ./scripts/create-icns.sh path/to/icon.png build/icon.icns
-  ```
+Production builds require both files (CI enforces via `npm run check-icons`;
+electron-builder also fails on a dangling icon reference):
+
+- `build/icon.ico` — multi-resolution Windows icon
+  (16→256px; regenerate with `python3 scripts/generate-icons.py`, needs Pillow)
+- `build/icon.icns` — macOS icon
+  (regenerate with `./scripts/create-icns.sh <1024x1024-source.png> build/icon.icns`)
+
+Default source artwork: `../assets/ability_glyphs_pbr.jpg` (1024×1024).
 
 ---
 
-## CI/CD Pipeline
+## Signing / notarization requirements
 
-Automated dual-platform builds are triggered on every commit to `main` via GitHub Actions (`.github/workflows/build-desktop.yml`). The workflow compiles and uploads artifacts for both `Aegis-Flora-Windows-x64` and `Aegis-Flora-macOS-DMG`.
+- **macOS**: hardened runtime + entitlements (`build/entitlements.mac.plist`)
+  are always applied. Apple code signing and notarization happen **only**
+  when these secrets are configured (GitHub Actions secrets or local env):
+  `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`,
+  `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`.
+  Without them the build succeeds unsigned (ad-hoc signature) and logs
+  `skipped macOS notarization` — suitable for development and testing, not
+  for public distribution. Never claim a signed/notarized release unless the
+  workflow ran with these secrets present.
+- **Windows**: no signing configured; the NSIS installer is unsigned and
+  SmartScreen will prompt on first run. For a signed public release, add a
+  code-signing certificate via `CSC_LINK`/`CSC_KEY_PASSWORD` (or
+  `WIN_CSC_LINK`) in a follow-up.
+
+---
+
+## Release procedure
+
+1. Update `version` in `desktop/package.json` (single source of truth).
+2. Mirror the version in this README's artifact names, the CI artifact names
+   in `.github/workflows/build-desktop.yml`, and
+   `WINDOWS_STEAM_RELEASE_CHECKLIST.md` output names.
+3. Run the full test suite (`node tests/*.test.js`) and `npm run check-icons`.
+4. Tag `v<version>` (e.g. `git tag v1.1.0`) and push — CI builds, tests, and
+   uploads versioned artifacts. `workflow_dispatch` allows manual runs.
+5. Verify in CI: Windows NSIS+ZIP on `windows-latest`, macOS arm64+x64 DMGs
+   on `macos-latest`.
+
+## Known limitations
+
+- Windows ARM64 is unsupported (x64 emulation only); no ARM64 build target.
+- macOS minimum is 12 Monterey; older releases are untested.
+- Unsigned builds trigger Gatekeeper (macOS) / SmartScreen (Windows) prompts.
+- The game fetches Google Fonts and a radio stream at runtime, so the
+  gameplay client needs network access for those assets.
+- `blender_pipeline/*.py` generator scripts and `Unity/` sources are
+  development-only and are intentionally excluded from the packaged app.

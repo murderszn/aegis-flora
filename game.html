@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aegis Flora 3D — Solarpunk-Mecha Mazing Tower Defense</title>
-<link rel="icon" type="image/png" href="assets/favicon.png" sizes="64x64">
+<link rel="icon" type="image/png" href="assets/aegis_shield_icon.png?v=2" sizes="512x512">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Roboto+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -532,6 +532,7 @@
     <div class="padmap-row"><div class="act">Damage numbers<small>Floating combat text</small></div><input type="checkbox" id="setDmgNums" class="switch" checked></div>
     <div class="padmap-row"><div class="act">Creep HP bars<small>Overhead health bars</small></div><input type="checkbox" id="setHpBars" class="switch" checked></div>
     <div class="padmap-row"><div class="act">Screen shake<small>Trauma kick on blasts</small></div><input type="checkbox" id="setShake" class="switch" checked></div>
+    <div class="padmap-row"><div class="act">Reduced flashes<small>Dim hit flashes, sanctum flash & bloom glow</small></div><input type="checkbox" id="setReduceFlash" class="switch"></div>
     <div class="padmap-row"><div class="act">Tactical Clarity<small>Desaturate scenery & reduce effects for combat readability (K)</small></div><input type="checkbox" id="setClarity" class="switch"></div>
     <div class="padmap-row"><div class="act">Mazing tutorial<small>Replay the 8-step guided walkthrough</small></div><button class="btn" id="btnReplayTutorial">Replay…</button></div>
     <div class="padmap-row"><div class="act">Reset glyph progress<small>Clears meta upgrades</small></div><button class="btn" id="btnWipeGlyphs">Reset…</button></div>
@@ -649,6 +650,11 @@
       </svg>
       <span class="brand-title">AEGIS FLORA</span>
     </a>
+    <div class="wave-chip" id="waveChip" aria-label="Wave status" role="status">
+      <span class="wave-chip-wave">WAVE <b id="wave">0 / 50</b></span>
+      <span class="wave-chip-phase" id="phaseLabel">PREPARING</span>
+      <span class="wave-chip-score">SCORE <b id="score">0</b></span>
+    </div>
   </div>
   <div class="resource-group" aria-label="Sanctum resources">
     <div class="stat lives" title="Sanctum integrity">
@@ -692,36 +698,31 @@
     </div>
   </div>
   <div class="topbar-right">
-    <div id="transport-cluster" aria-label="Game controls">
-      <button class="tp-btn square" id="btnPause" title="Pause / Resume Game (P)" aria-label="Pause game">Ⅱ</button>
-      <button class="tp-btn square" id="btnSpeed" title="Cycle Game Speed (V)">1x</button>
-      <button class="tp-btn square" id="btnAudio" title="Toggle Mute (M)">🔊</button>
-      <button class="tp-btn square" id="btnMoreControls" type="button" title="More controls" aria-label="More controls" aria-expanded="false" aria-controls="more-controls-panel">•••</button>
+    <div class="topbar-tools" aria-label="Battlefield view and simulation controls">
+      <button class="hud-icon-btn" id="btnPause" type="button" title="Pause or resume (P)" aria-label="Pause game"><span class="hud-symbol">Ⅱ</span></button>
+      <button class="hud-icon-btn speed-icon" id="btnSpeed" type="button" title="Cycle game speed (V)" aria-label="Cycle game speed"><span class="btn-speed-val">1×</span></button>
+      <button class="hud-icon-btn" id="btnAudio" type="button" title="Mute audio (M)" aria-label="Mute audio"><span class="btn-icon">🔊</span></button>
+      <button class="hud-icon-btn" id="btnCam" type="button" title="Cycle camera view (C)" aria-label="Cycle camera view"><span class="hud-symbol">⌗</span></button>
+      <button class="hud-icon-btn" id="btnClarity" type="button" title="Tactical clarity (K)" aria-label="Toggle tactical clarity"><span class="hud-symbol">◈</span></button>
+      <button class="hud-icon-btn weather-icon" id="btnWeather" type="button" title="Change season and weather" aria-label="Change season and weather"><span class="weather-symbol">☀</span></button>
     </div>
     <div class="command-group">
-      <button class="btn primary btn-wave-heroic" id="btnWave" aria-label="Start Wave">
-        <span class="btn-wave-glow"></span>
-        <span class="btn-wave-icon">▶</span>
-        <span class="btn-wave-label">Start Wave</span>
-        <kbd class="btn-kbd">SPACE</kbd>
-      </button>
+      <button class="hud-menu-btn sidebar-toggle" id="btnSidebar" type="button" title="Open utility tools" aria-label="Open utility tools" aria-expanded="false" aria-controls="control-sidebar"><span></span><span></span><span></span></button>
     </div>
-  </div>
-  <div id="more-controls-panel" aria-label="More game controls" hidden>
-    <div class="more-controls-title">GAME CONTROLS</div>
-    <div class="more-controls-grid">
-    <button class="tp-btn square" id="btnFullscreen" title="Toggle Fullscreen (F11 / Shift+F)" aria-label="Fullscreen">⛶</button>
-    <button class="tp-btn square" id="btnSettings" title="Settings (Esc)" aria-label="Settings">⚙</button>
-    <button class="tp-btn" id="btnClaudeRadio" title="Claude FM Radio — 24/7 Lo-Fi Stream (clau.de/radio)"><span class="btn-icon">♫</span><span>Radio</span><span class="live-dot" id="claudeFmDot" style="width:6px;height:6px;border-radius:50%;background:#9fecb4;display:inline-block;margin-left:2px;"></span></button>
-    <button class="tp-btn square" id="btnClarity" title="Toggle Tactical Clarity Mode (K)">◈</button>
-    <button class="tp-btn square" id="btnTutorial" title="Field Briefing & Mazing Guide (?)">?</button>
-    <button class="tp-btn" id="btnCam" title="Toggle Camera View (C)"><span class="btn-icon">⌗</span><span>View</span><kbd>C</kbd></button>
-    <button class="tp-btn" id="btnPad" title="Controller Mapping"><span class="btn-icon">⌘</span><span id="btnPadLabel">Pad</span></button>
-    </div>
-    <div id="cam-mode"><div class="dot"></div><span>TACTICAL VIEW <span class="cam-hint">· Right drag to orbit · Scroll to zoom</span></span></div>
-    <div id="gfx-mode" title="Graphics & Resolution (Shift+G): Click to toggle Auto (DRS) · Performance · Balanced · Ultra"><div class="dot"></div><span>⚡ 60 FPS · AUTO</span></div>
   </div>
 </div>
+
+<!-- Icon-only utility rail. It starts closed and exposes labels through tooltips. -->
+<aside id="control-sidebar" class="collapsed" aria-label="Utility tools" aria-hidden="true">
+  <div class="sb-heading"><span>TOOLS</span><i aria-hidden="true"></i></div>
+  <button class="rail-icon" id="btnFullscreen" title="Fullscreen (F11)" aria-label="Fullscreen">⛶</button>
+  <button class="rail-icon" id="btnSettings" title="Audio and video settings (Esc)" aria-label="Audio and video settings">⚙</button>
+  <button class="rail-icon" id="gfx-mode" title="Graphics quality (Shift+G)" aria-label="Cycle graphics quality"><span>⚡</span></button>
+  <button class="rail-icon" id="btnClaudeRadio" title="Aegis radio" aria-label="Open radio"><span>♫</span><i class="live-dot" id="claudeFmDot"></i></button>
+  <button class="rail-icon" id="btnTutorial" title="Walkthrough and field guide (?)" aria-label="Open walkthrough">?</button>
+  <button class="rail-icon" id="btnPad" title="Controller mapping" aria-label="Controller mapping"><span id="btnPadLabel">⌘</span></button>
+  <div id="cam-mode" class="sr-only" aria-live="polite"><span>TACTICAL VIEW</span></div>
+</aside>
 
 <!-- Claude FM Radio Tuner Popover -->
 <div id="claude-fm-popover" style="display:none;">
@@ -751,28 +752,18 @@
     frameborder="0" allow="autoplay; encrypted-media"></iframe>
 </div>
 
-<!-- Compact battlefield telemetry (Top Left Corner) -->
-<aside id="field-panel" aria-label="Battlefield telemetry">
-  <div class="field-heading"><span id="fieldStatus">FIELD ONLINE</span><i aria-hidden="true"></i></div>
-  <div class="field-readouts">
-    <div><span>PHASE</span><strong id="phaseLabel">PREPARING</strong></div>
-    <div><span>WAVE</span><strong id="wave">0 / 50</strong></div>
-    <div><span>KILLS</span><strong id="fieldKills">0</strong></div>
-    <div><span>SEED</span><strong id="fieldSeed">—</strong></div>
-  </div>
-  <div class="field-score">SCORE <b id="score">0</b></div>
-</aside>
-
-<!-- Incoming Threat Announcement (Top Right Corner) -->
-<aside id="threat-announcement" class="threat-announcement" aria-label="Incoming threat announcement">
-  <div class="threat-heading">
-    <span class="preview-kicker">INCOMING THREAT <span class="preview-pulse"></span></span>
-    <span class="threat-badge">BRIEFING</span>
-  </div>
-  <div id="preview" class="threat-body"></div>
-</aside>
-
 <canvas id="combat-canvas"></canvas>
+
+<!-- Spacebar Start Wave Floating Keycap Overlay (Pops up above bottom dock when wave is ready) -->
+<button class="btn primary btn-wave-heroic btn-wave-spacebar" id="btnWave" aria-label="Start Wave. Tower defense wave command." title="Start Next Wave (Space)">
+  <span class="btn-wave-art" aria-hidden="true"></span>
+  <span class="btn-wave-shade" aria-hidden="true"></span>
+  <span class="btn-wave-content" aria-hidden="false">
+    <span class="btn-wave-icon">▶</span>
+    <span class="btn-wave-label">Start Wave</span>
+    <kbd class="btn-kbd">SPACE</kbd>
+  </span>
+</button>
 
 <!-- Tactical Dock: Radar, Defense Arsenal, and Sanctum Forge Abilities -->
 <div id="drawer">
@@ -925,13 +916,13 @@ var WAVE_MAX = 50, START_CASH = 20, START_LIVES = 15, SELL_RATE = 0.75;
 var TOWERS = {
   gun: {
     key: 'Q', numKey: '1', name: 'Petal Gatling', cost: 6, range: 2.8,
-    img: 'assets/3d_turret_pbr.jpg', glb: 'blender_pipeline/models/tower_petal_gatling.glb',
+    img: 'assets/3d_turret_pbr.jpg', glb: 'blender_pipeline/models/tower_prism_gatling.glb',
     desc: 'Rapid rotary kinetic fire. Shreds unarmored swarms.'
   },
   rocket: {
     key: 'W', numKey: '2', name: 'Bloom Mortar', cost: 12, range: 5.0,
     img: 'assets/3d_mortar_pbr.jpg', glb: 'blender_pipeline/models/tower_bloom_cannon.glb',
-    desc: 'Mechanical lotus flak artillery. Arcing explosive spore shells with fiery splash.'
+    desc: 'Ground-only arcing explosive spore shells with fiery splash. Cannot hit air — bring Gatlings, Prisms, or Skyburst Flak for fliers.'
   },
   beam: {
     key: 'E', numKey: '3', name: 'Prism Pillar', cost: 12, range: 3.6,
@@ -958,7 +949,7 @@ var BRANCH = {
   },
   rocket: {
     A: { name: 'Cataclysm Bloom', cost: 30, dmg: 95, iv: 2.4, splash: 1.8, desc: 'Heavy devastating spore mortar with massive explosive blast radius.' },
-    B: { name: 'Skyburst Flak', cost: 25, dmg: 26, iv: 0.85, splash: 0.9, aaOnly: true, range: 6.2, desc: 'Dedicated anti-air flak battery with rapid intercept rounds.' }
+    B: { name: 'Skyburst Flak', cost: 25, dmg: 26, iv: 0.85, splash: 0.9, aaOnly: true, range: 6.2, desc: 'Dedicated anti-air flak battery with rapid intercept rounds. Air targets only.' }
   },
   beam: {
     A: { name: 'Sol Invictus', cost: 25, dps: 60, range: 4.6, ramp: 2.5, scorch: true, desc: 'Solar ray that carves lingering fiery scorch lines on the ground.' },
@@ -1009,9 +1000,14 @@ function applyDamage(f, dmg, dtype, shatteredBonus, isTowerDmg){
 
   var mod = (f.dmgMod && f.dmgMod[dtype]) || (FOES[f.type] && FOES[f.type].dmgMod && FOES[f.type].dmgMod[dtype]) || 1.0;
   var mult = mod;
-  if(isTowerDmg !== false && S && S.dmgMult) mult *= S.dmgMult;
+  var glyphBonus = S && (S.glyphBonus || (S.glyphs && getGlyphBonus(S.glyphs)));
+  if(isTowerDmg !== false && S && S.dmgMult){
+    mult *= S.dmgMult;
+    if(glyphBonus && glyphBonus.critChance && Math.random() < glyphBonus.critChance) mult *= 1.75;
+    if(glyphBonus && glyphBonus.executeDamage > 1 && f.maxhp && f.hp / f.maxhp <= 0.35) mult *= glyphBonus.executeDamage;
+  }
   var baseArmor = (f.armor !== undefined) ? f.armor : ((FOES[f.type] && FOES[f.type].armor) || 0);
-  var effArmor = baseArmor - (f.armorShred || 0);
+  var effArmor = baseArmor - (f.armorShred || 0) - ((isTowerDmg !== false && glyphBonus) ? glyphBonus.armorPierce : 0);
   // Energy ignores 50% armor
   if(dtype === 'Energy') mult *= (1 - 0.5 * armorMultiplier(effArmor));
   // Sonic is pure damage (ignores armor)
@@ -1092,12 +1088,14 @@ function newState(seed){
     lives: bonus.maxLives,
     maxLives: bonus.maxLives,
     dmgMult: bonus.dmgMult,
+    glyphBonus: bonus,
     hasMazingWall: bonus.hasMazingWall,
     mana: 100, score: 0,
     wave: 0, phase: 'build', waveT: 0,
     paused: false, speed: 1,
     selected: null, selTower: null,
     kills: 0, leaked: 0, time: 0,
+    eventLog: [],
     sanctum: { abilityCD: 0, rootCD: 0, rootTargets: [] },
     glyphs: glyphs,
     // Telemetry & Post-Match Statistics
@@ -1116,11 +1114,29 @@ function newState(seed){
 
 // ---------- Meta-Progression: Verdant Glyphs & Banked Meta-Scrap ----------
 var GLYPH_DEFS = {
-  foundry: { name: 'Foundry Engineering', desc: '+2% tower damage per level', maxLvl: 15, cost: 50, icon: '⚙' },
-  vault: { name: 'Ancient Vault', desc: '+50 starting Scrap per level', maxLvl: 3, cost: 80, icon: '💰' },
-  flora: { name: 'Flora Symbiosis', desc: '+15% Sanctum HP per level', maxLvl: 5, cost: 60, icon: '🌿' },
-  attune: { name: 'Solar Attunement', desc: '+8% Solar Mana regen per level', maxLvl: 5, cost: 70, icon: '☀' },
-  mazing: { name: 'Mazing Mastery', desc: 'Unlock decorative blocker walls', maxLvl: 1, cost: 100, icon: '🧱' }
+  foundry: { name: 'Foundry Engineering', desc: '+2% tower damage per rank', maxLvl: 15, cost: 50, icon: '⚙', branch: 'forge', tier: 0 },
+  vault: { name: 'Ancient Vault', desc: '+50 starting Scrap per rank', maxLvl: 3, cost: 80, icon: '◈', branch: 'forge', tier: 0 },
+  precision: { name: 'Petal Calibration', desc: '+3% tower critical chance per rank', maxLvl: 5, cost: 90, icon: '⌖', branch: 'forge', tier: 1, requires: { foundry: 3 } },
+  sundering: { name: 'Sundering Pollen', desc: 'Tower attacks ignore 0.6 armor per rank', maxLvl: 3, cost: 130, icon: '✦', branch: 'forge', tier: 2, requires: { precision: 2 }, pointsReq: 7 },
+  overclock: { name: 'Heartfire Overclock', desc: 'CAPSTONE · +20% tower damage to foes below 35% HP', maxLvl: 1, cost: 500, icon: '✹', branch: 'forge', tier: 3, requires: { sundering: 3 }, pointsReq: 12, capstone: true },
+
+  flora: { name: 'Flora Symbiosis', desc: '+15% Sanctum HP per rank', maxLvl: 5, cost: 60, icon: '☘', branch: 'grove', tier: 0 },
+  mazing: { name: 'Mazing Mastery', desc: 'Unlock Ruin Barrier maze walls', maxLvl: 1, cost: 100, icon: '▦', branch: 'grove', tier: 0 },
+  barkskin: { name: 'Barkskin Bulwark', desc: 'Reduce damage from leaks by 8% per rank', maxLvl: 5, cost: 90, icon: '⬡', branch: 'grove', tier: 1, requires: { flora: 2 } },
+  regrowth: { name: 'Sanctum Regrowth', desc: 'Restore 1 Sanctum HP after each wave per rank', maxLvl: 3, cost: 120, icon: '❈', branch: 'grove', tier: 2, requires: { barkskin: 2, mazing: 1 }, pointsReq: 6 },
+  heartwood: { name: 'Heartwood Rebirth', desc: 'CAPSTONE · Once per run, fatal damage restores 25% HP', maxLvl: 1, cost: 500, icon: '❦', branch: 'grove', tier: 3, requires: { regrowth: 3 }, pointsReq: 10, capstone: true },
+
+  attune: { name: 'Solar Attunement', desc: '+8% Solar Mana regeneration per rank', maxLvl: 5, cost: 70, icon: '☀', branch: 'solar', tier: 0 },
+  deeproots: { name: 'Deep Roots', desc: '+0.5s duration and +12% Overgrowth damage per rank', maxLvl: 5, cost: 90, icon: '≋', branch: 'solar', tier: 1, requires: { attune: 2 } },
+  solarlens: { name: 'Solar Lens', desc: '+10% Solar Flare damage per rank', maxLvl: 5, cost: 100, icon: '◉', branch: 'solar', tier: 1, requires: { attune: 2 } },
+  aetherflow: { name: 'Aetherflow', desc: 'Sanctum abilities recharge 6% faster per rank', maxLvl: 3, cost: 140, icon: '∿', branch: 'solar', tier: 2, requires: { deeproots: 2, solarlens: 2 }, pointsReq: 8 },
+  sunheart: { name: 'Sunheart Convergence', desc: 'CAPSTONE · Abilities cost 20% less Mana', maxLvl: 1, cost: 500, icon: '✺', branch: 'solar', tier: 3, requires: { aetherflow: 3 }, pointsReq: 12, capstone: true }
+};
+
+var GLYPH_BRANCHES = {
+  forge: { name: 'Forge Doctrine', role: 'Tower offense & economy', icon: '⚙' },
+  grove: { name: 'Grove Covenant', role: 'Sanctum defense & mazing', icon: '☘' },
+  solar: { name: 'Solar Communion', role: 'Abilities & aether control', icon: '☀' }
 };
 
 function getMetaScrap(){
@@ -1184,12 +1200,30 @@ function getGlyphBonus(glyphs){
   var flLvl = (g && g.flora) || 0;
   var mLvl = (g && g.mazing) || 0;
   var aLvl = (g && g.attune) || 0;
+  var precisionLvl = (g && g.precision) || 0;
+  var sunderingLvl = (g && g.sundering) || 0;
+  var barkskinLvl = (g && g.barkskin) || 0;
+  var regrowthLvl = (g && g.regrowth) || 0;
+  var rootsLvl = (g && g.deeproots) || 0;
+  var lensLvl = (g && g.solarlens) || 0;
+  var flowLvl = (g && g.aetherflow) || 0;
   return {
     dmgMult: 1 + fLvl * 0.02,
     startCash: START_CASH + vLvl * 50,
     maxLives: START_LIVES + flLvl * Math.round(START_LIVES * 0.15),
     manaRegen: 4 * (1 + aLvl * 0.08),
-    hasMazingWall: mLvl >= 1
+    hasMazingWall: mLvl >= 1,
+    critChance: precisionLvl * 0.03,
+    armorPierce: sunderingLvl * 0.6,
+    executeDamage: (g && g.overclock) ? 1.2 : 1,
+    leakReduction: Math.min(0.4, barkskinLvl * 0.08),
+    waveHeal: regrowthLvl,
+    secondWind: !!(g && g.heartwood),
+    rootDuration: 3.5 + rootsLvl * 0.5,
+    rootDamage: 60 * (1 + rootsLvl * 0.12),
+    flareDamage: 800 * (1 + lensLvl * 0.1),
+    cooldownMult: 1 - flowLvl * 0.06,
+    abilityCostMult: (g && g.sunheart) ? 0.8 : 1
   };
 }
 
@@ -1199,10 +1233,37 @@ function applyGlyphBonuses(targetState){
   var b = getGlyphBonus(st.glyphs);
   st.dmgMult = b.dmgMult;
   st.hasMazingWall = b.hasMazingWall;
+  st.glyphBonus = b;
   if(st.wave === 0 && st.phase === 'build'){
     st.maxLives = b.maxLives;
     st.lives = b.maxLives;
   }
+}
+
+function getGlyphBranchPoints(branch, glyphs){
+  var g = glyphs || (S && S.glyphs) || loadGlyphs();
+  var points = 0;
+  for(var gid in GLYPH_DEFS){
+    if(GLYPH_DEFS[gid].branch === branch) points += (g[gid] || 0);
+  }
+  return points;
+}
+
+function getGlyphUnlockState(gid, glyphs){
+  var def = GLYPH_DEFS[gid];
+  var g = glyphs || (S && S.glyphs) || loadGlyphs();
+  if(!def) return { unlocked: false, reason: 'Unknown glyph' };
+  var reqs = def.requires || {};
+  for(var req in reqs){
+    if((g[req] || 0) < reqs[req]){
+      return { unlocked: false, reason: 'Requires ' + GLYPH_DEFS[req].name + ' ' + reqs[req] };
+    }
+  }
+  var branchPoints = getGlyphBranchPoints(def.branch, g);
+  if(def.pointsReq && branchPoints < def.pointsReq){
+    return { unlocked: false, reason: 'Requires ' + def.pointsReq + ' points in ' + GLYPH_BRANCHES[def.branch].name };
+  }
+  return { unlocked: true, reason: '' };
 }
 
 function canAffordGlyph(gid){
@@ -1210,6 +1271,7 @@ function canAffordGlyph(gid){
   if(!def) return false;
   var lvl = getGlyphLevel(gid);
   if(lvl >= def.maxLvl) return false;
+  if(!getGlyphUnlockState(gid).unlocked) return false;
   var cost = def.cost * (lvl + 1);
   return getMetaScrap() >= cost;
 }
@@ -1225,6 +1287,8 @@ function purchaseGlyph(gid){
   }
   var lvl = getGlyphLevel(gid);
   if(lvl >= def.maxLvl) return false;
+  var unlock = getGlyphUnlockState(gid);
+  if(!unlock.unlocked){ toast(unlock.reason); sfx('error'); return false; }
   var cost = def.cost * (lvl + 1);
   if(getMetaScrap() < cost) return false;
 
@@ -1236,6 +1300,35 @@ function purchaseGlyph(gid){
   if(gid === 'mazing') buildDrawer();
   refreshHud();
   return true;
+}
+
+function getGlyphInvestment(glyphs){
+  var g = glyphs || (S && S.glyphs) || loadGlyphs();
+  var total = 0;
+  for(var gid in GLYPH_DEFS){
+    var lvl = g[gid] || 0;
+    total += GLYPH_DEFS[gid].cost * (lvl * (lvl + 1) / 2);
+  }
+  return total;
+}
+
+function respecGlyphs(){
+  if(S && S.phase === 'combat'){
+    toast('Glyph paths can only be reforged between waves or runs.');
+    sfx('error');
+    return false;
+  }
+  var current = (S && S.glyphs) || loadGlyphs();
+  var refund = getGlyphInvestment(current);
+  if(refund <= 0) return false;
+  var reset = {};
+  for(var gid in GLYPH_DEFS) reset[gid] = 0;
+  setMetaScrap(getMetaScrap() + refund);
+  saveGlyphs(reset);
+  if(S){ S.glyphs = reset; applyGlyphBonuses(S); }
+  if(typeof buildDrawer === 'function') buildDrawer();
+  refreshHud();
+  return refund;
 }
 
 // ---------- Tower Targeting Priorities ----------
@@ -1457,22 +1550,43 @@ function queryFoesInRadius(cx, cy, radius, outArray){
   return res;
 }
 
+// Restrained terrain: two flanking ruin clusters that form a natural mid-field
+// choke without sealing the map. Each tile keeps the route guarantee (valid
+// path longer than a straight crossing), so open-grid mazing is preserved and
+// every legal placement still leaves a route. SPAWN_POINTS lists wave entries
+// so future multi-direction / alternate-route waves can reuse this layout.
 function seedRuins(){
   var r = mulberry((S.seed ^ 0x9e37) >>> 0);
+  var clusters = [
+    { cx: Math.floor(COLS * 0.35), cy: SPAWN.y - 4 },
+    { cx: Math.floor(COLS * 0.62), cy: SPAWN.y + 4 }
+  ];
   var tries = 0, placed = 0, test = S.blocked.slice();
-  while(placed < 10 && tries < 400){
+  var target = 10, ci = 0;
+  while(placed < target && tries < 600){
     tries++;
-    var gx = 3 + ((r() * (COLS - 6)) | 0), gy = ((r() * ROWS) | 0);
+    var c = clusters[ci % clusters.length]; ci++;
+    var gx = Math.max(2, Math.min(COLS - 3, c.cx + (((r() * 7) | 0) - 3)));
+    var gy = Math.max(1, Math.min(ROWS - 2, c.cy + (((r() * 7) | 0) - 3)));
     if(Math.abs(gy - SPAWN.y) < 2 && (gx < 6 || gx > COLS - 7)) continue;
     var i = idx(gx, gy);
     if(test[i]) continue;
     test[i] = 1;
     var p = findPath(SPAWN.x, SPAWN.y, test);
-    if(p && p.length > COLS + 4){ S.blocked[i] = 1; S.ruin[i] = 1; placed++; }
+    // Route guarantee: every terrain tile must keep a valid Sanctum route of
+    // at least straight-crossing length, so the choke never seals the map.
+    if(p && p.length >= COLS){ S.blocked[i] = 1; S.ruin[i] = 1; placed++; }
     else test[i] = 0;
   }
   buildRuinVisuals();
 }
+function terrainTiles(){
+  var out = [];
+  if(!S || !S.ruin) return out;
+  for(var i = 0; i < S.ruin.length; i++) if(S.ruin[i]) out.push({ gx: i % COLS, gy: (i / COLS) | 0 });
+  return out;
+}
+function spawnPoints(){ return [{ x: SPAWN.x, y: SPAWN.y }]; }
 
 // ---------- Ruin obstacles: visible jungle-swallowed temple fragments (not white blocks) ----------
 function clearRuinVisuals(){
@@ -1483,6 +1597,25 @@ function ruinCluster(wp, seed){
   var g = new THREE.Group();
   var R = mulberry(seed);
   var variant = (seed % 6);
+
+  // Board obstacles stay low and botanical: a readable stone garden bed with
+  // real carnation bunches replaces the tall white column/statue silhouettes.
+  var bedMat = MATS.stone;
+  var bed = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.22, 1.55), bedMat);
+  bed.position.y = 0.11; bed.rotation.y = (R() - .5) * .28; bed.receiveShadow = true; bed.castShadow = true; g.add(bed);
+  var soil = new THREE.Mesh(new THREE.CircleGeometry(0.78, 10),
+    new THREE.MeshStandardMaterial({ color: 0x253a27, roughness: 1 }));
+  soil.rotation.x = -Math.PI / 2; soil.position.y = 0.25; g.add(soil);
+  var boardCarnations = createCarnationCluster(0.78 + R() * 0.16, R);
+  boardCarnations.position.y = 0.25; boardCarnations.rotation.y = R() * Math.PI * 2; g.add(boardCarnations);
+  for(var peb = 0; peb < 4; peb++){
+    var pa = peb / 4 * Math.PI * 2 + R() * .4;
+    var pebble = new THREE.Mesh(new THREE.DodecahedronGeometry(.16 + R() * .1, 0), MATS.stone);
+    pebble.position.set(Math.cos(pa) * .94, .3, Math.sin(pa) * .94); pebble.scale.y = .65; g.add(pebble);
+  }
+  g.name = 'botanicalRuinBed';
+  g.position.copy(wp);
+  return g;
 
   // High-fidelity GLTF architectural props for obstacles (no flowers on the board!)
   if(variant === 0 && GLTF_CACHE.column){
@@ -1568,13 +1701,19 @@ function ruinCluster(wp, seed){
     col.position.set(0.4, 1.0, -0.3); col.rotation.set(0.3, 0, 1.1); g.add(col);
   }
 
-  // Clinging ivy and moss creeping on the stone crevices (pure botanical leaves, no flowers on board!)
+  // Clinging ivy plus low carnation bunches on already-blocked ruin tiles.
   var nIvy = 4 + ((R() * 4) | 0);
   for(var k = 0; k < nIvy; k++){
     var ivy = new THREE.Mesh(new THREE.IcosahedronGeometry(0.22 + R() * 0.22, 1), MATS.leaf);
     ivy.position.set((R() - 0.5) * 1.8, 0.2 + R() * 0.9, (R() - 0.5) * 1.8);
     ivy.scale.y = 0.7;
     g.add(ivy);
+  }
+  for(var cb = 0; cb < 2; cb++){
+    var carnations = createCarnationCluster(0.42 + R() * 0.16, R);
+    carnations.position.set((R() - 0.5) * 1.55, 0.02, (R() - 0.5) * 1.55);
+    carnations.rotation.y = R() * Math.PI * 2;
+    g.add(carnations);
   }
   // Moss skirt ring so the stone blends into the flagstones
   var skirt = new THREE.Mesh(new THREE.CircleGeometry(1.35, 18),
@@ -1583,6 +1722,76 @@ function ruinCluster(wp, seed){
   g.add(skirt);
   g.position.copy(wp);
   return g;
+}
+
+function createCarnationCluster(scale, R, variety){
+  var cluster = new THREE.Group();
+  scale = scale || 1; R = R || Math.random;
+  var count = 5 + ((R() * 4) | 0);
+  if(!THREE.InstancedMesh){
+    for(var fallback = 0; fallback < Math.min(3, count); fallback++){
+      var flower = createBotanicalFlower('carnation', scale * 0.65, R);
+      flower.position.set((R() - .5) * scale, 0, (R() - .5) * scale);
+      cluster.add(flower);
+    }
+    return cluster;
+  }
+
+  if(!BOTANICAL_GEO_CACHE.stem){
+    BOTANICAL_GEO_CACHE.stem = new THREE.CylinderGeometry(.038, .06, 1, 6);
+    BOTANICAL_GEO_CACHE.stem.translate(0, .5, 0);
+    BOTANICAL_GEO_CACHE.leaf = new THREE.ConeGeometry(.075, .3, 4);
+    BOTANICAL_GEO_CACHE.calyx = new THREE.ConeGeometry(.12, .2, 6);
+    BOTANICAL_GEO_CACHE.petal = new THREE.SphereGeometry(.15, 6, 4);
+    BOTANICAL_GEO_CACHE.core = new THREE.SphereGeometry(.07, 6, 4);
+    Object.keys(BOTANICAL_GEO_CACHE).forEach(function(k){ SHARED_GEOMETRIES.add(BOTANICAL_GEO_CACHE[k]); });
+  }
+
+  var flowerMat = variety === 'sunlily' ? MATS.goldFlower
+    : (variety === 'wisteria' ? MATS.wisteria
+    : (variety === 'peony' ? MATS.peony
+    : ([MATS.carnationPink, MATS.carnationRed, MATS.carnationCream][(R() * 3) | 0] || MATS.peony)));
+  var stemMesh = new THREE.InstancedMesh(BOTANICAL_GEO_CACHE.stem, MATS.leaf, count);
+  var leafMesh = new THREE.InstancedMesh(BOTANICAL_GEO_CACHE.leaf, MATS.leaf, count * 2);
+  var calyxMesh = new THREE.InstancedMesh(BOTANICAL_GEO_CACHE.calyx, MATS.leaf, count);
+  var outerMesh = new THREE.InstancedMesh(BOTANICAL_GEO_CACHE.petal, flowerMat, count * 8);
+  var innerMesh = new THREE.InstancedMesh(BOTANICAL_GEO_CACHE.petal, flowerMat, count * 5);
+  var coreMesh = new THREE.InstancedMesh(BOTANICAL_GEO_CACHE.core, MATS.goldFlower, count);
+  var dummy = new THREE.Object3D(), leafIndex = 0, outerIndex = 0, innerIndex = 0;
+
+  for(var i = 0; i < count; i++){
+    var a = (i / count) * Math.PI * 2 + R() * .45;
+    var radius = i === 0 ? 0 : (.24 + R() * .34) * scale;
+    var x = Math.cos(a) * radius, z = Math.sin(a) * radius;
+    var fs = scale * (.58 + R() * .32), stemH = (.9 + R() * .35) * fs;
+    dummy.position.set(x, 0, z); dummy.rotation.set((R()-.5)*.12, R()*Math.PI*2, (R()-.5)*.18); dummy.scale.set(fs, stemH, fs); dummy.updateMatrix(); stemMesh.setMatrixAt(i, dummy.matrix);
+
+    for(var li = 0; li < 2; li++){
+      var la = a + li * Math.PI;
+      dummy.position.set(x + Math.cos(la)*.07*fs, stemH*(.4 + li*.24), z + Math.sin(la)*.07*fs);
+      dummy.rotation.set(Math.sin(la)*.85, la, -Math.cos(la)*.85); dummy.scale.set(fs, fs, fs); dummy.updateMatrix(); leafMesh.setMatrixAt(leafIndex++, dummy.matrix);
+    }
+    dummy.position.set(x, stemH, z); dummy.rotation.set(Math.PI, a, 0); dummy.scale.set(fs, fs, fs); dummy.updateMatrix(); calyxMesh.setMatrixAt(i, dummy.matrix);
+
+    for(var op = 0; op < 8; op++){
+      var oa = op / 8 * Math.PI * 2 + a;
+      dummy.position.set(x + Math.cos(oa)*.18*fs, stemH + .12*fs, z + Math.sin(oa)*.18*fs);
+      dummy.rotation.set(Math.sin(oa)*.55, oa, -Math.cos(oa)*.55); dummy.scale.set(1.2*fs, .34*fs, .82*fs); dummy.updateMatrix(); outerMesh.setMatrixAt(outerIndex++, dummy.matrix);
+    }
+    for(var ip = 0; ip < 5; ip++){
+      var ia = ip / 5 * Math.PI * 2 + a + .45;
+      dummy.position.set(x + Math.cos(ia)*.08*fs, stemH + .18*fs, z + Math.sin(ia)*.08*fs);
+      dummy.rotation.set(Math.sin(ia)*.3, ia, -Math.cos(ia)*.3); dummy.scale.set(.88*fs, .4*fs, .72*fs); dummy.updateMatrix(); innerMesh.setMatrixAt(innerIndex++, dummy.matrix);
+    }
+    dummy.position.set(x, stemH + .2*fs, z); dummy.rotation.set(0, a, 0); dummy.scale.set(fs, fs, fs); dummy.updateMatrix(); coreMesh.setMatrixAt(i, dummy.matrix);
+  }
+  [stemMesh, leafMesh, calyxMesh, outerMesh, innerMesh, coreMesh].forEach(function(mesh){
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    cluster.add(mesh);
+  });
+  return cluster;
 }
 function buildRuinVisuals(){
   if(!scene || !S) return;
@@ -1613,7 +1822,7 @@ function createBotanicalFlower(variety, scale, R){
   stem.position.y = stemH * 0.5;
   stem.rotation.z = (R() - 0.5) * 0.22;
   stem.rotation.x = (R() - 0.5) * 0.22;
-  stem.castShadow = true;
+  stem.castShadow = false;
   g.add(stem);
 
   // Tiny leaves along stem
@@ -1674,6 +1883,25 @@ function createBotanicalFlower(variety, scale, R){
       wbell.rotation.set(Math.sin(wba) * 0.6, 0, -Math.cos(wba) * 0.6);
       g.add(wbell);
     }
+  } else if(variety === 'carnation'){
+    // Garden carnation: a dense, ruffled multi-ring bloom rather than a sphere proxy.
+    var carnationMats = [MATS.carnationPink, MATS.carnationRed, MATS.carnationCream];
+    var carnationMat = carnationMats[(R() * carnationMats.length) | 0] || MATS.peony;
+    for(var ring = 0; ring < 3; ring++){
+      var ringPetals = 7 + ring * 3;
+      var ringRadius = (0.07 + ring * 0.085) * scale;
+      for(var cp = 0; cp < ringPetals; cp++){
+        var ca = (cp / ringPetals) * Math.PI * 2 + ring * 0.43 + (R() - 0.5) * 0.18;
+        var cPetal = new THREE.Mesh(new THREE.SphereGeometry((0.12 + ring * 0.025) * scale, 7, 5), carnationMat);
+        cPetal.position.set(Math.cos(ca) * ringRadius, stemH + (0.13 - ring * 0.018) * scale, Math.sin(ca) * ringRadius);
+        cPetal.scale.set(1.2, 0.28, 0.72);
+        cPetal.rotation.set(Math.sin(ca) * (0.35 + ring * 0.18), ca, -Math.cos(ca) * (0.35 + ring * 0.18));
+        g.add(cPetal);
+      }
+    }
+    var cCore = new THREE.Mesh(new THREE.SphereGeometry(0.055 * scale, 7, 5), MATS.goldFlower);
+    cCore.position.y = stemH + 0.17 * scale;
+    g.add(cCore);
   } else {
     // Botanical Peony / Garden Rose: 3-tier curved layered petals + stamen
     var pColors = [0xe64a6d, 0xf76d8b, 0xd9385b, 0xffa4b6, 0xf5eedb];
@@ -1720,7 +1948,8 @@ function createBotanicalFlower(variety, scale, R){
 function jungleTree(x, z, s, R, treeType){
   var g = new THREE.Group();
   // Strictly broadleaf shade trees: NO conical trees!
-  treeType = treeType || (R() < 0.5 ? 'olive' : 'oak');
+  var treeRoll = R();
+  treeType = treeType || (treeRoll < 0.28 ? 'cherry' : (treeRoll < 0.62 ? 'olive' : 'oak'));
 
   var barkMat = MATS.treeBark || new THREE.MeshStandardMaterial({ color: 0x3d3027, roughness: 0.88, metalness: 0.06 });
 
@@ -1731,17 +1960,17 @@ function jungleTree(x, z, s, R, treeType){
 
     // Cross-quad planes at 0, 60, 120 degrees
     var p1 = new THREE.Mesh(pGeo, leafMat);
-    p1.castShadow = true;
+    p1.castShadow = false;
     cl.add(p1);
 
     var p2 = new THREE.Mesh(pGeo, leafMat);
     p2.rotation.y = Math.PI / 3;
-    p2.castShadow = true;
+    p2.castShadow = false;
     cl.add(p2);
 
     var p3 = new THREE.Mesh(pGeo, leafMat);
     p3.rotation.y = (Math.PI * 2) / 3;
-    p3.castShadow = true;
+    p3.castShadow = false;
     cl.add(p3);
 
     // Horizontal top-cap plane tilted slightly so canopy looks lush and full from isometric angles
@@ -1749,7 +1978,7 @@ function jungleTree(x, z, s, R, treeType){
     p4.rotation.x = -Math.PI / 2 + (R() - 0.5) * 0.3;
     p4.rotation.z = R() * Math.PI;
     p4.position.y = 0.15 * scale;
-    p4.castShadow = true;
+    p4.castShadow = false;
     cl.add(p4);
 
     return cl;
@@ -1885,8 +2114,8 @@ function jungleTree(x, z, s, R, treeType){
     g.add(innerCore2);
 
     // Multi-angle Leaf Card clusters with rich emerald and sunlit gold leaves
-    var emeraldLeafMat = MATS.leafCluster || MATS.leaf;
-    var goldLeafMat = MATS.leafClusterGold || MATS.leafCluster || MATS.leaf;
+    var emeraldLeafMat = treeType === 'cherry' ? (MATS.blossomCluster || MATS.peony) : (MATS.leafCluster || MATS.leaf);
+    var goldLeafMat = treeType === 'cherry' ? (MATS.blossomCluster || MATS.peony) : (MATS.leafClusterGold || MATS.leafCluster || MATS.leaf);
 
     oakTips.forEach(function(pos, idx){
       var isHigh = pos[1] > 3.6 * s;
@@ -1972,8 +2201,8 @@ function buildJunglePerimeter(){
     return [x, z];
   }
 
-  // 1. Scenic 360-degree perimeter tree grove (32 high-resolution broadleaf trees framing the island)
-  var nPerimTrees = 32;
+  // Scenic framing stays intentionally sparse: trees are silhouette anchors, not a draw-call wall.
+  var nPerimTrees = 12;
   for(var ti = 0; ti < nPerimTrees; ti++){
     var ang = (ti / nPerimTrees) * Math.PI * 2 + (R() - 0.5) * 0.12;
     var baseDist = Math.max(W, H) * 0.60 + R() * 10;
@@ -2014,7 +2243,7 @@ function buildJunglePerimeter(){
   scene.add(ruinedFacade(-W / 2 - 8, 2, Math.PI / 2 + 0.2, 505));
 
   // Undergrowth bushes carpeting the perimeter
-  for(var bi = 0; bi < 160; bi++){
+  for(var bi = 0; bi < 72; bi++){
     var a = R() * Math.PI * 2, rad = Math.max(W, H) * 0.62 + R() * 16;
     var bx = Math.cos(a) * rad, bz = Math.sin(a) * rad * 0.75;
     if(Math.abs(bx) < W / 2 + 2.5 && Math.abs(bz) < H / 2 + 2.5) continue;
@@ -2041,7 +2270,7 @@ function buildJunglePerimeter(){
 // ---------- Meadows: Realistic Botanical Flowers Off the Board in the Grass ----------
 function buildMeadows(R, W, H, clampToIsland){
   // Realistic botanical flower drift colonies in the perimeter grass (OFF THE BOARD)
-  var nDrifts = 28;
+  var nDrifts = 16;
   for(var d = 0; d < nDrifts; d++){
     var da = (d / nDrifts) * Math.PI * 2 + (R() - 0.5) * 0.3;
     var drad = Math.max(W, H) * 0.56 + R() * 15;
@@ -2050,21 +2279,21 @@ function buildMeadows(R, W, H, clampToIsland){
     // Keep strictly outside the game board
     if(Math.abs(dx) < W / 2 + 2.5 && Math.abs(dz) < H / 2 + 2.5) continue;
     var c = clampToIsland(dx, dz, 2.5);
-    var driftType = (d % 3 === 0) ? 'peony' : ((d % 3 === 1) ? 'sunlily' : 'wisteria');
-    var clusterCount = 3 + ((R() * 4) | 0);
+    var driftType = (d % 4 === 0) ? 'carnation' : ((d % 4 === 1) ? 'peony' : ((d % 4 === 2) ? 'sunlily' : 'wisteria'));
+    var clusterCount = 2 + ((R() * 3) | 0);
     for(var ci = 0; ci < clusterCount; ci++){
       var fx = c[0] + (R() - 0.5) * 2.8;
       var fz = c[1] + (R() - 0.5) * 2.8;
       if(Math.abs(fx) < W / 2 + 2.2 && Math.abs(fz) < H / 2 + 2.2) continue;
-      var flower = createBotanicalFlower(driftType, 0.75 + R() * 0.55, R);
+      var flower = createCarnationCluster(0.48 + R() * 0.26, R, driftType);
       flower.position.set(fx, 0.05, fz);
       flower.rotation.y = R() * Math.PI * 2;
       scene.add(flower);
     }
   }
 
-  // Titan Blooms: five giant botanical statement flowers in the courtyard grass corners
-  [[-34, -12], [30, -16], [-28, 15], [34, 10], [0, 25]].forEach(function(p, ti){
+  // Retired the oversized toy-like Titan Blooms; normal-scale carnation beds carry the color instead.
+  [].forEach(function(p, ti){
     var g = new THREE.Group();
     var stemM = new THREE.MeshStandardMaterial({ color: 0x245532, roughness: 0.8 });
     var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.36, 4.6, 12), stemM);
@@ -2095,6 +2324,13 @@ function buildMeadows(R, W, H, clampToIsland){
     scene.add(g);
   });
 
+  [[-34, -12], [30, -16], [-28, 15], [34, 10], [0, 25]].forEach(function(p){
+    var bed = createCarnationCluster(1.05 + R() * 0.2, R);
+    bed.position.set(p[0], 0.02, p[1]);
+    bed.rotation.y = R() * Math.PI * 2;
+    scene.add(bed);
+  });
+
   // Mana Blooms: cyan soul-flowers glowing in the outer perimeter grass
   for(var mb = 0; mb < 16; mb++){
     var ma = R() * Math.PI * 2, mr = 25 + R() * 18;
@@ -2111,15 +2347,16 @@ function buildMeadows(R, W, H, clampToIsland){
   }
 
   // Rim Hedge: lush flowering wall tracing the island edge
-  for(var hg = 0; hg < 42; hg++){
-    var ha = hg / 42 * Math.PI * 2;
+  for(var hg = 0; hg < 28; hg++){
+    var ha = hg / 28 * Math.PI * 2;
     var hx = Math.cos(ha) * 46.5, hz = Math.sin(ha) * 46.5 * 0.8;
     if(Math.hypot(hx, hz) > 50) continue;
-    var hm = hg % 3 === 0 ? MATS.peony : (hg % 3 === 1 ? MATS.leaf : MATS.goldFlower);
-    var hedge = new THREE.Mesh(new THREE.IcosahedronGeometry(0.95 + R() * 0.75, 1), hm);
-    hedge.position.set(hx, 0.55, hz);
-    hedge.scale.y = 0.8; hedge.rotation.y = R() * 3;
-    hedge.castShadow = true;
+    var hedge = hg % 3 === 1
+      ? new THREE.Mesh(new THREE.IcosahedronGeometry(0.75 + R() * 0.55, 1), MATS.leaf)
+      : createCarnationCluster(0.82 + R() * 0.28, R);
+    hedge.position.set(hx, hg % 3 === 1 ? 0.48 : 0.02, hz);
+    hedge.rotation.y = R() * 3;
+    hedge.castShadow = hg % 3 === 1;
     scene.add(hedge);
   }
 }
@@ -2183,14 +2420,12 @@ function scatterWildRuins(R, W, H, clampToIsland){
       var obCap = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.5, 4), MATS.brass);
       obCap.position.set(-0.45, 2.35, 0); obCap.rotation.y = Math.PI / 4; g.add(obCap);
       overgrow(g, 5, 2.6);
-    } else { // headless statue: pedestal + torso fragment
-      var ped = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.8, 1.1), MATS.marble);
-      ped.position.y = 0.4; ped.castShadow = true; ped.receiveShadow = true; g.add(ped);
-      var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.42, 1.0, 8), aged);
-      torso.position.y = 1.25; torso.rotation.z = 0.15; torso.castShadow = true; g.add(torso);
-      var ahead = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), aged);
-      ahead.position.set(0.8, 0.22, 0.5); ahead.castShadow = true; g.add(ahead); // fallen head
-      overgrow(g, 6, 2.6);
+    } else { // low garden ruin: weathered urn fragments, never a sightline-blocking statue
+      var ped = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.32, 1.3), MATS.marble);
+      ped.position.y = 0.16; ped.castShadow = true; ped.receiveShadow = true; g.add(ped);
+      var bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.3, 0.45, 12), aged);
+      bowl.position.y = 0.48; bowl.rotation.z = 0.38; bowl.castShadow = true; g.add(bowl);
+      overgrow(g, 7, 2.8);
     }
     g.position.set(p[0], 0, p[1]);
     g.rotation.y = R() * 6.28;
@@ -2242,7 +2477,7 @@ function buildWaterAndFire(){
 }
 
 // ---------- Audio Synthesizer, Dynamics Limiter & SFX Buses ----------
-var AC = null, lastGunSnd = 0;
+var AC = null, lastGunSnd = 0, lastLaunchSnd = 0;
 var AUDIO_MUTED = false;
 try { AUDIO_MUTED = localStorage.getItem('aegis_audio_muted') === 'true'; } catch(e){}
 
@@ -2689,17 +2924,18 @@ function playVictorySFX(){
 
 function sfx(name){
   try {
-    if(name === 'click') tone(720, 0.04, 'square', 0.04);
-    else if(name === 'build'){ tone(180, 0.08, 'triangle', 0.12); setTimeout(function(){ tone(320, 0.08, 'triangle', 0.1); }, 70); }
-    else if(name === 'upgrade'){ tone(440, 0.08, 'triangle', 0.1); setTimeout(function(){ tone(660, 0.08, 'triangle', 0.1); }, 80); }
-    else if(name === 'sell') tone(540, 0.12, 'square', 0.07, 180);
+    // UI feedback stays clearly quieter than combat voices (gun 0.04, boom ducked).
+    if(name === 'click') tone(720, 0.04, 'square', 0.022);
+    else if(name === 'build'){ tone(180, 0.08, 'triangle', 0.07); setTimeout(function(){ tone(320, 0.08, 'triangle', 0.06); }, 70); }
+    else if(name === 'upgrade'){ tone(440, 0.08, 'triangle', 0.06); setTimeout(function(){ tone(660, 0.08, 'triangle', 0.06); }, 80); }
+    else if(name === 'sell') tone(540, 0.12, 'square', 0.045, 180);
     else if(name === 'error') tone(130, 0.2, 'sawtooth', 0.12, 80);
     else if(name === 'alarm') playAlarmSFX();
     else if(name === 'defeat') playDefeatSFX();
     else if(name === 'victory') playVictorySFX();
-    else if(name === 'buy') tone(620, 0.09, 'triangle', 0.09, 880);
+    else if(name === 'buy') tone(620, 0.09, 'triangle', 0.05, 880);
     else if(name === 'gun'){ var n = performance.now(); if(n - lastGunSnd > 65){ lastGunSnd = n; tone(160 + Math.random() * 80, 0.035, 'square', 0.04); } }
-    else if(name === 'launch') noiseHit(0.28, 0.09, 2200);
+    else if(name === 'launch'){ var nl = performance.now(); if(nl - lastLaunchSnd > 90){ lastLaunchSnd = nl; noiseHit(0.28, 0.09, 2200); } }
     else if(name === 'boom'){ playExplosionSFX(); }
     else if(name === 'zap') tone(1400 + Math.random() * 500, 0.07, 'sawtooth', 0.035, 350);
     else if(name === 'slow') tone(260, 0.3, 'sine', 0.08, 100);
@@ -2716,12 +2952,82 @@ var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2(-999, -999);
 var rayPlane;
 var dustParticles;
+var WEATHER_MODES = [
+  { id: 'bloom', label: 'Bloom Season', icon: '☀', fog: 0x183744, density: 0.003, sun: 2.0 },
+  { id: 'rain', label: 'Rain Garden', icon: '☂', fog: 0x122c36, density: 0.006, sun: 1.25 },
+  { id: 'autumn', label: 'Autumn Gold', icon: '🍂', fog: 0x3b3028, density: 0.0042, sun: 1.7 },
+  { id: 'snow', label: 'Winter Snow', icon: '❄', fog: 0x9eb2bc, density: 0.005, sun: 1.45 }
+];
+var WEATHER_INDEX = 0;
 
 // GLTF Models Cache & Asset Streaming
 var GLTF_CACHE = {};
 var gltfLoader = new THREE.GLTFLoader();
 var SHARED_GEOMETRIES = new WeakSet();
 var SHARED_MATERIALS = new WeakSet();
+var BOTANICAL_GEO_CACHE = {};
+
+// Blender exports intentionally keep authoring parts separate. That is useful in
+// Blender, but every part becomes a WebGL draw call. Collapse static GLBs to one
+// mesh per material at load time, preserving their appearance while making clones
+// cheap enough to use for towers, enemies, and scenery.
+function mergeStaticGltfRoot(root, castsShadow){
+  if(!root || !THREE.BufferGeometry) return root;
+  root.updateMatrixWorld(true);
+  var buckets = {};
+  root.traverse(function(node){
+    if(!node.isMesh || !node.geometry || Array.isArray(node.material)) return;
+    var mat = node.material;
+    var key = mat && mat.uuid ? mat.uuid : 'default';
+    var geo = node.geometry.clone();
+    geo.applyMatrix4(node.matrixWorld);
+    if(geo.index && geo.toNonIndexed){
+      var flat = geo.toNonIndexed();
+      geo.dispose();
+      geo = flat;
+    }
+    if(!buckets[key]) buckets[key] = { material: mat, geometries: [] };
+    buckets[key].geometries.push(geo);
+  });
+
+  var mergedRoot = new THREE.Group();
+  mergedRoot.name = root.name || 'optimizedGLTF';
+  mergedRoot.userData = Object.assign({}, root.userData || {}, { optimizedStatic: true });
+  Object.keys(buckets).forEach(function(key){
+    var bucket = buckets[key], geos = bucket.geometries;
+    if(!geos.length) return;
+    var attrNames = ['position', 'normal', 'uv', 'color'];
+    var merged = new THREE.BufferGeometry();
+    for(var ai = 0; ai < attrNames.length; ai++){
+      var attrName = attrNames[ai];
+      var first = geos[0].getAttribute(attrName);
+      if(!first) continue;
+      var compatible = true, total = 0;
+      for(var gi = 0; gi < geos.length; gi++){
+        var attr = geos[gi].getAttribute(attrName);
+        if(!attr || attr.itemSize !== first.itemSize){ compatible = false; break; }
+        total += attr.array.length;
+      }
+      if(!compatible) continue;
+      var joined = new first.array.constructor(total), offset = 0;
+      for(var gj = 0; gj < geos.length; gj++){
+        var src = geos[gj].getAttribute(attrName).array;
+        joined.set(src, offset); offset += src.length;
+      }
+      merged.setAttribute(attrName, new THREE.BufferAttribute(joined, first.itemSize, first.normalized));
+    }
+    merged.computeBoundingBox();
+    merged.computeBoundingSphere();
+    var mesh = new THREE.Mesh(merged, bucket.material);
+    mesh.castShadow = !!castsShadow;
+    mesh.receiveShadow = true;
+    mergedRoot.add(mesh);
+    SHARED_GEOMETRIES.add(merged);
+    if(bucket.material) SHARED_MATERIALS.add(bucket.material);
+    for(var gd = 0; gd < geos.length; gd++) geos[gd].dispose();
+  });
+  return mergedRoot.children.length ? mergedRoot : root;
+}
 
 // GLTF clones share their source GPU resources; procedural children do not.
 function disposeSceneObject(root){
@@ -2769,7 +3075,9 @@ document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
 function updateAudioButton(){
   var btn = document.getElementById('btnAudio');
   if(!btn) return;
-  btn.textContent = AUDIO_MUTED ? '🔇' : '🔊';
+  var icon = btn.querySelector ? btn.querySelector('.btn-icon') : null;
+  if(icon && typeof icon.textContent !== 'undefined') icon.textContent = AUDIO_MUTED ? '🔇' : '🔊';
+  else btn.textContent = AUDIO_MUTED ? '🔇' : '🔊';
   btn.title = AUDIO_MUTED ? 'Unmute Audio (M)' : 'Mute Audio (M)';
 }
 
@@ -2829,7 +3137,7 @@ var GTA_LOADER = {
   currentSlide: 0,
   slidesShown: 1,
   modelsLoaded: 0,
-  totalModels: 21,
+  totalModels: 20,
   startTime: 0,
   minDuration: 11000, // Four illustrated dossiers before automatic entry
   readyToDismiss: false,
@@ -2956,6 +3264,8 @@ function preloadGLTFModels(){
     { key: 'gatling',     url: 'blender_pipeline/models/tower_prism_gatling.glb' },
     { key: 'mortar',      url: 'blender_pipeline/models/tower_bloom_cannon.glb' },
     { key: 'resonance',   url: 'blender_pipeline/models/tower_resonance_monolith.glb' },
+    { key: 'heliostat',    url: 'blender_pipeline/models/tower_heliostat_orchid.glb' },
+    { key: 'mycelium',     url: 'blender_pipeline/models/tower_mycelium_bell.glb' },
     { key: 'sanctum',     url: 'blender_pipeline/models/sanctum_core_rotunda.glb' },
     { key: 'spider',      url: 'blender_pipeline/models/enemy_skitter_scout.glb' },
     { key: 'tank',        url: 'blender_pipeline/models/enemy_tread_tank.glb' },
@@ -2967,7 +3277,6 @@ function preloadGLTFModels(){
     { key: 'olive',       url: 'blender_pipeline/models/flora_olive_tree.glb' },
     { key: 'colonnade',   url: 'blender_pipeline/models/ruin_grand_colonnade.glb' },
     { key: 'wildflowers', url: 'blender_pipeline/models/flora_wildflower_cluster.glb' },
-    { key: 'statue',      url: 'blender_pipeline/models/statue_automata_athena.glb' },
     { key: 'masonry',     url: 'blender_pipeline/models/accent_masonry_blocks.glb' },
     { key: 'column',      url: 'blender_pipeline/models/accent_column_pediment.glb' },
     { key: 'chest',       url: 'blender_pipeline/models/prop_treasure_chest.glb' },
@@ -2983,12 +3292,13 @@ function preloadGLTFModels(){
   modelsToLoad.forEach(function(item){
     gltfLoader.load(item.url, function(gltf){
       var root = gltf.scene;
+      var decorative = /^(cypress|olive|colonnade|wildflowers|masonry|column|chest|urn|lotus|chrysanthemum)$/.test(item.key);
       root.traverse(function(child){
         if(child.isMesh){
           if(child.geometry) SHARED_GEOMETRIES.add(child.geometry);
           var mats = Array.isArray(child.material) ? child.material : (child.material ? [child.material] : []);
           for(var mat of mats) SHARED_MATERIALS.add(mat);
-          child.castShadow = true;
+          child.castShadow = !decorative;
           child.receiveShadow = true;
           if(child.material){
             child.material.roughness = 0.35;
@@ -2997,18 +3307,15 @@ function preloadGLTFModels(){
           }
         }
       });
+      root = mergeStaticGltfRoot(root, !decorative);
       GLTF_CACHE[item.key] = root;
       console.log('Preloaded 3D GLB Model:', item.key);
       if(item.key === 'sanctum'){
         mountSanctumRotunda(root);
       }
       // Populate perimeter props once landscape assets load
-      if(item.key === 'cypress' || item.key === 'colonnade' || item.key === 'olive' || item.key === 'statue' || item.key === 'chest' || item.key === 'urn' || item.key === 'lotus' || item.key === 'chrysanthemum'){
+      if(item.key === 'cypress' || item.key === 'colonnade' || item.key === 'olive' || item.key === 'chest' || item.key === 'urn' || item.key === 'lotus' || item.key === 'chrysanthemum'){
         populatePerimeterFloraAndRuins();
-      }
-      // Refresh in-maze ruins visuals if already placed
-      if(item.key === 'masonry' || item.key === 'column' || item.key === 'wildflowers' || item.key === 'chest' || item.key === 'urn' || item.key === 'lotus' || item.key === 'chrysanthemum'){
-        buildRuinVisuals();
       }
       loaded++;
       updateGtaProgress(loaded, total);
@@ -3072,15 +3379,6 @@ function populatePerimeterFloraAndRuins(){
       oTree.rotation.y = Math.random() * Math.PI * 2;
       decorGroup.add(oTree);
     }
-  }
-
-  // 4. Statue of Athena Automata guarding Eastern Sanctum Overlook
-  if(GLTF_CACHE.statue){
-    var statue = GLTF_CACHE.statue.clone();
-    statue.position.set(halfW + 6.8, 0, 0);
-    statue.rotation.y = -Math.PI / 2;
-    statue.scale.set(1.15, 1.15, 1.15);
-    decorGroup.add(statue);
   }
 
   // 5. Wildflower Meadow Clusters in the Grass Perimeter (OFF THE BOARD)
@@ -3481,6 +3779,27 @@ function initMaterials(){
   TEX.leafCluster = makeLeafSprayTex(101, '#1b4d2b', '#3d824d', 'rgba(155, 235, 165, 0.75)', false);
   TEX.leafClusterOlive = makeLeafSprayTex(202, '#284635', '#4d7559', 'rgba(175, 210, 190, 0.70)', true);
   TEX.leafClusterGold = makeLeafSprayTex(303, '#3c6e2b', '#7ebc4c', 'rgba(215, 255, 160, 0.80)', false);
+  TEX.blossomCluster = canvasTex(512, function(ctx, S2){
+    ctx.clearRect(0, 0, S2, S2);
+    var r = mulberry(404);
+    ctx.strokeStyle = '#4f3028'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(S2 * .5, S2); ctx.bezierCurveTo(S2 * .46, S2 * .62, S2 * .57, S2 * .34, S2 * .48, S2 * .08); ctx.stroke();
+    for(var b = 0; b < 8; b++){
+      var by = S2 * (.18 + b * .085), dir = b % 2 ? 1 : -1;
+      ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(S2 * .5, by);
+      ctx.quadraticCurveTo(S2 * (.5 + dir * .12), by - 18, S2 * (.5 + dir * (.24 + r() * .1)), by - 42 - r() * 26); ctx.stroke();
+    }
+    var blossomCols = ['#ffd7e5','#ffabc5','#f48fb1','#fff1f4','#e96998'];
+    for(var fl = 0; fl < 82; fl++){
+      var fx = S2 * (.12 + r() * .76), fy = S2 * (.05 + r() * .78), rad = 7 + r() * 8;
+      for(var p = 0; p < 5; p++){
+        var pa = p / 5 * Math.PI * 2;
+        ctx.fillStyle = blossomCols[(fl + p) % blossomCols.length];
+        ctx.beginPath(); ctx.ellipse(fx + Math.cos(pa) * rad * .55, fy + Math.sin(pa) * rad * .55, rad * .68, rad * .42, pa, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = '#e3a829'; ctx.beginPath(); ctx.arc(fx, fy, Math.max(1.5, rad * .16), 0, Math.PI * 2); ctx.fill();
+    }
+  });
 
   // High-Resolution Furrowed Tree Bark Texture
   TEX.treeBark = canvasTex(512, function(ctx, S2){
@@ -3558,6 +3877,10 @@ function initMaterials(){
     map: TEX.leafClusterGold, alphaTest: 0.38, transparent: true, side: THREE.DoubleSide,
     roughness: 0.42, metalness: 0.04
   });
+  MATS.blossomCluster = new THREE.MeshStandardMaterial({
+    map: TEX.blossomCluster, alphaTest: 0.32, transparent: true, side: THREE.DoubleSide,
+    roughness: 0.5, metalness: 0.0
+  });
 
   // Foliage: double-sided with calibrated forward SSS transmission
   MATS.peony = new THREE.MeshStandardMaterial({
@@ -3568,6 +3891,9 @@ function initMaterials(){
     color: 0xFFB703, roughness: 0.36, metalness: 0.05, side: THREE.DoubleSide,
     emissive: 0x946505, emissiveIntensity: 0.24
   });
+  MATS.carnationPink = new THREE.MeshStandardMaterial({ color: 0xf06d98, roughness: 0.52, side: THREE.DoubleSide });
+  MATS.carnationRed = new THREE.MeshStandardMaterial({ color: 0xb52f55, roughness: 0.5, side: THREE.DoubleSide });
+  MATS.carnationCream = new THREE.MeshStandardMaterial({ color: 0xffe9dc, roughness: 0.56, side: THREE.DoubleSide });
   MATS.leaf = new THREE.MeshStandardMaterial({
     color: 0x2D7246, roughness: 0.40, metalness: 0.0, side: THREE.DoubleSide,
     normalMap: TEX.leafNormal, normalScale: new THREE.Vector2(0.4, 0.4),
@@ -3827,6 +4153,7 @@ function cycleGraphicsProfile(){
 }
 
 function updateGfxPill(){
+  var root = document.getElementById('gfx-mode');
   var pill = document.querySelector('#gfx-mode span');
   var dot = document.querySelector('#gfx-mode .dot');
   if(!pill) return;
@@ -3834,7 +4161,13 @@ function updateGfxPill(){
   var w = Math.round(window.innerWidth * (GFX.dpr || 1));
   var h = Math.round(window.innerHeight * (GFX.dpr || 1));
   var prof = GFX.profile.toUpperCase();
-  pill.innerHTML = '⚡ ' + GFX.fps + ' FPS · <span style="font-weight:700">' + prof + '</span> <span class="gfx-sub">(' + w + '×' + h + ' · ' + dprStr + ')</span>';
+  if(root && root.classList && root.classList.contains('rail-icon')){
+    pill.textContent = '⚡';
+    root.title = 'Graphics: ' + GFX.fps + ' FPS · ' + prof + ' · ' + w + '×' + h + ' @ ' + dprStr + ' (Shift+G)';
+    root.setAttribute('aria-label', root.title);
+  } else {
+    pill.innerHTML = '⚡ ' + GFX.fps + ' FPS · <span style="font-weight:700">' + prof + '</span> <span class="gfx-sub">(' + w + '×' + h + ' · ' + dprStr + ')</span>';
+  }
   if(dot){
     dot.className = 'dot ' + GFX.profile;
   }
@@ -3913,11 +4246,88 @@ function initThreeJS(){
   buildRuinVisuals();
   buildPathVisualizer();
   buildSunDust();
+  buildWeatherSystem();
 
   rayPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   window.addEventListener('resize', onWindowResize);
 }
 
+function weatherById(id){
+  for(var i = 0; i < WEATHER_MODES.length; i++) if(WEATHER_MODES[i].id === id) return WEATHER_MODES[i];
+  return WEATHER_MODES[0];
+}
+function setWeather(id, quiet){
+  var mode = weatherById(id);
+  WEATHER_INDEX = WEATHER_MODES.indexOf(mode);
+  if(scene){
+    scene.userData.weatherMode = mode.id;
+    if(scene.fog){ scene.fog.color.setHex(mode.fog); scene.fog.density = mode.density; }
+    if(scene.background && scene.background.setHex) scene.background.setHex(mode.fog);
+    if(scene.userData.sun) scene.userData.sun.intensity = mode.sun;
+    if(scene.userData.hemi) scene.userData.hemi.intensity = mode.id === 'rain' ? .28 : (mode.id === 'snow' ? .62 : .4);
+    var precip = scene.userData.precipitation;
+    if(precip){
+      precip.visible = mode.id === 'rain' || mode.id === 'snow';
+      precip.material.color.setHex(mode.id === 'snow' ? 0xeaf7ff : 0x83b9c8);
+      precip.material.size = mode.id === 'snow' ? .34 : .11;
+      precip.material.opacity = mode.id === 'snow' ? .82 : .48;
+    }
+    if(MATS.leaf) MATS.leaf.color.setHex(mode.id === 'autumn' ? 0x7b5428 : (mode.id === 'snow' ? 0x607b68 : 0x2D7246));
+    if(MATS.leafCluster) MATS.leafCluster.color.setHex(mode.id === 'autumn' ? 0xc0702d : (mode.id === 'snow' ? 0xa9b9ad : 0xffffff));
+    if(MATS.leafClusterGold) MATS.leafClusterGold.color.setHex(mode.id === 'autumn' ? 0xe09535 : (mode.id === 'snow' ? 0xd8e2dc : 0xffffff));
+    if(scene.userData.grassField) scene.userData.grassField.material.color.setHex(mode.id === 'autumn' ? 0x6d6430 : (mode.id === 'snow' ? 0x789085 : 0x356d41));
+  }
+  var btn = document.getElementById('btnWeather');
+  if(btn){
+    var sym = btn.querySelector ? btn.querySelector('.weather-symbol') : null;
+    if(sym) sym.textContent = mode.icon;
+    btn.title = mode.label + ' — change season/weather';
+    btn.setAttribute('aria-label', btn.title);
+  }
+  try { localStorage.setItem('aegis_weather', mode.id); } catch(e){}
+  if(!quiet && typeof toast === 'function') toast(mode.icon + ' ' + mode.label);
+  return mode.id;
+}
+function cycleWeather(){
+  WEATHER_INDEX = (WEATHER_INDEX + 1) % WEATHER_MODES.length;
+  setWeather(WEATHER_MODES[WEATHER_INDEX].id);
+  if(typeof sfx === 'function') sfx('click');
+}
+function buildWeatherSystem(){
+  if(!scene || scene.userData.precipitation) return;
+  var count = 900, pos = new Float32Array(count * 3), seed = new Float32Array(count);
+  var R = mulberry(90210);
+  for(var i = 0; i < count; i++){
+    pos[i*3] = (R() - .5) * 90; pos[i*3+1] = 2 + R() * 45; pos[i*3+2] = (R() - .5) * 70; seed[i] = R() * 20;
+  }
+  var geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geom.userData.seed = seed;
+  var mat = new THREE.PointsMaterial({ color: 0x83b9c8, size: .11, transparent: true, opacity: .48, depthWrite: false });
+  var points = new THREE.Points(geom, mat); points.visible = false; points.frustumCulled = false;
+  scene.add(points); scene.userData.precipitation = points;
+  var saved = 'bloom';
+  try { saved = localStorage.getItem('aegis_weather') || 'bloom'; } catch(e){}
+  setWeather(saved, true);
+}
+function updateWeather(dt){
+  if(!scene || !scene.userData.precipitation || !scene.userData.precipitation.visible) return;
+  var mode = scene.userData.weatherMode, points = scene.userData.precipitation;
+  var arr = points.geometry.attributes.position.array, seeds = points.geometry.userData.seed;
+  var fall = mode === 'snow' ? 2.2 : 19;
+  for(var i = 0; i < seeds.length; i++){
+    arr[i*3+1] -= fall * dt;
+    arr[i*3] += (mode === 'snow' ? Math.sin(S.time * .7 + seeds[i]) * .55 : 1.5) * dt;
+    arr[i*3+2] += (mode === 'snow' ? Math.cos(S.time * .55 + seeds[i]) * .35 : .25) * dt;
+    if(arr[i*3+1] < .1){ arr[i*3+1] = 38 + (seeds[i] % 8); arr[i*3] = ((seeds[i] * 17) % 90) - 45; }
+  }
+  points.geometry.attributes.position.needsUpdate = true;
+}
+
+function prefersReducedMotion(){
+  try { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  catch(e){ return false; }
+}
 var camTween = null;
 function flyCameraTo(pos, tgt, dur){
   if(!controls) return;
@@ -3979,15 +4389,44 @@ function toggleCameraView(){
   else if(S.camView === 'immersive') setCameraDirector();
   else setCameraIsometric();
 }
+// Center/focus action: snap back to a readable full-battlefield fit.
+// Instant when the player prefers reduced motion, eased flight otherwise.
+function focusBattlefield(){
+  var dest = new THREE.Vector3(48, 56, 48), tgt = new THREE.Vector3(0, 0, 0);
+  if(prefersReducedMotion()){
+    camTween = null;
+    camera.position.copy(dest);
+    if(controls){ controls.target.copy(tgt); controls.update(); }
+    else camera.lookAt(0, 0, 0);
+  } else {
+    if(!controls){ camera.position.copy(dest); camera.lookAt(0, 0, 0); }
+    else flyCameraTo(dest, tgt, 1.1);
+  }
+  if(S) S.camView = 'tactical';
+  document.body.classList.remove('director');
+  updateCamPill();
+}
+// Constrained default during onboarding/early waves; free control returns later.
+function applyEarlyCameraConstraints(){
+  if(!controls) return;
+  var early = !S || (S.wave || 0) < 3;
+  controls.maxDistance = early ? 120 : 220;
+  if(!early) return;
+  var d = camera.position.distanceTo(controls.target);
+  if(d > 120){
+    camera.position.copy(controls.target).add(
+      new THREE.Vector3().subVectors(camera.position, controls.target).setLength(120));
+  }
+}
 function updateCamPill(){
   var pill = document.querySelector('#cam-mode span');
   if(!pill) return;
   if(S && S.camView === 'immersive')
-    pill.innerHTML = 'BOOTS-ON-THE-MAP VIEW <span class="cam-hint">· Right drag / Right-stick to look · T for director</span>';
+    pill.innerHTML = 'BOOTS-ON-THE-MAP VIEW <span class="cam-hint">· Right drag / Right-stick to look · T to focus field</span>';
   else if(S && S.camView === 'director')
-    pill.innerHTML = '🎬 DIRECTOR VIEW <span class="cam-hint">· Auto-filming the battle · Drag to take over · T for tactical</span>';
+    pill.innerHTML = '🎬 DIRECTOR VIEW <span class="cam-hint">· Auto-filming the battle · Drag to take over · T to focus field</span>';
   else
-    pill.innerHTML = 'TACTICAL VIEW <span class="cam-hint">· Right drag to orbit · Scroll to zoom · T for boots-on-map</span>';
+    pill.innerHTML = 'TACTICAL VIEW <span class="cam-hint">· Right drag to orbit · Scroll to zoom · T to focus field</span>';
 }
 function stepDirector(dt){
   if(!S || S.camView !== 'director' || camTween || !controls) return;
@@ -4036,6 +4475,7 @@ function build3DLighting(){
 
   var hemi = new THREE.HemisphereLight(0x8da9ad, 0x0E2830, 0.40);
   scene.add(hemi);
+  scene.userData.hemi = hemi;
 
   // 3) Rim / Accent: incandescent solar amber #FF6B35 — silhouette edges on turrets/mechs/capitals
   var rim = new THREE.DirectionalLight(0xFF6B35, 0.75);
@@ -4420,16 +4860,16 @@ function build3DEnvironment(){
       scene.add(cap);
       addContactShadow(pillar, 3.4, 0.5);
 
-      // Dense floral embankment: chrysanthemum bushes + peony blooms + ivy at each base
-      for(var f = 0; f < 14; f++){
+      // Dense floral embankment: real flower bunches and leafy groundcover at each base.
+      for(var f = 0; f < 10; f++){
         var fx = x + (Math.random() - 0.5) * 3.4;
         var fz = z + (Math.random() - 0.5) * 3.0;
         var pick = Math.random();
-        var fm = pick < 0.4 ? MATS.goldFlower : (pick < 0.75 ? MATS.peony : MATS.leaf);
-        var fg = pick < 0.25 ? bushGeom : flowerGeom;
-        var fl = new THREE.Mesh(fg, fm);
-        fl.position.set(fx, 0.22 + Math.random()*0.35, fz);
-        var fs = 0.7 + Math.random()*1.1; fl.scale.set(fs, fs*0.8, fs);
+        var fl = pick < 0.68
+          ? createCarnationCluster(0.38 + Math.random() * 0.22, Math.random)
+          : new THREE.Mesh(bushGeom, MATS.leaf);
+        fl.position.set(fx, pick < 0.68 ? 0.02 : 0.3, fz);
+        if(pick >= 0.68){ var fs = 0.7 + Math.random()*0.8; fl.scale.set(fs, fs*0.8, fs); }
         scene.add(fl);
       }
       // Weeping wisteria vines draping from architrave
@@ -4449,11 +4889,9 @@ function build3DEnvironment(){
     var plinth = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.9, 1.4), MATS.marble);
     plinth.position.set(px2, 0.45, pz2); plinth.castShadow = true; plinth.receiveShadow = true;
     scene.add(plinth);
-    for(var pf=0; pf<6; pf++){
-      var blo = new THREE.Mesh(flowerGeom, pf%2? MATS.peony : MATS.goldFlower);
-      blo.position.set(px2+(Math.random()-0.5)*1.8, 0.9+Math.random()*0.5, pz2+(Math.random()-0.5)*1.8);
-      scene.add(blo);
-    }
+    var plinthFlowers = createCarnationCluster(0.72 + Math.random() * 0.18, Math.random);
+    plinthFlowers.position.set(px2, 0.82, pz2);
+    scene.add(plinthFlowers);
   }
 
   // Western Portal (Spawn Gate)
@@ -4504,36 +4942,28 @@ function build3DGrid(){
   var w = COLS * CELL_SIZE;
   var h = ROWS * CELL_SIZE;
 
-  // Marble Flagstones: cracked uneven pavers + moss seams + brass labyrinthine mosaic
+  // Playable living lawn: dense turf detail with subtle placement seams and brass wayfinding.
   var cv = document.createElement('canvas');
   cv.width = 1152; cv.height = 640;
   var ctx = cv.getContext('2d');
   var R = mulberry(20240);
-  ctx.fillStyle = '#bba98a'; ctx.fillRect(0, 0, 1152, 640);
+  ctx.fillStyle = '#315d45'; ctx.fillRect(0, 0, 1152, 640);
   var tw = 1152 / COLS, th = 640 / ROWS;
   for(var gy=0; gy<ROWS; gy++){
     for(var gx=0; gx<COLS; gx++){
-      var tone = 170 + ((R()*19)|0);
-      ctx.fillStyle = 'rgb('+(tone+21)+','+(tone+5)+','+(tone-23)+')';
+      var tone = 66 + ((R()*28)|0);
+      ctx.fillStyle = 'rgb('+(tone-25)+','+(tone+22)+','+(tone-8)+')';
       ctx.fillRect(gx*tw+1, gy*th+1, tw-2, th-2);
-      // per-paver cracks
-      if(R() < 0.4){
-        ctx.strokeStyle = 'rgba(60,52,42,0.55)'; ctx.lineWidth = 1;
-        ctx.beginPath();
+      for(var blade = 0; blade < 10; blade++){
+        ctx.strokeStyle = 'rgba('+(45+((R()*35)|0))+','+(105+((R()*45)|0))+','+(62+((R()*28)|0))+','+(0.28+R()*.34)+')';
+        ctx.lineWidth = .7 + R();
         var cx = gx*tw + R()*tw, cy = gy*th + R()*th;
-        ctx.moveTo(cx, cy);
-        for(var cs=0; cs<3; cs++){ cx += (R()-0.5)*tw*0.7; cy += (R()-0.5)*th*0.7; ctx.lineTo(cx, cy); }
-        ctx.stroke();
-      }
-      // moss clustering in seams
-      if(R() < 0.35){
-        ctx.fillStyle = 'rgba(45,114,70,'+(0.25+R()*0.4)+')';
-        ctx.beginPath(); ctx.arc(gx*tw + R()*tw, gy*th + (R()<0.5?1:th-1), 2+R()*5, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + (R()-.5)*2.5, cy - 2 - R()*5); ctx.stroke();
       }
     }
   }
   // seam grid
-  ctx.strokeStyle = '#8f806c'; ctx.lineWidth = 1.3;
+  ctx.strokeStyle = 'rgba(197,185,131,.36)'; ctx.lineWidth = 1.15;
   for(var lx=0; lx<=COLS; lx++){ ctx.beginPath(); ctx.moveTo(lx*tw,0); ctx.lineTo(lx*tw,640); ctx.stroke(); }
   for(var ly=0; ly<=ROWS; ly++){ ctx.beginPath(); ctx.moveTo(0,ly*th); ctx.lineTo(1152,ly*th); ctx.stroke(); }
   // inlaid geometric brass/gold labyrinthine mosaic runes along arterial mid row
@@ -4551,7 +4981,7 @@ function build3DGrid(){
   tex.anisotropy = 8;
 
   var groundMat = new THREE.MeshStandardMaterial({
-    map: tex, color: 0xffffff, roughness: 0.68, metalness: 0.02
+    map: tex, color: 0x66856a, roughness: 0.9, metalness: 0.0
   });
 
   // Marble courtyard slab (thin inlay — the playable field)
@@ -4560,6 +4990,7 @@ function build3DGrid(){
   groundMesh.position.set(0, -0.25, 0);
   groundMesh.receiveShadow = true;
   scene.add(groundMesh);
+  buildAnimatedGrass(w, h);
 
   buildFloatingIsland(w, h);
 
@@ -4586,6 +5017,38 @@ function build3DGrid(){
   scene.add(rangeRingMesh);
 
   scene.userData.decals = [];
+}
+
+function buildAnimatedGrass(w, h){
+  if(!THREE.InstancedMesh) return;
+  var bladeGeo = new THREE.PlaneGeometry(0.14, 0.48, 1, 2);
+  bladeGeo.translate(0, 0.24, 0);
+  var bladeMat = new THREE.MeshStandardMaterial({
+    color: 0x356d41, roughness: 0.92, metalness: 0, side: THREE.DoubleSide,
+    transparent: true, opacity: 0.72, depthWrite: false
+  });
+  bladeMat.onBeforeCompile = function(shader){
+    shader.uniforms.uGrassTime = { value: 0 };
+    bladeMat.userData.shader = shader;
+    shader.vertexShader = 'uniform float uGrassTime;\n' + shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      '#include <begin_vertex>\ntransformed.x += sin(uGrassTime * 1.7 + position.y * 5.0) * position.y * 0.12;'
+    );
+  };
+  var count = 1150;
+  var lawn = new THREE.InstancedMesh(bladeGeo, bladeMat, count);
+  lawn.name = 'animatedGrassField';
+  var R = mulberry(6724), dummy = new THREE.Object3D();
+  for(var i = 0; i < count; i++){
+    dummy.position.set((R() - .5) * (w - .5), 0.025, (R() - .5) * (h - .5));
+    dummy.rotation.set(0, R() * Math.PI, (R() - .5) * .08);
+    var s = .62 + R() * .68; dummy.scale.set(s, s, s);
+    dummy.updateMatrix(); lawn.setMatrixAt(i, dummy.matrix);
+  }
+  lawn.instanceMatrix.needsUpdate = true;
+  lawn.frustumCulled = false;
+  scene.add(lawn);
+  scene.userData.grassField = lawn;
 }
 
 // ---------- Floating island: grass crown, dirt strata, rocky underbelly (WoW style) ----------
@@ -4909,8 +5372,15 @@ function create3DTowerMesh(type){
     root.userData = { isGltf: true, model: clone, turn: clone };
     return addTowerBasePlinth(root, type);
   }
-  if(type === 'slow' && GLTF_CACHE.resonance){
-    var clone = GLTF_CACHE.resonance.clone();
+  if(type === 'beam' && GLTF_CACHE.heliostat){
+    var clone = GLTF_CACHE.heliostat.clone();
+    clone.scale.set(0.72, 0.72, 0.72);
+    root.add(clone);
+    root.userData = { isGltf: true, model: clone, crystal: clone, turn: clone };
+    return addTowerBasePlinth(root, type);
+  }
+  if(type === 'slow' && (GLTF_CACHE.mycelium || GLTF_CACHE.resonance)){
+    var clone = (GLTF_CACHE.mycelium || GLTF_CACHE.resonance).clone();
     clone.scale.set(0.65, 0.65, 0.65);
     root.add(clone);
     root.userData = { isGltf: true, model: clone, turn: clone };
@@ -5319,18 +5789,20 @@ function spawnShellCasing(worldPos){
   m.visible = true;
   FX.shells.push({ mesh: m, vx: (Math.random()-0.5)*4 + 2.2, vy: 3+Math.random()*2, vz: (Math.random()-0.5)*4, rx: Math.random()*8, life: 2.2, pooled: true });
 }
-function spawnMortarShell(from, to, dmg, splash){
+function spawnMortarShell(from, to, dmg, splash, airOnly){
   var m = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), MATS.amberGlow);
   m.position.copy(from); addHalo(m, 0xFF6B35, 1.2, 0.45);
   scene.add(m);
   var dist = from.distanceTo(to);
-  FX.mortars.push({ mesh: m, from: from.clone(), to: to.clone(), t: 0, dur: 0.5 + dist*0.03, dmg: dmg, splash: splash, trail: 0 });
+  FX.mortars.push({ mesh: m, from: from.clone(), to: to.clone(), t: 0, dur: 0.5 + dist*0.03, dmg: dmg, splash: splash, airOnly: !!airOnly, trail: 0 });
 }
 function spawnExplosion(worldPos, splash){
-  fxLight(0xffffff, 9, 16).position.copy(worldPos);
-  fxLight(0xFF6B35, 7, 18).position.copy(worldPos);
+  // Warm amber blast light instead of harsh white: silhouettes stay readable.
+  var reduceFlash = (typeof SETTINGS !== 'undefined' && SETTINGS.reduceFlash);
+  fxLight(reduceFlash ? 0xFF9B35 : 0xffd9a0, reduceFlash ? 5 : 9, 16).position.copy(worldPos);
+  fxLight(0xFF6B35, reduceFlash ? 4 : 7, 18).position.copy(worldPos);
   var grp = new THREE.Group(); grp.position.copy(worldPos); grp.position.y = 0.4;
-  addHalo(grp, 0xffffff, 4, 0.7); addHalo(grp, 0xFF6B35, 6, 0.5);
+  addHalo(grp, 0xffd9a0, reduceFlash ? 2 : 4, reduceFlash ? 0.35 : 0.7); addHalo(grp, 0xFF6B35, 6, 0.5);
   scene.add(grp);
   FX.flashes.push({ mesh: grp, life: 0.16 });
   // expanding ground dust shockwave ring
@@ -5367,7 +5839,8 @@ function waveBanner(title, sub, danger){
 function sanctumFlash(){
   var df = document.getElementById('dmgflash');
   if(!df) return;
-  df.style.opacity = 1;
+  var reduceFlash = (typeof SETTINGS !== 'undefined' && SETTINGS.reduceFlash);
+  df.style.opacity = reduceFlash ? 0.3 : 1;
   clearTimeout(df._h);
   df._h = setTimeout(function(){ df.style.opacity = 0; }, 220);
 }
@@ -5705,12 +6178,27 @@ function renderCombatFX(dt){
   }
 }
 
+// Tinted, damage-type-specific hit feedback. Brief colored impact pops instead
+// of harsh white flashes, so enemy models and silhouettes stay visible.
+var HIT_FLASH_COLORS = { Kinetic: 0xFFD60A, Blast: 0xFF6B35, Energy: 0x00F5D4, Sonic: 0xC77DFF };
+function spawnHitFlash(worldPos, dtype, big){
+  if(typeof SETTINGS !== 'undefined' && SETTINGS.reduceFlash) return;
+  var color = HIT_FLASH_COLORS[dtype] || 0xFFE6A3;
+  var size = big ? 0.55 : 0.3;
+  var m = new THREE.Mesh(new THREE.SphereGeometry(size, 8, 8),
+    new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.85, depthWrite: false }));
+  m.position.copy(worldPos); scene.add(m);
+  FX.flashes.push({ mesh: m, life: big ? 0.3 : 0.15 });
+}
 function hitFlashCreep(f){
   if(f.dirX !== undefined && f.dirY !== undefined){
     // Directional mechanical knockback / stagger impulse
     f.x -= f.dirX * 0.035;
     f.y -= f.dirY * 0.035;
   }
+  try {
+    spawnHitFlash(gridToWorld3D(f.x, f.y, f.air ? 2.5 : 0.7), f.lastHitType, false);
+  } catch(e){}
 }
 function deathDisassembly(f){
   var wp = gridToWorld3D(f.x, f.y, f.air ? 2.5 : 0.6);
@@ -5783,7 +6271,7 @@ function updateFX(dt){
       var puff = new THREE.Mesh(FX_SHARED.puffGeo, FX_SHARED.puffMat);
       puff.position.copy(o.mesh.position); scene.add(puff); FX.flashes.push({ mesh: puff, life: 0.35 }); }
     if(k>=1){ disposeFxMesh(o.mesh); FX.mortars.splice(i,1);
-      applyBlastDamage(o.to, o.dmg, o.splash); spawnExplosion(o.to, o.splash); } }
+      applyBlastDamage(o.to, o.dmg, o.splash, o.airOnly); spawnExplosion(o.to, o.splash); } }
   for(i=FX.rings.length-1;i>=0;i--){ o=FX.rings[i]; o.life-=dt; var p=1-o.life/o.max;
     var r=o.grow*p+0.5; o.mesh.scale.set(r,r,1); o.mesh.material.opacity=0.85*(1-p);
     if(o.life<=0){ disposeFxMesh(o.mesh); FX.rings.splice(i,1); } }
@@ -5834,16 +6322,18 @@ function clearActiveEffects(){
   DMG_NUMS.length = 0;
   if(combatCtx) combatCtx.clearRect(0, 0, combatCanvas.width, combatCanvas.height);
 }
-function applyBlastDamage(worldPos, dmg, splash){
+function applyBlastDamage(worldPos, dmg, splash, airOnly){
   var g = worldToGrid3D(worldPos);
   var cx = g.gx + 0.5, cy = g.gy + 0.5;
   var nearby = (typeof queryFoesInRadius === 'function') ? queryFoesInRadius(cx, cy, splash + 0.8, BLAST_QUERY_BUF) : S.foes;
   for(var fi = 0; fi < nearby.length; fi++){
     var f = nearby[fi];
     if(f.hp <= 0 || f.dead) continue;
+    if(!!f.air !== !!airOnly) continue; // ground shells ignore fliers; flak ignores ground
     var d = Math.hypot(f.x - cx, f.y - cy);
     if(d <= splash + f.r){
       var actualDmg = applyDamage(f, dmg, 'Blast', true);
+      f.lastHitType = 'Blast';
       hitFlashCreep(f);
       damageNumber(gridToWorld3D(f.x, f.y, f.air ? 2.5 : 0), actualDmg, 'Blast');
       if(f.hp <= 0) killFoe(f);
@@ -5852,6 +6342,12 @@ function applyBlastDamage(worldPos, dmg, splash){
 }
 function killFoe(f){
   if(f.dead) return; f.dead = true;
+  logGameEvent('kill', { type: f.type });
+  // Lethal-hit emphasis: one stronger tinted pop in the killing damage type.
+  try {
+    var kw = (f.mesh && f.mesh.position) ? f.mesh.position.clone() : gridToWorld3D(f.x, f.y, f.air ? 2.5 : 0.7);
+    spawnHitFlash(kw, f.lastHitType, true);
+  } catch(e){}
   deathDisassembly(f);
   S.cash += f.reward; S.score += f.reward * 10; S.kills++;
   S.totalEarned = (S.totalEarned || 0) + f.reward;
@@ -5890,7 +6386,9 @@ function canPlace(gx, gy){
   var i = idx(gx, gy);
   if((gx === SPAWN.x && gy === SPAWN.y) || (gx === SANCTUM.x && gy === SANCTUM.y))
     return { ok: false, why: 'Spawn gate and sanctum portal must stay clear!' };
-  if(S.blocked[i]) return { ok: false, why: 'Tile already occupied.' };
+  if(S.blocked[i]) return S.ruin && S.ruin[i]
+    ? { ok: false, why: 'Ancient ruins — unbuildable terrain.' }
+    : { ok: false, why: 'Tile already occupied.' };
   var test = S.blocked.slice(); test[i] = 1;
   if(!mazeValid(test)) return { ok: false, why: 'Path Blocked! Maze must leave an open lane to the Sanctum.' };
   return { ok: true };
@@ -6015,7 +6513,9 @@ function hpScale(w){
 function waveComp(w){
   // Waves 1-5 run +2 bonus scouts so the opening forces tower placement decisions.
   var c = [{ type: 'spider', count: 5 + Math.floor(w * 1.6) + (w <= 5 ? 2 : 0), gap: 0.45 }];
-  if(w >= 2) c.push({ type: 'tank', count: 1 + Math.floor(w * 0.8), gap: 0.95 });
+  // Wave 1 is spiders-only; tanks join from wave 2 without the old +1 bonus
+  // so the opening teaches placement instead of demanding anti-armor.
+  if(w >= 2) c.push({ type: 'tank', count: Math.max(1, Math.floor(w * 0.8)), gap: 0.95 });
   if(w >= 3) c.push({ type: 'drone', count: 2 + Math.floor(w * 0.7), gap: 0.75 });
   if(w >= 4) c.push({ type: 'prowler', count: Math.max(1, Math.floor((w - 2) * 0.7)), gap: 0.8 });
   if(w >= 5) c.push({ type: 'walker', count: Math.floor((w - 1) * 0.55), gap: 1.25 });
@@ -6030,6 +6530,31 @@ function waveComp(w){
   return c;
 }
 
+// First-encounter codex: one concise toast per enemy type per run — readable
+// silhouette, role, counter, and reason to adjust placement. Shown once so
+// early waves teach without overwhelming.
+var FOE_INTEL = {
+  spider: 'Skitter Scouts — fast and fragile. Petal Gatlings shred them.',
+  tank: 'Tread Tanks — armored vs bullets. Soften with mortars or beams.',
+  drone: 'Rotor Drones — FLY over maze walls! Base mortars cannot hit air: answer with Gatlings, Prisms, or Skyburst Flak.',
+  prowler: 'Steam Prowlers — dodge bullets and lasers. Blast and Sonic never miss.',
+  walker: 'Diesel Walkers — heavy armor. Slow them down and focus beams.',
+  ram: 'Dreadnought Rams — STALL adjacent towers on impact! Stun them, then focus fire.',
+  ship: 'Zeppelin Sky-Hulls — armored airships. Skyburst Flak and massed Gatlings answer.',
+  blink: 'Phase Blinks — teleport past your walls. Kill them fast inside the maze.',
+  dart: 'Rift Darts — dash through walls. Spread coverage, do not over-funnel.',
+  boss: 'Goliath Colossus — phased titan. Save Solar Flare and slow for it.'
+};
+function announceFirstEncounter(type){
+  if(!S || !FOE_INTEL[type]) return;
+  if(!S.seenTypes) S.seenTypes = {};
+  if(S.seenTypes[type]) return;
+  S.seenTypes[type] = 1;
+  toast('⚠ ' + FOE_INTEL[type]);
+}
+
+// Legacy helper: full composition text for wave w. No longer rendered in the
+// HUD (announcements stay concise); kept for the debug API and tests.
 function previewText(w){
   if(w > WAVE_MAX) return 'Grid secured. All waves vanquished.';
   return 'Wave ' + w + ': ' + waveComp(w).map(function(g){
@@ -6041,6 +6566,7 @@ function startWave(){
   if(!canMutateGameplay('wave')) return false;
   if(!S || S.phase !== 'build' || S.wave >= WAVE_MAX) return false;
   S.wave++;
+  applyEarlyCameraConstraints();
   S.spawnQueue = [];
   var t = 0.5;
   waveComp(S.wave).forEach(function(g){
@@ -6049,11 +6575,13 @@ function startWave(){
       t += g.gap;
     }
   });
-  S.spawnT = 0; S.phase = 'combat'; S.selTower = null;
+  S.spawnT = 0; S.phase = 'combat'; S.selTower = null; S.nextAnnounced = false;
   hideInspect(); refreshHud(); sfx('wave');
-  var comp = waveComp(S.wave).map(function(g){ return g.count + 'x ' + FOES[g.type].name; }).join(' · ');
+  // Concise announcements only: never expose enemy counts or composition here.
   var isBoss = S.wave % 10 === 0;
-  waveBanner(isBoss ? '☠ COLOSSUS APPROACHES' : 'WAVE ' + S.wave, comp, isBoss);
+  if(isBoss) waveBanner('☠ COLOSSUS APPROACHES', 'BOSS WAVE', true);
+  else if(S.wave === 1) waveBanner('WAVE 1', 'DEFEND THE SANCTUM', false);
+  else waveBanner('WAVE ' + S.wave, '', false);
   // spawn gate discharge: the portal vomits the wave
   var gate = gridToWorld3D(SPAWN.x, SPAWN.y, 0);
   fxLight(0x00F5D4, 5, 12).position.copy(gate);
@@ -6092,6 +6620,7 @@ function spawnEnemy(type){
     f.dashCD = 3.0 + Math.random() * 2;
     f.phaseT = 0; // >0 = currently phasing (ignores blocked tiles)
   }
+  announceFirstEncounter(type);
   if(!air){
     if(!S.flowField) S.flowField = computeFlowField(SANCTUM.x, SANCTUM.y, S.blocked);
     var path = (S.flowField ? getFlowPath(SPAWN.x, SPAWN.y, S.flowField) : null) || findPath(SPAWN.x, SPAWN.y, S.blocked);
@@ -6276,14 +6805,23 @@ function update(dt){
       if(Math.abs(f.x - (SANCTUM.x + 0.5)) < 0.08 && Math.abs(f.y - (SANCTUM.y + 0.5)) < 0.08){
         disposeSceneObject(f.mesh);
         S.foes.splice(i, 1);
-        S.lives -= f.leak; S.leaked++;
+        var defenseBonus = S.glyphBonus || getGlyphBonus(S.glyphs);
+        var leakDamage = Math.max(1, Math.ceil(f.leak * (1 - (defenseBonus.leakReduction || 0))));
+        S.lives -= leakDamage; S.leaked++;
+        if(S.lives <= 0 && defenseBonus.secondWind && !S.glyphSecondWindUsed){
+          S.glyphSecondWindUsed = true;
+          S.lives = Math.max(1, Math.ceil(S.maxLives * 0.25));
+          waveBanner('❦ HEARTWOOD REBIRTH', 'THE SANCTUM REFUSES TO FALL', false);
+          toast('Heartwood Rebirth restored ' + S.lives + ' Sanctum HP!');
+        }
+        logGameEvent('leak', { type: f.type, leak: leakDamage, lives: S.lives });
         if(!S.leakedByType) S.leakedByType = { spider: 0, tank: 0, drone: 0, walker: 0, ship: 0, boss: 0, blink: 0, dart: 0 };
         if(f.type) S.leakedByType[f.type] = (S.leakedByType[f.type] || 0) + 1;
         sfx('alarm');
         sanctumFlash();
         if(f.type === 'boss'){
           // Boss leak must feel catastrophic: banner + heavy shake + double rumble
-          waveBanner('☠ BOSS LEAK', 'COLOSSUS BREACHED THE SANCTUM · -' + f.leak + ' LIVES', true);
+          waveBanner('☠ BOSS LEAK', 'COLOSSUS BREACHED THE SANCTUM · -' + leakDamage + ' LIVES', true);
           addTrauma(0.85);
           padRumble(1.0, 1.2, 400);
         } else {
@@ -6430,6 +6968,13 @@ function update(dt){
       var f = nearbyFoes[fi];
       if(f.hp <= 0 || f.dead) continue;
       if(f.air && t.type === 'gun' && t.branch && BRANCH.gun[t.branch].aa === false) continue;
+      if(t.type === 'rocket'){
+        // Mortar role split: base + Cataclysm are ground-only; Skyburst Flak is air-only.
+        var rSpec = t.branch ? BRANCH.rocket[t.branch] : null;
+        var rAA = !!(rSpec && rSpec.aaOnly);
+        if(f.air && !rAA) continue;
+        if(!f.air && rAA) continue;
+      }
       var d = Math.hypot(f.x - tPos.x, f.y - tPos.y);
       if(d <= range + f.r){
         var prog = (f.wp || 0) * 1000 - d;
@@ -6572,14 +7117,15 @@ function update(dt){
       else if(t.type === 'rocket' && t.cd <= 0){
         var riv = (spec && spec.iv) || 1.8;
         var rdmg = (spec && spec.dmg) || 32;
-        var splash = (spec && spec.splash) || 1.4;
+        var splash = (spec && spec.splash) || 1.25;
+        var rocketAA = !!(spec && spec.aaOnly); // Skyburst Flak is the air answer
         t.cd = riv;
         var mortarMuzzle = new THREE.Vector3(
           tWorld.x + forwardX * 0.95,
           tWorld.y + 0.65,
           tWorld.z + forwardZ * 0.95
         );
-        spawnMortarShell(mortarMuzzle, bWorld.clone(), rdmg, splash);
+        spawnMortarShell(mortarMuzzle, bWorld.clone(), rdmg, splash, rocketAA);
         t.totalDmg = (t.totalDmg || 0) + rdmg;
         sfx('launch');
       }
@@ -6758,11 +7304,20 @@ function update(dt){
   if(S.phase === 'combat' && !S.spawnQueue.length && !S.foes.length){
     var bonus = 15 + S.wave * 2;
     S.cash += bonus; S.score += S.wave * 25;
+    var recovery = (S.glyphBonus || getGlyphBonus(S.glyphs)).waveHeal || 0;
+    if(recovery > 0 && S.lives < S.maxLives){
+      var healed = Math.min(recovery, S.maxLives - S.lives);
+      S.lives += healed;
+      toast('Sanctum Regrowth restored ' + healed + ' HP');
+    }
     if(S.wave >= WAVE_MAX){ gameOver(true); return; }
-    S.phase = 'build'; S.waveT = 12;
+    S.phase = 'build'; S.waveT = 12; S.nextAnnounced = false;
+    logGameEvent('wave-complete', { wave: S.wave });
+    waveBanner('WAVE COMPLETE', '', false);
   }
   if(S.phase === 'build' && S.wave > 0 && S.wave < WAVE_MAX){
     S.waveT -= dt;
+    if(S.waveT <= 3 && !S.nextAnnounced){ S.nextAnnounced = true; waveBanner('NEXT WAVE', '', false); }
     if(S.waveT <= 0) startWave();
   }
 
@@ -6851,6 +7406,7 @@ function update(dt){
 var LAST_MATCH_REPORT = '';
 function gameOver(win){
   S.phase = win ? 'win' : 'over';
+  logGameEvent('game-over', { win: !!win, wave: S.wave, score: S.score });
   sfx(win ? 'victory' : 'defeat');
 
   // Bank match earnings into permanent Meta-Scrap
@@ -7265,27 +7821,41 @@ function refreshHud(){
   document.getElementById('manaFill').style.width = Math.max(0, Math.min(100, S.mana)) + '%';
   document.getElementById('phaseLabel').textContent = S.phase === 'combat' ? 'ENGAGED' : (S.phase === 'build' ? 'PREPARING' : 'COMPLETE');
   document.getElementById('topbar').classList.toggle('is-combat', S.phase === 'combat');
-  var fieldStatus = document.getElementById('fieldStatus');
-  if(fieldStatus) fieldStatus.textContent = S.phase === 'over' ? 'SANCTUM BREACHED' : (S.phase === 'win' ? 'FIELD SECURED' : (S.paused ? 'FIELD PAUSED' : 'FIELD ONLINE'));
-  var fieldKills = document.getElementById('fieldKills');
-  if(fieldKills) fieldKills.textContent = S.kills;
-  var fieldSeed = document.getElementById('fieldSeed');
-  if(fieldSeed && fieldSeed.textContent === '—') fieldSeed.textContent = '#' + (S.seed >>> 0).toString(16).toUpperCase().slice(-6);
-  el.preview.textContent = (S.phase === 'combat')
-    ? previewText(S.wave) + ' — in combat'
-    : (S.wave >= WAVE_MAX ? 'Sanctum secured. Victory!'
-    : previewText(S.wave + 1) + (S.wave > 0 ? ' — wave in ' + Math.ceil(S.waveT) + 's' : ' — press Start'));
   paintCards();
   if(el.btnWave){
-    if(S.phase === 'combat') el.btnWave.textContent = 'Combat Raging…';
-    else if(S.phase === 'over' || S.phase === 'win') el.btnWave.textContent = 'Done';
-    else el.btnWave.textContent = (S.wave === 0 ? 'Start Wave (Space)' : 'Call Wave ' + (S.wave + 1) + ' (Space)');
+    var waveLabel = el.btnWave.querySelector ? el.btnWave.querySelector('.btn-wave-label') : null;
+    var waveText;
+    if(S.phase === 'combat') waveText = 'Combat Raging…';
+    else if(S.phase === 'over' || S.phase === 'win') waveText = 'Done';
+    else waveText = (S.wave === 0 ? 'Start Wave (Space)' : 'Call Wave ' + (S.wave + 1) + ' (Space)');
+    if(waveLabel) waveLabel.textContent = waveText;
+    else el.btnWave.textContent = waveText;
     el.btnWave.disabled = S.phase !== 'build';
+    el.btnWave.classList.toggle('is-available', S.phase === 'build');
+    el.btnWave.classList.toggle('is-hidden', S.phase !== 'build');
+    el.btnWave.setAttribute('aria-label', waveText + '. Tower defense wave command.');
   }
-  el.btnPause.textContent = S.paused ? '▶' : 'Ⅱ';
-  el.btnPause.setAttribute('aria-label', S.paused ? 'Resume game' : 'Pause game');
-  if(el.btnRoot) el.btnRoot.disabled = !S.sanctum || S.sanctum.rootCD > 0 || S.mana < 35;
-  if(el.btnFlare) el.btnFlare.disabled = !S.sanctum || S.sanctum.abilityCD > 0 || S.mana < 75;
+  if(el.btnPause){
+    var pauseIcon = el.btnPause.querySelector ? el.btnPause.querySelector('.hud-symbol, .btn-icon') : null;
+    if(pauseIcon) pauseIcon.textContent = S.paused ? '▶' : 'Ⅱ';
+    else el.btnPause.textContent = S.paused ? '▶' : 'Ⅱ';
+    el.btnPause.setAttribute('aria-label', S.paused ? 'Resume game' : 'Pause game');
+  }
+  var liveGlyphBonus = S.glyphBonus || getGlyphBonus(S.glyphs);
+  var rootManaCost = Math.ceil(35 * liveGlyphBonus.abilityCostMult);
+  var flareManaCost = Math.ceil(75 * liveGlyphBonus.abilityCostMult);
+  if(el.btnRoot){
+    el.btnRoot.disabled = !S.sanctum || S.sanctum.rootCD > 0 || S.mana < rootManaCost;
+    var rootCostEl = el.btnRoot.querySelector ? el.btnRoot.querySelector('.ab-cost') : null;
+    if(rootCostEl) rootCostEl.textContent = rootManaCost + ' ✧';
+    el.btnRoot.title = 'Verdant Overgrowth (D) — ' + rootManaCost + ' Mana';
+  }
+  if(el.btnFlare){
+    el.btnFlare.disabled = !S.sanctum || S.sanctum.abilityCD > 0 || S.mana < flareManaCost;
+    var flareCostEl = el.btnFlare.querySelector ? el.btnFlare.querySelector('.ab-cost') : null;
+    if(flareCostEl) flareCostEl.textContent = flareManaCost + ' ✧';
+    el.btnFlare.title = 'Solar Flare (F) — ' + flareManaCost + ' Mana';
+  }
   if(el.btnUpgradeAll){
     var quote = upgradeAllQuote();
     el.btnUpgradeAll.disabled = !quote.towers.length || S.cash < quote.cost || S.paused || S.phase === 'over' || S.phase === 'win';
@@ -7371,7 +7941,7 @@ var lastPlacedTime = 0;
 
 function onClick(ev){
   audio();
-  if(ev.target.closest('#topbar, #drawer, #inspect, #field-panel, #threat-announcement, #ability-cluster, #glyphShop, #banner, #loading-screen, #more-controls-panel, #claude-fm-popover, #padmap-modal, #settings-modal, #tutorial-modal')) return;
+  if(ev.target.closest('#topbar, #drawer, #inspect, #control-sidebar, #ability-cluster, #glyphShop, #banner, #loading-screen, #claude-fm-popover, #padmap-modal, #settings-modal, #tutorial-modal')) return;
 
   aimAtScreen(ev.clientX, ev.clientY);
   var hitPoint = new THREE.Vector3();
@@ -7467,8 +8037,8 @@ function bindInput(){
       }
       else openSettings();
     }
-    else if(k === 'c') setCameraIsometric();
-    else if(k === 't') toggleCameraView(); // tactical <-> boots-on-the-map
+    else if(k === 'c') toggleCameraView(); // cycle tactical / immersive / director
+    else if(k === 't') focusBattlefield(); // recenter on the battlefield
     else if(k === 'v') cycleSpeed();
     else if(k === 'g') toggleGlyphShop();
     else if(k === 'k') toggleTacticalClarity();
@@ -7561,22 +8131,24 @@ function bindInput(){
   });
   el.btnGlyph = document.getElementById('btnGlyph');
   if(el.btnGlyph) el.btnGlyph.addEventListener('click', toggleGlyphShop);
-  var moreButton = document.getElementById('btnMoreControls');
-  var morePanel = document.getElementById('more-controls-panel');
-  if(moreButton && morePanel){
-    moreButton.addEventListener('click', function(){
-      morePanel.hidden = !morePanel.hidden;
-      moreButton.setAttribute('aria-expanded', String(!morePanel.hidden));
-    });
-    document.addEventListener('pointerdown', function(ev){
-      if(morePanel.hidden || ev.target.closest('#more-controls-panel, #btnMoreControls')) return;
-      morePanel.hidden = true;
-      moreButton.setAttribute('aria-expanded', 'false');
-    });
-    morePanel.addEventListener('click', function(ev){
-      if(!ev.target.closest('button')) return;
-      morePanel.hidden = true;
-      moreButton.setAttribute('aria-expanded', 'false');
+  var sidebarToggle = document.getElementById('btnSidebar');
+  var sidebar = document.getElementById('control-sidebar');
+  function setSidebar(open){
+    if(!sidebar) return;
+    sidebar.classList.toggle('collapsed', !open);
+    sidebar.setAttribute('aria-hidden', String(!open));
+    if(sidebarToggle){
+      sidebarToggle.setAttribute('aria-expanded', String(!!open));
+      sidebarToggle.setAttribute('aria-label', open ? 'Close utility tools' : 'Open utility tools');
+      sidebarToggle.title = open ? 'Close utility tools' : 'Open utility tools';
+    }
+  }
+  if(sidebarToggle && sidebar){
+    // Utility tools are opt-in every session; the battlefield always opens uncluttered.
+    setSidebar(false);
+    sidebarToggle.addEventListener('click', function(){
+      setSidebar(sidebar.classList.contains('collapsed'));
+      sfx('click');
     });
   }
   el.btnUpgradeAll = document.getElementById('btnUpgradeAll');
@@ -7598,6 +8170,9 @@ function bindInput(){
 
   var btnAud = document.getElementById('btnAudio');
   if(btnAud) btnAud.addEventListener('click', toggleAudioMute);
+
+  var btnWeather = document.getElementById('btnWeather');
+  if(btnWeather) btnWeather.addEventListener('click', cycleWeather);
 
   if(el.btnCam) el.btnCam.addEventListener('click', toggleCameraView);
 
@@ -7832,11 +8407,12 @@ function padPress(btn){
 
 // ---------- Controller setup modal: remap every action button ----------
 // ---------- Settings: Video / Audio / Game (persisted, Esc closes) ----------
-var SETTINGS_DEFAULT = { volume: 0.8, musicVol: 0.75, sfxVol: 0.85, ambienceVol: 0.65, explosionVol: 0.8, exposure: 1.0, grain: true, shake: true, dmgNums: true, hpbars: true, muted: false, tacticalClarity: false };
+var SETTINGS_DEFAULT = { volume: 0.8, musicVol: 0.75, sfxVol: 0.85, ambienceVol: 0.65, explosionVol: 0.8, exposure: 1.0, grain: true, shake: true, reduceFlash: false, dmgNums: true, hpbars: true, muted: false, tacticalClarity: false };
 var SETTINGS = Object.assign({}, SETTINGS_DEFAULT);
 try {
   var _ss = JSON.parse(localStorage.getItem('aegis_settings') || 'null');
   if(_ss) for(var _sk in SETTINGS_DEFAULT){ if(typeof _ss[_sk] === typeof SETTINGS_DEFAULT[_sk]) SETTINGS[_sk] = _ss[_sk]; }
+  else if(prefersReducedMotion()){ SETTINGS.reduceFlash = true; SETTINGS.shake = false; }
 } catch(e){}
 function saveSettings(){ try { localStorage.setItem('aegis_settings', JSON.stringify(SETTINGS)); } catch(e){} }
 function applySettings(){
@@ -7866,7 +8442,8 @@ function applyTacticalClarityScenery(active){
   if(chk && chk.checked !== !!active) chk.checked = !!active;
 
   if(typeof POST !== 'undefined' && POST && POST.postMaterial && POST.postMaterial.uniforms && POST.postMaterial.uniforms.uBloomIntensity){
-    POST.postMaterial.uniforms.uBloomIntensity.value = active ? 0.12 : 0.5;
+    var reduceFlash = (typeof SETTINGS !== 'undefined' && SETTINGS.reduceFlash);
+    POST.postMaterial.uniforms.uBloomIntensity.value = active ? 0.12 : (reduceFlash ? 0.2 : 0.5);
   }
   if(typeof dustParticles !== 'undefined' && dustParticles && dustParticles.material){
     dustParticles.material.opacity = active ? 0.12 : 0.55;
@@ -7970,6 +8547,7 @@ function syncSettingsUI(){
     ['setDmgNums', 'dmgNums'],
     ['setHpBars', 'hpbars'],
     ['setShake', 'shake'],
+    ['setReduceFlash', 'reduceFlash'],
     ['setClarity', 'tacticalClarity']
   ];
   map.forEach(function(m){
@@ -8008,7 +8586,7 @@ function bindSettingsUI(){
   num('setSfxVol', 'sfxVol', 100);
   num('setAmbienceVol', 'ambienceVol', 100);
   num('setExplosionVol', 'explosionVol', 100);
-  tog('setGrain', 'grain'); tog('setDmgNums', 'dmgNums'); tog('setHpBars', 'hpbars'); tog('setShake', 'shake'); tog('setClarity', 'tacticalClarity');
+  tog('setGrain', 'grain'); tog('setDmgNums', 'dmgNums'); tog('setHpBars', 'hpbars'); tog('setShake', 'shake'); tog('setReduceFlash', 'reduceFlash'); tog('setClarity', 'tacticalClarity');
   var mu2 = document.getElementById('setMute');
   if(mu2) mu2.addEventListener('change', function(){
     setMasterMute(mu2.checked);
@@ -8075,14 +8653,14 @@ function updatePadPill(){
   if(!chip) return;
   if(PAD.active){
     chip.classList.add('connected');
-    if(label) label.innerHTML = '<i class="pad-dot"></i>' + padBtnName(PADMAP.wave) + ' wave';
+    if(label) label.textContent = '⌘';
     chip.title = 'Connected: ' + (PAD.name || 'Gamepad') +
       ' — ' + padBtnName(PADMAP.place) + ' place · ' + padBtnName(PADMAP.wave) + ' wave · ' +
       padBtnName(PADMAP.upgradeAll) + ' upgrade all · ' + padBtnName(PADMAP.sell) + ' sell twice · ' +
       padBtnName(PADMAP.view) + ' view · sticks move/look · click to remap';
   } else {
     chip.classList.remove('connected');
-    if(label) label.innerHTML = '<i class="pad-dot"></i>No pad';
+    if(label) label.textContent = '⌘';
     chip.title = 'Controller mapping — no pad connected. Click to remap.';
   }
 }
@@ -8348,7 +8926,11 @@ function togglePause(explicitVal){
 }
 function cycleSpeed(){
   S.speed = S.speed === 1 ? 2 : (S.speed === 2 ? 4 : 1);
-  el.btnSpeed.textContent = S.speed + 'x';
+  if(el.btnSpeed){
+    var speedVal = el.btnSpeed.querySelector ? el.btnSpeed.querySelector('.btn-speed-val') : null;
+    if(speedVal) speedVal.textContent = S.speed + '×';
+    else el.btnSpeed.textContent = S.speed + '×';
+  }
   var sf = document.getElementById('speed-flash');
   if(sf){
     sf.textContent = '×' + S.speed;
@@ -8371,45 +8953,79 @@ function showGlyphShop(){
   shop.id = 'glyphShop';
   var metaScrap = getMetaScrap();
   var isCombat = S && S.phase === 'combat';
-  var html = '<h3>✧ Verdant Glyphs</h3>';
-  html += '<p>Permanent upgrades between runs. Forged with banked Meta-Scrap.</p>';
-  html += '<div style="margin:6px 0 14px;padding:8px 12px;background:rgba(0,0,0,0.35);border:1px solid rgba(0,245,212,0.3);border-radius:6px;font-size:12px;display:flex;justify-content:space-between;align-items:center;">';
-  html += '<span>Banked Meta-Scrap:</span><b style="color:#00f5d4;font-size:14px;">¤ ' + metaScrap + '</b></div>';
+  var glyphs = (S && S.glyphs) || loadGlyphs();
+  var invested = 0;
+  for(var pointId in GLYPH_DEFS) invested += glyphs[pointId] || 0;
+  var html = '<header class="glyph-shop-head"><div><span class="glyph-kicker">✦ VERDANT ARCHIVE</span><h3>Choose Your Doctrine</h3>';
+  html += '<p>Shape a permanent build. Commit deeper into a path to awaken its capstone.</p></div>';
+  html += '<button class="glyph-close-x" id="btnCloseGlyphsX" aria-label="Close glyph tree">×</button></header>';
+  html += '<div class="glyph-ledger"><span><small>BANKED META-SCRAP</small><b>¤ ' + metaScrap + '</b></span>';
+  html += '<span><small>INVESTED RANKS</small><b>' + invested + '</b></span>';
+  html += '<span class="glyph-ledger-note">New ranks take effect immediately</span></div>';
   if(isCombat){
-    html += '<div style="margin-bottom:10px;padding:6px 10px;background:rgba(255,107,53,0.15);border-left:3px solid #ff6b35;color:#ff9e79;font-size:11px;">Forge locked during active wave. Spend Meta-Scrap between waves or after the match.</div>';
+    html += '<div class="glyph-lock-banner">⚠ Forge sealed during an active wave. Review your build now; spend between waves.</div>';
   }
-  var keys = Object.keys(GLYPH_DEFS);
-  for(var i=0;i<keys.length;i++){
-    var gid = keys[i]; var def = GLYPH_DEFS[gid]; var lvl = getGlyphLevel(gid); var max = def.maxLvl;
-    var cost = def.cost * (lvl + 1); var canBuy = !isCombat && canAffordGlyph(gid);
-    var pct = (lvl / max) * 100;
-    html += '<div class="glyph-row"><span class="glyph-icon" aria-hidden="true">' + def.icon + '</span>';
-    html += '<div class="glyph-detail"><b>' + def.name + '</b><span>' + def.desc + '</span>';
-    html += '<div class="glyph-track"><i style="width:' + pct + '%"></i></div></div>';
-    html += '<div class="glyph-action"><small>LV ' + lvl + ' / ' + max + '</small>';
-    if(lvl >= max){
-      html += '<span class="glyph-maxed">MAXED</span>';
-    } else {
-      html += '<button class="btn' + (canBuy ? ' primary' : '') + ' glyph-buy" data-gid="' + gid + '"' + (canBuy ? '' : ' disabled') + '>' + cost + ' Meta-Scrap</button>';
+  html += '<div class="glyph-tree" role="tree" aria-label="Verdant Glyph specialization tree">';
+  var branchIds = ['forge', 'grove', 'solar'];
+  for(var bi=0; bi<branchIds.length; bi++){
+    var branchId = branchIds[bi];
+    var branch = GLYPH_BRANCHES[branchId];
+    var branchPoints = getGlyphBranchPoints(branchId, glyphs);
+    html += '<section class="glyph-branch glyph-branch-' + branchId + '"><div class="glyph-branch-head">';
+    html += '<span class="glyph-branch-sigil">' + branch.icon + '</span><div><h4>' + branch.name + '</h4><p>' + branch.role + '</p></div>';
+    html += '<strong>' + branchPoints + '<small> PTS</small></strong></div><div class="glyph-path">';
+    var keys = Object.keys(GLYPH_DEFS);
+    for(var i=0;i<keys.length;i++){
+      var gid = keys[i]; var def = GLYPH_DEFS[gid];
+      if(def.branch !== branchId) continue;
+      var lvl = glyphs[gid] || 0; var max = def.maxLvl; var cost = def.cost * (lvl + 1);
+      var unlock = getGlyphUnlockState(gid, glyphs);
+      var canBuy = !isCombat && unlock.unlocked && lvl < max && metaScrap >= cost;
+      var stateClass = lvl >= max ? ' maxed' : (lvl > 0 ? ' invested' : (unlock.unlocked ? ' available' : ' locked'));
+      if(def.capstone) stateClass += ' capstone';
+      html += '<article class="glyph-node tier-' + def.tier + stateClass + '" role="treeitem" aria-label="' + def.name + '">';
+      html += '<div class="glyph-node-top"><span class="glyph-icon" aria-hidden="true">' + def.icon + '</span><div><b>' + def.name + '</b>';
+      html += '<small>RANK ' + lvl + ' / ' + max + '</small></div></div><p>' + def.desc + '</p>';
+      html += '<div class="glyph-pips" aria-hidden="true">';
+      for(var pi=0;pi<max;pi++) html += '<i class="' + (pi < lvl ? 'filled' : '') + '"></i>';
+      html += '</div>';
+      if(!unlock.unlocked){
+        html += '<span class="glyph-requirement">🔒 ' + unlock.reason + '</span>';
+      } else if(lvl >= max){
+        html += '<span class="glyph-maxed">✦ MASTERED</span>';
+      } else {
+        html += '<button class="glyph-buy' + (canBuy ? ' ready' : '') + '" data-gid="' + gid + '"' + (canBuy ? '' : ' disabled') + '><span>ETCH RANK</span><b>¤ ' + cost + '</b></button>';
+      }
+      html += '</article>';
     }
-    html += '</div></div>';
+    html += '</div></section>';
   }
-  html += '<button class="btn" id="btnCloseGlyphs">Close (G)</button>';
+  html += '</div><footer class="glyph-shop-foot"><button class="btn glyph-respec" id="btnRespecGlyphs"' + (isCombat || !getGlyphInvestment(glyphs) ? ' disabled' : '') + '>REFORGE BUILD <small>Full refund</small></button>';
+  html += '<span>G closes archive</span><button class="btn" id="btnCloseGlyphs">DONE</button></footer>';
   shop.innerHTML = html;
   document.body.appendChild(shop);
   shop.addEventListener('click', function(e){
-    if(e.target.classList.contains('glyph-buy')){
-      var g = e.target.getAttribute('data-gid');
+    var buyButton = e.target.closest ? e.target.closest('.glyph-buy') : null;
+    if(buyButton){
+      var g = buyButton.getAttribute('data-gid');
       if(purchaseGlyph(g)){
-        toast(GLYPH_DEFS[g].name + ' upgraded to Lv ' + getGlyphLevel(g));
+        toast(GLYPH_DEFS[g].name + ' etched to Rank ' + getGlyphLevel(g));
         sfx('upgrade');
         shop.remove();
         showGlyphShop();
       } else {
-        toast('Not enough Meta-Scrap or Forge locked!'); sfx('error');
+        var lock = getGlyphUnlockState(g);
+        toast(lock.unlocked ? 'Not enough Meta-Scrap or Forge locked!' : lock.reason); sfx('error');
       }
     }
-    if(e.target.id === 'btnCloseGlyphs'){ hideGlyphShop(); }
+    if(e.target.id === 'btnRespecGlyphs'){
+      var ok = !window.confirm || window.confirm('Reforge every glyph path? All invested Meta-Scrap will be refunded.');
+      if(ok){
+        var refunded = respecGlyphs();
+        if(refunded){ toast('Build reforged · ¤ ' + refunded + ' Meta-Scrap returned'); sfx('upgrade'); shop.remove(); showGlyphShop(); }
+      }
+    }
+    if(e.target.id === 'btnCloseGlyphs' || e.target.id === 'btnCloseGlyphsX'){ hideGlyphShop(); }
   });
 }
 function hideGlyphShop(){
@@ -8422,8 +9038,11 @@ function hideGlyphShop(){
 function useSanctumAbility(type){
   if(!canMutateGameplay('ability')) return;
   if(!S || S.phase !== 'combat') return;
+  var glyphBonus = S.glyphBonus || getGlyphBonus(S.glyphs);
   var ability = type === 'root' ? { cost: 35, cooldown: 25, key: 'D', name: 'Verdant Overgrowth' }
     : { cost: 75, cooldown: 60, key: 'F', name: 'Solar Flare' };
+  ability.cost = Math.ceil(ability.cost * glyphBonus.abilityCostMult);
+  ability.cooldown *= glyphBonus.cooldownMult;
   if(S.mana < ability.cost){ toast('Not enough Mana (' + ability.cost + ' needed)'); sfx('error'); return; }
   if(type === 'root' && S.sanctum.rootCD > 0){ toast('Overgrowth cooling: ' + Math.ceil(S.sanctum.rootCD) + 's'); sfx('error'); return; }
   if(type === 'flare' && S.sanctum.abilityCD > 0){ toast('Solar Flare cooling: ' + Math.ceil(S.sanctum.abilityCD) + 's'); sfx('error'); return; }
@@ -8441,8 +9060,8 @@ function useSanctumAbility(type){
       if(f.hp <= 0 || f.dead) continue;
       var d = Math.hypot(f.x - sx, f.y - sy);
       if(d <= 4.5){
-        f.rooted = 3.5; f.slowF = 0; f.slowT = 3.5;
-        applyDamage(f, 60, 'Sonic', false);
+        f.rooted = glyphBonus.rootDuration; f.slowF = 0; f.slowT = glyphBonus.rootDuration;
+        applyDamage(f, glyphBonus.rootDamage, 'Sonic', false, false);
         rootCount++;
       }
     }
@@ -8454,7 +9073,7 @@ function useSanctumAbility(type){
       new THREE.MeshBasicMaterial({ color: 0x2D7246, transparent: true, opacity: 0.3, depthWrite: false }));
     mist.rotation.x = -Math.PI/2; mist.position.set(sPos.x, 0.15, sPos.z);
     scene.add(mist);
-    FX.flashes.push({ mesh: mist, life: 3.5 });
+    FX.flashes.push({ mesh: mist, life: glyphBonus.rootDuration });
     sfx('slow');
     toast('Verdant Overgrowth — ' + rootCount + ' creeps rooted!');
   }
@@ -8483,9 +9102,9 @@ function useSanctumAbility(type){
       if(f.hp <= 0 || f.dead) continue;
       var d = Math.hypot(f.x - (gx + 0.5), f.y - (gy + 0.5));
       if(d <= 3.5){
-        applyDamage(f, 800, 'Energy', false);
+        applyDamage(f, glyphBonus.flareDamage, 'Energy', false, false);
         hitFlashCreep(f);
-        damageNumber(gridToWorld3D(f.x, f.y, f.air?2.5:0), 800, 'Energy');
+        damageNumber(gridToWorld3D(f.x, f.y, f.air?2.5:0), Math.round(glyphBonus.flareDamage), 'Energy');
         if(f.hp <= 0) killFoe(f);
         dmgCount++;
       }
@@ -8556,6 +9175,11 @@ function animate(){
     bz.light.intensity = bz.base * (0.85 + Math.random() * 0.3);
     bz.flame.scale.set(1 + Math.random() * 0.25, 1 + Math.random() * 0.4, 1);
   }
+  if(scene.userData.grassField && scene.userData.grassField.material){
+    var grassShader = scene.userData.grassField.material.userData.shader;
+    if(grassShader && grassShader.uniforms && grassShader.uniforms.uGrassTime) grassShader.uniforms.uGrassTime.value = S.time;
+  }
+  updateWeather(dt);
   // floating-island life: orbiting shards, pulsing root-tip, waterfall shimmer
   if(scene.userData.shards) for(var shi = 0; shi < scene.userData.shards.length; shi++){
     var sh2 = scene.userData.shards[shi];
@@ -8664,57 +9288,57 @@ function animate(){
 var TUTORIAL_STEPS = [
   {
     step: 1,
-    title: 'There is no fixed lane.',
-    desc: 'This is free-form tower defense. Automata enter from the left and search the open field for a way to your Sanctum on the right. Every enemy that gets through costs you lives.',
+    title: 'Stop them before the Sanctum.',
+    desc: 'This is tower defense: automata enter from the left and march on your Sanctum on the right. Every enemy that gets through costs you lives. Lesson 1 — select a tower: pick Petal Gatling [Q] in the arsenal dock below.',
     icon: '✦',
     visual: 'Many routes are possible. Your builds decide which stays open.'
   },
   {
     step: 2,
-    title: 'Enemies find another way.',
-    desc: 'Place a tower on an open tile and ground enemies steer around it. They recalculate a walkable route toward the Sanctum as you build, so each defense changes both your firepower and their journey.',
+    title: 'Towers are also walls.',
+    desc: 'Lesson 2 — place it: click any open tile. Every tower is a weapon AND a maze wall: ground enemies steer around what you build, so each placement changes both your firepower and their journey.',
     icon: '⚙',
     visual: 'Each tower is a weapon and an obstacle.'
   },
   {
     step: 3,
-    title: 'Make the journey longer.',
-    desc: 'Stagger towers to weave a long chain of turns. A winding route keeps a wave under overlapping fire for longer, giving your defenses time to destroy it before it reaches the other side.',
-    icon: '⚡',
-    visual: 'More distance means more time to deal damage.'
-  },
-  {
-    step: 4,
-    title: 'Leave a path. Call the wave.',
-    desc: 'You cannot seal the Sanctum off completely: the game rejects any build that blocks every route. Select a defense from the arsenal, place it on the field, then press Start Wave or Space when your maze is ready.',
+    title: 'Keep one path open.',
+    desc: 'Lesson 3 — never seal the Sanctum completely: the game rejects any build that blocks every route. Stagger towers to weave long winding turns instead; more distance means more time under fire.',
     icon: '⛔',
     visual: 'Keep one route open from Entry to Sanctum.'
   },
   {
+    step: 4,
+    title: 'Build, then battle.',
+    desc: 'Lesson 4 — start the wave: press the wave command or Space when your maze is ready. PREPARING means build freely; ENGAGED means combat is raging and destroyed automata pay Scrap for more defenses.',
+    icon: '⚔',
+    visual: '<b>Pacing:</b> Space calls waves · [P] pauses simulation · [V] cycles 1x / 2x / 4x speed.'
+  },
+  {
     step: 5,
+    title: 'Upgrade against what you see.',
+    desc: 'Lesson 5 — counter enemy behavior: click any placed tower to open the Inspector and specialize into an Elite Branch. Armored columns demand Blast and Energy; swarms demand rapid fire; fliers demand anti-air.',
+    icon: '★',
+    visual: '<b>Target Priorities:</b> Cycle targeting modes (First, Last, Strongest, Weakest, Closest) with [Tab] or [Y].'
+  },
+  {
+    step: 6,
     title: 'Funneling & Lethal Choke Points',
     desc: 'Stagger defenses to funnel swarms through narrow turns, then place Bloom Mortars and Prism Pillars where they can fire along the route. Ruin Barrier walls become available after you unlock the Mazing Mastery glyph.',
     icon: '🏹',
     visual: '<b>Pro Tip:</b> Tight choke points turn slow Bloom Mortars into catastrophic swarm sweepers.'
   },
   {
-    step: 6,
-    title: 'Launching the Wave & Earning Scrap',
-    desc: 'When your maze is prepared, hit Start Wave or press Space. Destroyed automata yield Scrap and score, letting you build more defenses and upgrade batteries during combat.',
-    icon: '⚔',
-    visual: '<b>Pacing:</b> Space calls waves · [P] pauses simulation · [V] cycles 1x / 2x / 4x speed.'
-  },
-  {
     step: 7,
-    title: 'Tower Inspection & Elite Specialization',
-    desc: 'Click any placed tower to open the Inspector. Each tower can specialize into one of two Elite Branches (e.g. Gatling into Vulcan swarm-shredder or line-piercing Rail-Needler; Prism into ground-scorching Sol Invictus or 3-way Refraction).',
-    icon: '★',
-    visual: '<b>Target Priorities:</b> Cycle targeting modes (First, Last, Strongest, Weakest, Closest) with [Tab] or [Y].'
+    title: 'Abilities & Targeting, in time.',
+    desc: 'Once the basics hold, layer in control: Sanctum abilities Bramble Root [D] and Solar Flare [F] for emergencies, and [Tab] targeting modes to focus fire. Nothing here is needed for the first waves.',
+    icon: '⚡',
+    visual: 'Introduce one system at a time — abilities can wait until wave 5+.'
   },
   {
     step: 8,
     title: 'Threat Types & Sanctum Powers',
-    desc: 'Beware: Rotor Drones & Zeppelins bypass maze walls! Steam Prowlers use steam-screen evasion against bullets/lasers (counter with Bloom AoE explosions or Sonic resonance!). Dreadnought Rams batter and stall adjacent towers (freeze them with Stun & melt with Prism Beams!). In emergencies, trigger Solar Flare [F] or Bramble Root [D]!',
+    desc: 'Beware: Rotor Drones & Zeppelins fly over maze walls, and base Bloom Mortars cannot hit air — answer with Gatlings, Prisms, or Skyburst Flak! Steam Prowlers use steam-screen evasion against bullets/lasers (counter with Bloom AoE explosions or Sonic resonance!). Dreadnought Rams batter and stall adjacent towers (freeze them with Stun & melt with Prism Beams!).',
     icon: '☼',
     visual: '<b>Counterplay:</b> Bloom AoE sweeps Steam Prowlers · Prism lasers & Sonic shred Dreadnought Rams.'
   }
@@ -8992,12 +9616,21 @@ function getTutorialStep(){
   return curTutorialStep;
 }
 
+function shouldShowFirstRunTutorial(storage){
+  try {
+    storage = storage || localStorage;
+    return !storage.getItem('aegis_tutorial_completed') || !storage.getItem('aegis_mazing_briefing_v3');
+  } catch(e){ return true; }
+}
+
 function checkFirstRunTutorial(){
   try {
-    if(!localStorage.getItem('aegis_mazing_briefing_v3')){
+    if(shouldShowFirstRunTutorial(localStorage)){
       startTutorial(0, true);
+      return true;
     }
-  } catch(e){}
+  } catch(e){ startTutorial(0, true); return true; }
+  return false;
 }
 
 function bindTutorialUI(){
@@ -9022,7 +9655,6 @@ function boot(){
   S = newState((Date.now() % 1e9) | 0);
   seedRuins();
   ['lives', 'cash', 'mana', 'wave', 'score'].forEach(function(id){ el[id] = document.getElementById(id); });
-  el.preview = document.getElementById('preview');
   el.drawer = document.getElementById('drawer');
   el.buildGrid = document.getElementById('build-grid');
   el.inspect = document.getElementById('inspect');
@@ -9040,6 +9672,7 @@ function boot(){
   updatePadPill();
 
   initThreeJS();
+  applyEarlyCameraConstraints();
   buildDrawer();
   bindInput();
   bindSettingsUI();
@@ -9162,6 +9795,34 @@ function runStressBenchmark(enemyCount, frameCount){
   };
 }
 
+// ---------- Deterministic debug / autonomous-test interfaces ----------
+// Seeded runs: api.newGame(seed) resets layout, ruins, and waves. Poll
+// api.drainEvents() for kills, leaks, wave completions, and game over;
+// api.snapshotFoes() for enemy positions and path state.
+function logGameEvent(kind, data){
+  if(!S) return;
+  if(!S.eventLog) S.eventLog = [];
+  S.eventLog.push({ kind: kind, wave: S.wave, time: S.time || 0, data: data || null });
+}
+function drainGameEvents(){
+  var out = (S && S.eventLog) ? S.eventLog.slice() : [];
+  if(S) S.eventLog = [];
+  return out;
+}
+function snapshotFoes(){
+  if(!S) return [];
+  return S.foes.map(function(f){
+    return { type: f.type, hp: Math.round(f.hp), maxhp: f.maxhp,
+      x: +f.x.toFixed(3), y: +f.y.toFixed(3), air: !!f.air, dead: !!f.dead,
+      pathLen: (f.path || []).length, wp: f.wp || 0 };
+  });
+}
+function stepSimulation(steps, dt){
+  var n = Math.max(1, steps | 0 || 1), h = dt || 1 / 60;
+  for(var i = 0; i < n; i++) update(h);
+  return snapshotFoes();
+}
+
 // ---------- Public Automated Testing & API ----------
 var API = {
   cfg: { COLS: COLS, ROWS: ROWS, SPAWN: SPAWN, SANCTUM: SANCTUM, TOWERS: TOWERS, BRANCH: BRANCH, FOES: FOES, WAVE_MAX: WAVE_MAX },
@@ -9180,6 +9841,13 @@ var API = {
   startWave: startWave, spawnEnemy: spawnEnemy, update: update,
   waveComp: waveComp, previewText: previewText, mazeValid: mazeValid,
   towerRange: towerRange,
+  FOE_INTEL: FOE_INTEL, announceFirstEncounter: announceFirstEncounter,
+  terrainTiles: terrainTiles, spawnPoints: spawnPoints,
+  focusBattlefield: focusBattlefield, applyEarlyCameraConstraints: applyEarlyCameraConstraints,
+  prefersReducedMotion: prefersReducedMotion,
+  spawnHitFlash: spawnHitFlash, HIT_FLASH_COLORS: HIT_FLASH_COLORS,
+  logGameEvent: logGameEvent, drainEvents: drainGameEvents,
+  snapshotFoes: snapshotFoes, stepSimulation: stepSimulation,
   canMutateGameplay: canMutateGameplay,
   togglePause: togglePause,
   isPaused: function(){ return S ? !!S.paused : false; },
@@ -9200,6 +9868,10 @@ var API = {
   getGlyphLevel: getGlyphLevel,
   purchaseGlyph: purchaseGlyph,
   canAffordGlyph: canAffordGlyph,
+  getGlyphUnlockState: getGlyphUnlockState,
+  getGlyphBranchPoints: getGlyphBranchPoints,
+  getGlyphInvestment: getGlyphInvestment,
+  respecGlyphs: respecGlyphs,
   getGlyphBonus: getGlyphBonus,
   loadGlyphs: loadGlyphs,
   saveGlyphs: saveGlyphs,
@@ -9207,6 +9879,7 @@ var API = {
   setMetaScrap: setMetaScrap,
   addMetaScrap: addMetaScrap,
   GLYPH_DEFS: GLYPH_DEFS,
+  GLYPH_BRANCHES: GLYPH_BRANCHES,
   TARGET_MODES: TARGET_MODES,
   setTowerTargetMode: setTowerTargetMode,
   cycleTowerTargetMode: cycleTowerTargetMode,
@@ -9218,6 +9891,11 @@ var API = {
   completeTutorial: completeTutorial,
   getTutorialStep: getTutorialStep,
   isTutorialActive: isTutorialActive,
+  shouldShowFirstRunTutorial: shouldShowFirstRunTutorial,
+  checkFirstRunTutorial: checkFirstRunTutorial,
+  WEATHER_MODES: WEATHER_MODES,
+  setWeather: setWeather,
+  cycleWeather: cycleWeather,
   toggleTacticalClarity: toggleTacticalClarity,
   isTacticalClarityActive: isTacticalClarityActive,
   setTacticalClarity: setTacticalClarity,

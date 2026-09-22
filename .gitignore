@@ -7,4 +7,3 @@ __pycache__/
 # Electron / Desktop Build
 desktop/node_modules/
 desktop/dist/
-desktop/build/icon.icns

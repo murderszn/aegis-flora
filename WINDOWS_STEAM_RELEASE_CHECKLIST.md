@@ -28,16 +28,19 @@
 
 ### 2.1 Toolchain & Build Artifacts
 - **Packaging Engine**: `electron-builder` (`^24.13.3`) on `electron` (`^29.1.0`).
-- **Target Architectures**: Windows 10/11 x64 (`win32-x64`).
+- **Target Architectures**: Windows 10 version 1909+ / Windows 11 x64 (`win32-x64`).
+  Windows ARM64 is explicitly unsupported (x64 emulation only) — there is no
+  ARM64 build target.
+- **Current release**: 1.1.0 (`desktop/package.json` is the single source of truth).
 - **Build Commands** (`desktop/package.json`):
   - `npm run build:win`: Compiles both the NSIS standalone installer and the portable Steam depot archive.
   - `npm run pack`: Emits the unpacked distribution directly to `desktop/dist/win-unpacked/` for instant local testing.
 
 ### 2.2 Output Deliverables
-1. **Steam Depot Archive (`AegisFlora-1.0.0-win.zip` / `win-unpacked/`)**:
+1. **Steam Depot Archive (`Aegis Flora-1.1.0-win-x64.zip` / `win-unpacked/`)**:
    - Direct, uncompressed folder containing `AegisFlora.exe`, Chromium framework DLLs, GPU ANGLE backends, and `resources/`.
    - Designed for direct ingestion into Valve's `steamcmd` ContentBuilder.
-2. **Standalone NSIS Installer (`AegisFlora-Setup-1.0.0.exe`)**:
+2. **Standalone NSIS Installer (`Aegis Flora-1.1.0-win-x64.exe`)**:
    - Custom installer with start menu and desktop shortcuts for DRM-free direct web distribution.
 
 ### 2.3 Windows GPU & Rendering Flags (`desktop/main.js`)

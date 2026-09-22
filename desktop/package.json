@@ -1,15 +1,18 @@
 {
   "name": "aegis-flora",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Aegis Flora Desktop Game",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder build",
     "build:mac": "electron-builder build --mac",
+    "build:mac:arm64": "electron-builder build --mac --arm64",
+    "build:mac:x64": "electron-builder build --mac --x64",
     "build:win": "electron-builder build --win",
     "build:all": "electron-builder build -mw",
     "pack": "electron-builder --dir",
+    "check-icons": "node scripts/check-icons.js",
     "postinstall": "electron-builder install-app-deps"
   },
   "author": "murderszn",
@@ -21,6 +24,7 @@
   "build": {
     "appId": "com.murderszn.aegisflora",
     "productName": "Aegis Flora",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -44,25 +48,32 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "Aegis Flora",
-      "uninstallDisplayName": "Aegis Flora",
+      "uninstallDisplayName": "Aegis Flora ${version}",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     },
     "mac": {
       "category": "public.app-category.games",
+      "minimumSystemVersion": "12.0.0",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
-      "target": ["dmg"],
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64", "x64"]
+        }
+      ],
       "icon": "build/icon.icns"
     },
     "dmg": {
-      "title": "Aegis Flora",
+      "title": "Aegis Flora ${version}",
       "contents": [
         {
           "x": 130,
-          "y": 220
+          "y": 220,
+          "type": "file"
         },
         {
           "x": 410,
@@ -82,11 +93,14 @@
         "to": ".",
         "filter": [
           "index.html",
+          "landing.html",
           "game.html",
           "hud.css",
+          "favicon.ico",
           "js/**/*",
           "assets/**/*",
-          "blender_pipeline/models/**/*"
+          "blender_pipeline/models/**/*",
+          "blender_pipeline/renders/**/*"
         ]
       }
     ]

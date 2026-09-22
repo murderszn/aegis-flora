@@ -117,16 +117,26 @@ app.whenReady().then(() => {
   // In packaged: extraResources land in process.resourcesPath
   protocol.handle('app', (request) => {
     const parsedUrl = new URL(request.url);
-    const decodedPath = decodeURIComponent(parsedUrl.pathname);
+    let decodedPath;
+    try {
+      decodedPath = decodeURIComponent(parsedUrl.pathname);
+    } catch {
+      return new Response('Bad request', { status: 400 });
+    }
     const basePath = app.isPackaged
       ? process.resourcesPath
       : path.join(__dirname, '..');
-    const filePath = path.join(basePath, decodedPath);
+    const filePath = path.normalize(path.join(basePath, decodedPath));
+    // Block path traversal (e.g. app://localhost/../../etc/passwd): the
+    // resolved path must stay inside the game root/resources directory.
+    if (filePath !== basePath && !filePath.startsWith(basePath + path.sep)) {
+      return new Response('Forbidden', { status: 403 });
+    }
     return net.fetch('file://' + filePath);
   });
 
-  if (process.platform === 'darwin') {
-    app.dock.setName('Aegis Flora');
+  if (process.platform === 'darwin' && typeof app.setName === 'function') {
+    app.setName('Aegis Flora');
   }
 
   createWindow();
