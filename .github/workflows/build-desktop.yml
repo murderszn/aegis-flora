@@ -6,9 +6,17 @@ on:
       - main
     tags:
       - 'v*'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
   workflow_dispatch:
 
 permissions:
@@ -37,6 +45,8 @@ jobs:
   build:
     name: Build (${{ matrix.os }})
     needs: test
+    # Only run expensive macOS (10x) and Windows (2x) packaging runners for explicit releases or manual trigger
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -62,6 +72,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'desktop/package-lock.json'
 
       - name: Install Desktop Dependencies (clean)
         if: hashFiles('desktop/package-lock.json') != ''
