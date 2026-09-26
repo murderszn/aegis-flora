@@ -29,16 +29,21 @@ namespace AegisFlorae.Mazing
 
         public bool ValidateMazeWithBlock(int[,] currentGrid, int testX, int testY)
         {
-            // Temporarily block test cell
+            if (currentGrid == null) return false;
+            if (testX < 0 || testX >= width || testY < 0 || testY >= height) return false;
+            int original = currentGrid[testX, testY];
             currentGrid[testX, testY] = 2;
-            
-            // Check path from spawn to goal
-            List<Vector2Int> path = FindPath(currentGrid, defaultSpawn, sanctumGoal);
-            
-            // Revert cell
-            currentGrid[testX, testY] = 0;
-
-            return path != null && path.Count > 0;
+            try
+            {
+                // Check path from spawn to goal
+                List<Vector2Int> path = FindPath(currentGrid, defaultSpawn, sanctumGoal);
+                return path != null && path.Count > 0;
+            }
+            finally
+            {
+                // Restore original occupancy instead of assuming empty
+                currentGrid[testX, testY] = original;
+            }
         }
 
         public List<Vector2Int> FindPath(int[,] grid, Vector2Int start, Vector2Int goal)

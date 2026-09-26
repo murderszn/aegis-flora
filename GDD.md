@@ -30,7 +30,7 @@
 ```
 
 ### 2.1 The Grid Layout
-- **Dimensions:** Default battlefield is `32 columns x 18 rows` (scalable up to `48 x 24` on grand battlefield modes).
+- **Dimensions:** Default battlefield is `36 columns x 20 rows` (shipping contract; single source of truth is `GRID` in `game.html` and `cols`/`rows` in `Unity/Assets/Scripts/Mazing/GridManager.cs`).
 - **Spawn Zones:** Located on the left (West) boundary edge (1 to 3 active ingress gates).
 - **Sanctum (Goal):** Located on the right (East) boundary edge.
 - **Cell Occupancy:**

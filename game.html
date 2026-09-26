@@ -912,8 +912,11 @@
    ============================================================ */
 
 // ---------- Configuration ----------
-var COLS = 36, ROWS = 20;
-var CELL_SIZE = 2.0;
+// Authoritative battlefield dimensions (shipping contract: 36 x 20).
+// GRID is the single source of truth; COLS/ROWS remain as legacy aliases.
+var GRID = { W: 36, H: 20, CELL: 2.0 };
+var COLS = GRID.W, ROWS = GRID.H;
+var CELL_SIZE = GRID.CELL;
 // Chunky toy-like presence (Roblox vibe): everything slightly oversized
 var CHUNK_TOWER = 1.3, CHUNK_CREEP = 1.28, CHUNK_TREE = 1.28, CHUNK_RUIN = 1.18;
 var SPAWN = { x: 0, y: 10 }, SANCTUM = { x: COLS - 1, y: 10 };
@@ -1099,7 +1102,7 @@ function newState(seed){
     hasMazingWall: bonus.hasMazingWall,
     mana: 100, score: 0,
     wave: 0, phase: 'build', waveT: 0,
-    paused: false, speed: 1,
+    paused: false, speed: 1, hitStop: 0,
     selected: null, selTower: null,
     kills: 0, leaked: 0, time: 0,
     eventLog: [],
@@ -3959,8 +3962,18 @@ var GFX = {
   fps: 60,
   fpsCount: 0,
   fpsTimer: performance.now(),
+  fpsGapSkip: false,
   drsTimer: 0
 };
+function resetFpsTelemetry(){
+  GFX.fpsCount = 0;
+  GFX.fpsTimer = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  GFX.drsTimer = 0;
+  GFX.fpsGapSkip = true;
+}
+if(typeof document !== 'undefined' && document.addEventListener){
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) resetFpsTelemetry(); });
+}
 
 function getIdealPixelRatio(profile){
   var nativeDpr = window.devicePixelRatio || 1;
@@ -4180,14 +4193,21 @@ function updateGfxPill(){
   }
 }
 
-function stepFpsAndDrs(dt){
+function stepFpsAndDrs(dt, rawDt){
+  // A throttled/rAF-paused tab resumes with one huge real delta while sim dt
+  // stays clamped: drop the polluted window instead of reporting it as FPS.
+  if(rawDt && rawDt > 0.25){ resetFpsTelemetry(); return; }
   GFX.fpsCount++;
   var now = performance.now();
   if(now - GFX.fpsTimer >= 1000){
-    GFX.fps = Math.round((GFX.fpsCount * 1000) / (now - GFX.fpsTimer));
+    if(GFX.fpsGapSkip){ GFX.fpsGapSkip = false; }
+    else {
+      GFX.fps = Math.round((GFX.fpsCount * 1000) / (now - GFX.fpsTimer));
+      // Release builds keep FPS for internal DRS but skip per-second HUD churn.
+      if(!(typeof window !== 'undefined' && window.AEGIS_RELEASE)) updateGfxPill();
+    }
     GFX.fpsCount = 0;
     GFX.fpsTimer = now;
-    updateGfxPill();
   }
   
   // Dynamic Resolution Scaling (DRS) in AUTO mode
@@ -5944,6 +5964,7 @@ function spawnExplosion(worldPos, splash){
   spawnDecal('scorch', g.gx, g.gy, 2.6);
   if(Math.random() < 0.4) spawnDecal('crater', g.gx, g.gy, 2.0);
   addTrauma(Math.min(0.12, 0.03 + splash * 0.02));
+  if(splash >= 2.2) requestHitStop('mortar');
   sfx('boom');
 }
 // Dota-style announcements: wave banner + boss HP bar + sanctum damage flash
@@ -6052,6 +6073,7 @@ function updateBossMechanics(boss, dt){
     toast('⚡ Goliath Colossus triggered EMP OVERCHARGE!');
     sfx('zap');
     addTrauma(0.6);
+    requestHitStop('boss');
     padRumble(0.8, 0.5, 400);
 
     var bPos = gridToWorld3D(boss.x, boss.y, 0);
@@ -6083,6 +6105,7 @@ function updateBossMechanics(boss, dt){
     toast('🔥 Goliath Colossus CORE MELTDOWN! Speed +35%, Armor Exposed!');
     sfx('alarm');
     addTrauma(0.8);
+    requestHitStop('boss');
     padRumble(1.0, 0.8, 600);
 
     var bPos3 = gridToWorld3D(boss.x, boss.y, 0);
@@ -6478,6 +6501,7 @@ function killFoe(f){
     waveBanner('👑 COLOSSUS DESTROYED', 'TITAN SLAIN · ¤' + f.reward + ' SCRAP HARVESTED', false);
     sfx('victory');
     addTrauma(0.7);
+    requestHitStop('boss');
     padRumble(1.0, 0.8, 500);
   }
 }
@@ -8171,7 +8195,7 @@ function bindInput(){
     else if(k === 'k') toggleTacticalClarity();
     else if(k === 'o') toggleWaveOverlay();
     else if(S && S.paused){
-      if(['q', 'w', 'e', 'r', '1', '2', '3', '4', ' ', 'd', 'f', 'u'].indexOf(k) >= 0){
+      if(['q', 'w', 'e', 'r', '1', '2', '3', '4', ' ', 'n', 'd', 'f', 'u'].indexOf(k) >= 0){
         ev.preventDefault();
         canMutateGameplay('key');
       }
@@ -8180,7 +8204,7 @@ function bindInput(){
     else if(k === 'w' || k === '2') selectBuild('rocket');
     else if(k === 'e' || k === '3') selectBuild('beam');
     else if(k === 'r' || k === '4') selectBuild('slow');
-    else if(k === ' '){
+    else if(k === ' ' || k === 'n'){
       ev.preventDefault();
       if(!startWave()){ toast('Wave already raging!'); sfx('error'); }
     }
@@ -9257,6 +9281,7 @@ function useSanctumAbility(type){
     if(Math.random() < 0.7) spawnDecal('crater', gx, gy, 3.0);
     sfx('boom');
     addTrauma(0.6);
+    requestHitStop('ability');
     toast('Solar Flare — ' + dmgCount + ' creeps scorched!');
   }
   refreshHud();
@@ -9290,13 +9315,31 @@ function addTrauma(amount){
   // Scaled down by ~65% to provide gentle tactile kick without nauseating screen violence
   S.trauma = Math.min(0.35, (S.trauma || 0) + (amount || 0.1) * 0.35);
 }
+// Event-scaled hit-stop: brief, configurable micro-freeze for heavy impacts.
+// Never gates input, pause, or menus — only scales the simulation delta.
+var HITSTOP = { enabled: true, max: 0.12, mortar: 0.06, boss: 0.12, ability: 0.09, crit: 0.05 };
+function hitStopAllowed(){
+  if(!HITSTOP.enabled) return false;
+  if(typeof SETTINGS !== 'undefined' && SETTINGS.shake === false) return false;
+  if(typeof prefersReducedMotion === 'function' && prefersReducedMotion()) return false;
+  return true;
+}
+function requestHitStop(kind){
+  if(!hitStopAllowed() || !S || S.paused) return;
+  var dur = (kind && HITSTOP[kind]) || HITSTOP.mortar;
+  dur = Math.min(HITSTOP.max, dur);
+  S.hitStop = Math.max(S.hitStop || 0, dur);
+}
 function animate(){
   requestAnimationFrame(animate);
-  var dt = Math.min(0.05, clock.getDelta());
+  var rawDt = clock.getDelta();
+  var dt = Math.min(0.05, rawDt);
+  GFX.lastRawDt = rawDt;
   if(!S.paused && !isTutorialActive() && (S.phase === 'build' || S.phase === 'combat')){
     var sdt = dt * S.speed;
+    if(S.hitStop > 0){ S.hitStop = Math.max(0, S.hitStop - rawDt); sdt = 0; }
     update(sdt);
-  }
+  } else if(S && S.hitStop > 0){ S.hitStop = 0; }
 
   var core = scene.getObjectByName('sanctumCore');
   if(core && core.visible){
@@ -9424,7 +9467,7 @@ function animate(){
     renderer.render(scene, camera);
   }
   renderCombatFX(dt);
-  stepFpsAndDrs(dt);
+  stepFpsAndDrs(dt, rawDt);
 }
 
 // ---------- Guided First-Run Mazing Tutorial ----------

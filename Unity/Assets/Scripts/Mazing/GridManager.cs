@@ -26,6 +26,7 @@ namespace AegisFlorae.Mazing
         private int[,] gridOccupancy; // 0 = empty, 1 = ruin, 2 = tower
         private GameObject currentGhost;
         private AStarPathfinder pathfinder;
+        private readonly Dictionary<Vector2Int, GameObject> towerInstances = new Dictionary<Vector2Int, GameObject>();
 
         private void Awake()
         {
@@ -78,7 +79,8 @@ namespace AegisFlorae.Mazing
             gridOccupancy[gx, gy] = 2;
             Vector3 worldPos = GridToWorld(gx, gy);
             GameObject tower = Instantiate(towerPrefab, worldPos, Quaternion.identity, transform);
-            
+            towerInstances[new Vector2Int(gx, gy)] = tower;
+
             // Notify active creeps to recalculate their paths
             OnMazeModified?.Invoke();
             return true;
@@ -86,11 +88,15 @@ namespace AegisFlorae.Mazing
 
         public void RemoveTower(int gx, int gy)
         {
-            if (InBounds(gx, gy) && gridOccupancy[gx, gy] == 2)
+            if (!InBounds(gx, gy) || gridOccupancy[gx, gy] != 2) return;
+            gridOccupancy[gx, gy] = 0;
+            var key = new Vector2Int(gx, gy);
+            if (towerInstances.TryGetValue(key, out var tower))
             {
-                gridOccupancy[gx, gy] = 0;
-                OnMazeModified?.Invoke();
+                towerInstances.Remove(key);
+                if (tower != null) Destroy(tower);
             }
+            OnMazeModified?.Invoke();
         }
 
         public List<Vector2Int> GetCurrentShortestPath(Vector2Int start)

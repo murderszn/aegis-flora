@@ -113,7 +113,7 @@ Then open [http://localhost:8000](http://localhost:8000) (landing page) or [http
 | `W` or `2` | Select **Spore Mortar** (150 Scrap) — AoE artillery battery |
 | `E` or `3` | Select **Solar Beam** (175 Scrap) — sustained focus thermal beam |
 | `R` or `4` | Select **Resonance Obelisk** (125 Scrap) — radial acoustic slow/armor shred |
-| `Space` | Start Wave / Call Next Wave |
+| `Space` or `N` | Start Wave / Call Next Wave |
 | `D` | **Verdant Overgrowth** — root all creeps in 4×4 area & deal sonic damage (35 Mana) |
 | `F` | **Solar Flare** — orbital solar lance on cursor tile (75 Mana) |
 | `Tab` or `Y` | Cycle tower target priority (First, Last, Strongest, Weakest, Closest) |
@@ -129,6 +129,8 @@ Then open [http://localhost:8000](http://localhost:8000) (landing page) or [http
 | Mouse | Left-click to place/inspect · Right-click to cancel · Scroll to zoom |
 
 ### 🎮 Gamepad Support (Xbox / PlayStation / Switch)
+
+> Default mapping below. Buttons are rebindable in-game via the controller mapping modal; sticks (move/look), triggers (zoom), and D-pad shortcuts are fixed.
 
 | Button | Action |
 |--------|--------|
