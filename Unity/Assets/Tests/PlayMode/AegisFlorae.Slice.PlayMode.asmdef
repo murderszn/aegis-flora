@@ -1,0 +1,5 @@
+{
+  "name": "AegisFlorae.Slice.PlayMode",
+  "references": ["AegisFlorae.Slice", "UnityEngine.UI", "Unity.TextMeshPro"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

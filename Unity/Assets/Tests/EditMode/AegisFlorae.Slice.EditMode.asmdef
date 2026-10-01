@@ -1,0 +1,6 @@
+{
+  "name": "AegisFlorae.Slice.EditMode",
+  "references": ["AegisFlorae.Slice"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

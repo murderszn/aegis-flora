@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegis-florae.invalid/schemas/asset-manifest.schema.json",
+  "title": "Aegis Florae art asset manifest",
+  "type": "object",
+  "required": ["manifestVersion", "policy", "assets", "materialFamilies"],
+  "additionalProperties": false,
+  "properties": {
+    "manifestVersion": { "const": 1 },
+    "policy": {
+      "type": "object",
+      "required": ["noPaidCalls", "allowRestrictedRawFilesInPublicRepo", "unityArtRoot"],
+      "additionalProperties": false,
+      "properties": {
+        "noPaidCalls": { "const": true },
+        "allowRestrictedRawFilesInPublicRepo": { "const": false },
+        "unityArtRoot": { "const": "Unity/Assets/Aegis/Art" },
+        "privateStagingRoot": { "type": "string", "minLength": 1 }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/asset" },
+      "minItems": 1
+    },
+    "materialFamilies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/materialFamily" },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "required": ["id", "name", "category", "status", "productionStatus", "references", "existingPrototypeFiles", "targetPath", "meshSource", "license", "review"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "category": { "enum": ["tower", "enemy", "sanctum", "ruin-kit", "flora", "material-family"] },
+        "status": { "enum": ["reference_only", "prototype_present", "staged_private", "cleanup", "review", "accepted", "rejected"] },
+        "productionStatus": { "enum": ["not_generated", "prototype_only", "generated_unreviewed", "cleanup_in_progress", "approved"] },
+        "references": { "type": "array", "items": { "type": "string" } },
+        "existingPrototypeFiles": { "type": "array", "items": { "type": "string" } },
+        "targetPath": { "type": "string", "pattern": "^Unity/Assets/Aegis/Art/" },
+        "meshSource": {
+          "type": "object",
+          "required": ["provider", "taskId", "promptRecord", "settingsRecord"],
+          "additionalProperties": false,
+          "properties": {
+            "provider": { "enum": ["Meshy", "Blender", "none"] },
+            "taskId": { "type": ["string", "null"] },
+            "promptRecord": { "type": ["string", "null"] },
+            "settingsRecord": { "type": ["string", "null"] },
+            "rawExportPrivatePath": { "type": ["string", "null"] }
+          }
+        },
+        "license": {
+          "type": "object",
+          "required": ["provider", "record", "redistribution", "status"],
+          "additionalProperties": false,
+          "properties": {
+            "provider": { "enum": ["project_owned_reference", "Meshy", "Poliigon", "mixed", "unknown", "none"] },
+            "record": { "type": ["string", "null"] },
+            "redistribution": { "enum": ["allowed", "restricted", "not_applicable", "unverified"] },
+            "status": { "enum": ["not_acquired", "needs_review", "verified", "not_applicable"] }
+          }
+        },
+        "dimensionsMeters": { "type": ["array", "null"], "items": { "type": "number", "exclusiveMinimum": 0 }, "minItems": 3, "maxItems": 3 },
+        "pivot": { "type": ["string", "null"] },
+        "lodTriangleCounts": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+        "textureSizes": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+        "rigStatus": { "enum": ["not_applicable", "not_started", "needs_review", "verified"] },
+        "collisionStatus": { "enum": ["not_started", "proxy_authored", "verified"] },
+        "review": {
+          "type": "object",
+          "required": ["owner", "notes", "approvedBy", "approvedDate"],
+          "additionalProperties": false,
+          "properties": {
+            "owner": { "type": "string" },
+            "notes": { "type": "string" },
+            "approvedBy": { "type": ["string", "null"] },
+            "approvedDate": { "type": ["string", "null"], "format": "date" }
+          }
+        }
+      }
+    },
+    "materialFamily": {
+      "type": "object",
+      "required": ["id", "name", "provider", "status", "searchBrief", "licenseStatus", "stagingPolicy", "targetPath"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+        "name": { "type": "string" },
+        "provider": { "enum": ["Poliigon", "project_authored", "mixed"] },
+        "status": { "enum": ["reference_only", "not_acquired", "staged_private", "cleanup", "review", "accepted"] },
+        "searchBrief": { "type": "array", "items": { "type": "string" } },
+        "licenseStatus": { "enum": ["not_acquired", "needs_review", "verified"] },
+        "stagingPolicy": { "enum": ["private_only", "license_permits_runtime_files", "project_authored"] },
+        "targetPath": { "type": "string", "pattern": "^Unity/Assets/Aegis/Art/" }
+      }
+    }
+  }
+}

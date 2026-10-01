@@ -7,3 +7,14 @@ __pycache__/
 # Electron / Desktop Build
 desktop/node_modules/
 desktop/dist/
+
+# Unity caches and generated player outputs (source assets/settings stay tracked)
+Unity/Library/
+Unity/Temp/
+Unity/Obj/
+Unity/Logs/
+Unity/UserSettings/
+Unity/Builds/
+Unity/MemoryCaptures/
+Unity/*.csproj
+Unity/*.sln

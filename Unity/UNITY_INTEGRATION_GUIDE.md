@@ -1,5 +1,7 @@
 # Aegis Florae: Unity 3D Integration Guide
 
+> Migration update (2026-10-01): use the [Unity project setup](README.md), [migration status](MIGRATION_STATUS.md), [visual migration plan](../UNITY_VISUAL_MIGRATION_PLAN.md), and [implementation/asset prompts](../UNITY_VISUAL_MIGRATION_PROMPT.md). A native three-wave slice and project initialization tooling now exist in source; Editor compilation and player verification are pending. This older guide describes historical starter material. Its direct GLB import and mixed URP/HDRP instructions require the corrections described in the new plan.
+
 This guide details how to import the generated 3D Blender models, PBR textures, and C# mazing scripts into **Unity (URP / HDRP)** to transition from the HTML5 prototype to a full commercial-tier 3D tower defense game.
 
 ---

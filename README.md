@@ -253,6 +253,10 @@ aegis-florae/
 
 ## 📚 Documentation
 
+For the proposed native Unity rebuild with Meshy and Poliigon, start with the [Unity visual migration plan](./UNITY_VISUAL_MIGRATION_PLAN.md) and [implementation and asset prompts](./UNITY_VISUAL_MIGRATION_PROMPT.md).
+
+The first native slice is now implemented in source: a three-wave Gatling/Scout/Drone match, procedural courtyard, and Unity HUD. See [Unity setup and controls](./Unity/README.md) and [migration status](./Unity/MIGRATION_STATUS.md). Unity Editor compilation and visual verification are still pending; the browser game remains the shipping runtime.
+
 | Document | Description |
 |----------|-------------|
 | [`GDD.md`](./GDD.md) | Complete game design — mechanics, mazing rules, towers, enemies, economy, meta-progression |
